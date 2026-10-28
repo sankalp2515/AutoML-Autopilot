@@ -7,7 +7,11 @@ import pytest_asyncio
 # that routes which open their OWN AsyncSessionLocal (inference/extras/discovery) see
 # the SAME database + tables as the injected test session. Otherwise those routes hit
 # an unmigrated DB and 500 instead of exercising their real logic. (P1.3 fix.)
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_automl.db"
+# TEST_DATABASE_URL lets CI run the same suite against Postgres (column lengths, types
+# and constraints that SQLite does not enforce).
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite:///./test_automl.db")
+if not os.environ["DATABASE_URL"].startswith("sqlite"):
+    os.environ["DB_NULL_POOL"] = "1"
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/1")
 os.environ.setdefault("MLFLOW_TRACKING_URI", "http://localhost:5000")
 os.environ.setdefault("SANDBOX_URL", "http://localhost:8001")
@@ -31,9 +35,14 @@ from app.main import app
 from app.database import Base, get_db
 
 # Use SQLite in-memory for local tests — no Postgres needed
-SQLITE_URL = "sqlite+aiosqlite:///./test_automl.db"
+SQLITE_URL = os.environ["DATABASE_URL"]
+_IS_SQLITE = SQLITE_URL.startswith("sqlite")
 
-test_engine = create_async_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
+if _IS_SQLITE:
+    test_engine = create_async_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
+else:
+    from sqlalchemy.pool import NullPool
+    test_engine = create_async_engine(SQLITE_URL, echo=False, poolclass=NullPool)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -51,6 +60,8 @@ async def override_get_db():
 async def setup_test_db():
     """Create all tables in SQLite test DB once per test session."""
     async with test_engine.begin() as conn:
+        if not _IS_SQLITE:
+            await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     await test_engine.dispose()

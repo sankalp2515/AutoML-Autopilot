@@ -160,7 +160,9 @@ class Investigator:
         proto = mlcore.make_protocol(pack.reference, pack.current, pack.target, cfg["seed"], pack.primary_metric)
         digests = self.ws.materialize(pack, proto)
         self.s["scenario"] = {"scenario_id": pack.scenario_id, "kind": pack.kind, "title": pack.title,
-                              "symptom": pack.symptom, "notes": scenarios.INCIDENT_NOTES.get(pack.scenario_id, ""),
+                              "symptom": pack.symptom,
+                              "notes": pack.notes or scenarios.INCIDENT_NOTES.get(pack.scenario_id, ""),
+                              "source": pack.source, "docs_urls": pack.docs_urls,
                               "primary_metric": pack.primary_metric,
                               "critical_segment": pack.critical_segment,
                               "rows": {"reference": len(pack.reference), "current": len(pack.current)}}
@@ -196,7 +198,7 @@ class Investigator:
 
     def _investigate(self) -> None:
         if not self.s["hypotheses"]:
-            gap = research.detect_gap(self._findings())
+            gap = research.detect_gap(self._findings(), (self.s.get("scenario") or {}).get("docs_urls"))
             self.s["research"]["reason_code"] = gap["reason_code"]
             if gap["required"]:
                 self.move(Status.RESEARCHING, f"external evidence gap ({gap['reason_code']})")
@@ -220,12 +222,40 @@ class Investigator:
             forbidden = set(self.ws.reference().columns) | {
                 str(v) for c in pack["pipeline"]["categorical"] for v in self.ws.reference()[c].dropna().unique()}
             prev = ((pack.get("environment") or {}).get("previous") or {}).get("scikit-learn")
-            out = research.run_research(self._findings(), forbidden, prev, self.tavily,
-                                        self.settings.AUTOPILOT_MAX_EXTRACTS_PER_RUN,
-                                        getattr(self.settings, "AUTOPILOT_MAX_SEARCHES_PER_RUN", 2))
-            r.update(state=out["state"], query=out["query"], mapping=out["mapping"],
-                     evidence=[e.model_dump() for e in out["evidence"]],
-                     calls=[c.model_dump() for c in out["calls"]])
+            findings = self._findings()
+            kinds = {f.kind: f for f in findings}
+            evidence, calls = [], []
+            out = {"state": "NOT_NEEDED", "query": None, "mapping": None}
+            if "pipeline_error" in kinds and kinds["pipeline_error"].value.get("keyword"):
+                # A library error: find the official rename (the only research that can justify a fix).
+                out = research.run_research(findings, forbidden, prev, self.tavily,
+                                            self.settings.AUTOPILOT_MAX_EXTRACTS_PER_RUN,
+                                            getattr(self.settings, "AUTOPILOT_MAX_SEARCHES_PER_RUN", 2))
+                evidence += out["evidence"]
+                calls += out["calls"]
+            dep = kinds.get("dependency_change")
+            if dep is not None and "pipeline_error" not in kinds:
+                # Upgrades without a crash: read the official release notes for silent changes.
+                rv = research.review_releases(dep.value, self.tavily, start_ref=len(evidence) + 1)
+                evidence += rv["evidence"]
+                calls += rv["calls"]
+                out["query"] = out["query"] or {"query": "; ".join(rv["queries"]), "purpose": "release_review"}
+            docs = (self.s.get("scenario") or {}).get("docs_urls") or []
+            if docs:
+                cfgp = pack["pipeline"]
+                ud = research.read_user_docs(docs, cfgp["numeric"] + cfgp["categorical"], self.tavily,
+                                             start_ref=len(evidence) + 1)
+                evidence += ud["evidence"]
+                calls += ud["calls"]
+            state = out["state"]
+            if state in ("NOT_NEEDED", "NO_MATCH") and any(e.status == "ACCEPTED" for e in evidence):
+                state = "AVAILABLE"
+            elif state == "NOT_NEEDED":
+                state = "UNAVAILABLE" if calls and not any(c.ok for c in calls) else "NO_MATCH"
+            r.update(state=state, query=out["query"], mapping=out["mapping"],
+                     evidence=[e.model_dump() for e in evidence],
+                     calls=[c.model_dump() for c in calls])
+            out = {"evidence": evidence, "state": state}
             acc = sum(1 for e in out["evidence"] if e.status == "ACCEPTED")
             self.emit("research", f"Tavily research {out['state']}: {len(out['evidence'])} results, "
                                   f"{acc} accepted by the source gate", calls=r["calls"])
@@ -459,6 +489,23 @@ class Investigator:
                             "Inspect the upstream transformation.")
                 return
             params = fix
+        if tid == "DEPENDENCY_COMPAT_FIX" and self.s["scenario"].get("source") == "upload":
+            # We rebuilt the model family from the user's data; their training code is theirs.
+            # A sourced rename is a recommendation to apply there, not a fix we can verify.
+            m = self.s["research"].get("mapping")
+            if m:
+                self.decide(Decision.DIAGNOSIS_SUPPORTED, Status.INCONCLUSIVE, ["E_USER_CODE_CHANGE"],
+                            f"Diagnosis supported: {sup.statement} Recommended change: {m['object']}"
+                            f"({m['from']}=…) → {m['object']}({m['to']}=…), from source {m['source_ref']}, "
+                            "confirmed against the installed library signature.",
+                            "Apply the change in your training code, re-run your pipeline, then re-run "
+                            "Autopilot to verify the retrained model.")
+            else:
+                self.decide(Decision.DIAGNOSIS_SUPPORTED, Status.INCONCLUSIVE, ["E_SOURCE_REQUIRED"],
+                            f"Diagnosis supported: {sup.statement} No official source names the replacement "
+                            f"(research state: {self.s['research']['state']}); policy forbids guessing it.",
+                            "Pin the previous library version or check the library's release notes.")
+            return
         if tid == "DEPENDENCY_COMPAT_FIX":
             m = self.s["research"].get("mapping")
             if not m:

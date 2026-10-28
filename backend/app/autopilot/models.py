@@ -23,7 +23,7 @@ class AutopilotInvestigation(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     tenant_id: Mapped[str] = mapped_column(String(64), default="public", index=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    scenario_id: Mapped[str] = mapped_column(String(16))
+    scenario_id: Mapped[str] = mapped_column(String(32))     # "S02" or "upload:<12 hex>"
     status: Mapped[str] = mapped_column(String(24), index=True)
     decision: Mapped[str | None] = mapped_column(String(32), nullable=True)
     cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)

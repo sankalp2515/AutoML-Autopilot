@@ -149,7 +149,34 @@ def verify(ws: Workspace, candidate: dict[str, Any], self_report: dict[str, Any]
 
     # 8 critical-segment guardrail
     seg = pack.get("critical_segment")
-    if seg:
+    if seg and seg.get("value") is None:
+        # Column only: no group may get worse by more than max_drop.
+        worst, rows_by = None, {}
+        for v in sorted(fin[seg["column"]].dropna().astype(str).unique()):
+            mm = (fin[seg["column"]].astype(str) == v).to_numpy()
+            if mm.sum() < 30 or len(np.unique(y[mm])) < 2:
+                continue
+            sc = mlcore.score(y[mm], p_c[mm], cand.threshold)[seg["metric"]]
+            si = mlcore.score(y[mm], p_i[mm], inc.threshold)[seg["metric"]]
+            rows_by[v] = {"candidate": sc, "incumbent": si, "delta": round(sc - si, 4), "rows": int(mm.sum())}
+            if worst is None or sc - si < rows_by[worst]["delta"]:
+                worst = v
+        if not rows_by:
+            checks.append(_check("segment_guardrail", "INCONCLUSIVE", "no segment large enough to judge"))
+            reasons.append("E_EVIDENCE_MISSING")
+        else:
+            w = rows_by[worst]
+            metrics["critical_segment"] = {"segment": f"{seg['column']}={worst} (worst of {len(rows_by)})",
+                                           "metric": seg["metric"], "candidate": w["candidate"],
+                                           "incumbent": w["incumbent"], "rows": w["rows"], "by_group": rows_by}
+            ok = w["delta"] >= -seg["max_drop"]
+            checks.append(_check("segment_guardrail", "PASS" if ok else "FAIL",
+                                 f"{seg['metric']} must not drop more than {seg['max_drop']} in any "
+                                 f"{seg['column']} group vs the incumbent on the same rows (worst: {worst})",
+                                 worst_group=worst, delta=w["delta"]))
+            if not ok:
+                reasons.append("E_GUARDRAIL_FAIL")
+    elif seg:
         m = (fin[seg["column"]].astype(str) == str(seg["value"])).to_numpy()
         if m.sum() < 30 or len(np.unique(y[m])) < 2:
             checks.append(_check("segment_guardrail", "INCONCLUSIVE", "critical segment too small to judge",

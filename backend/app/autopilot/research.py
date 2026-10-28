@@ -23,9 +23,21 @@ import httpx
 
 from app.autopilot import mlcore
 from app.autopilot.schemas import ExternalEvidence, Finding, ProviderCall, utcnow
-from app.autopilot.templates import PROBE_OBJECTS, _installed_params
+from app.autopilot.templates import _installed_params, is_probe_object
 
 OFFICIAL_HOSTS = {"scikit-learn.org": "scikit-learn (official docs)"}
+# Official documentation of the data/ML packages whose upgrades we review.
+RELEASE_DOCS = {
+    "scikit-learn": ("scikit-learn.org", "scikit-learn (official docs)"),
+    "pandas": ("pandas.pydata.org", "pandas (official docs)"),
+    "numpy": ("numpy.org", "NumPy (official docs)"),
+    "scipy": ("docs.scipy.org", "SciPy (official docs)"),
+    "xgboost": ("xgboost.readthedocs.io", "XGBoost (official docs)"),
+    "lightgbm": ("lightgbm.readthedocs.io", "LightGBM (official docs)"),
+    "joblib": ("joblib.readthedocs.io", "joblib (official docs)"),
+}
+for _pkg, (_host, _pub) in RELEASE_DOCS.items():
+    OFFICIAL_HOSTS.setdefault(_host, _pub)
 MAINTAINER_PREFIXES = {"github.com/scikit-learn/scikit-learn": "scikit-learn maintainers (GitHub)"}
 _INJECTION = re.compile(
     r"(ignore (all |any )?(previous|prior|above) (instructions|rules)|system prompt|you are now|"
@@ -41,8 +53,10 @@ class ResearchUnavailable(Exception):
 
 
 # ── 1. Gap detection ─────────────────────────────────────────────────────────
-def detect_gap(findings: list[Finding]) -> dict[str, Any]:
+def detect_gap(findings: list[Finding], docs_urls: list[str] | None = None) -> dict[str, Any]:
     kinds = {f.kind: f for f in findings}
+    if docs_urls and "pipeline_error" not in kinds and "dependency_change" not in kinds:
+        return {"required": True, "reason_code": "user_docs", "finding_ids": []}
     if "pipeline_error" in kinds and kinds["pipeline_error"].value.get("keyword"):
         return {"required": True, "reason_code": "version_error",
                 "finding_ids": [f.finding_id for f in findings if f.kind in ("pipeline_error", "dependency_change")]}
@@ -68,7 +82,7 @@ def build_query(findings: list[Finding], forbidden_terms: set[str]) -> dict[str,
     parts = [pkg]
     if ver and re.fullmatch(r"\d+\.\d+(\.\d+)?", str(ver)):
         parts.append(".".join(str(ver).split(".")[:2]))
-    if obj in PROBE_OBJECTS:
+    if is_probe_object(obj):
         parts.append(obj)
     if kw and re.fullmatch(r"[a-z_][a-z0-9_]{0,40}", kw):
         parts += [f"{kw} parameter", "removed renamed"]
@@ -211,13 +225,14 @@ def gate(result: dict, idx: int, q: dict, prev_version: str | None) -> ExternalE
 def compat_mapping(evidence: list[ExternalEvidence], obj: str | None, old: str | None) -> dict[str, Any] | None:
     """Deterministically extract 'old → new' parameter names from ACCEPTED official
     or maintainer excerpts. The new name must exist in the INSTALLED signature."""
-    if not obj or not old or obj not in PROBE_OBJECTS:
+    if not obj or not old or not is_probe_object(obj):
         return None
+    evidence = [e for e in evidence if e.purpose == "library_fix"]
     installed = set(_installed_params(obj))
     pats = [rf"`?{re.escape(old)}`?\s*(?:was|is|has been)?\s*(?:renamed|deprecated)[^.]{{0,120}}?`?([a-z_][a-z0-9_]*)`?",
             rf"(?:in favou?r of|replaced by|renamed to|use)\s+`?([a-z_][a-z0-9_]*)`?"]
     for e in evidence:
-        if e.status != "ACCEPTED" or e.source_type == "third_party":
+        if e.status != "ACCEPTED" or e.source_type in ("third_party", "user_docs"):
             continue
         for pat in pats:
             for m in re.finditer(pat, e.excerpt, re.I):
@@ -285,4 +300,88 @@ def run_research(findings: list[Finding], forbidden_terms: set[str], prev_versio
     out["evidence"] = ev
     out["mapping"] = compat_mapping(ev, q.get("object"), q.get("keyword"))
     out["state"] = "AVAILABLE" if any(e.status == "ACCEPTED" for e in ev) else "NO_MATCH"
+    return out
+
+
+# ── 6. Release-notes review (any upgraded data/ML package) ───────────────────
+_SEMVER = re.compile(r"^\d+\.\d+")
+
+
+def review_releases(changed: dict[str, dict], client: TavilyClient, start_ref: int,
+                    max_searches: int = 2, max_extract: int = 2) -> dict[str, Any]:
+    """For each upgraded package we know, search its official docs for the target
+    version's release notes and extract them. Only package names and version numbers
+    enter a query. Results are context for the planner (purpose=release_review); they
+    can never justify a code change on their own."""
+    out: dict[str, Any] = {"calls": [], "evidence": [], "queries": []}
+    picks: list[ExternalEvidence] = []
+    for pkg, v in list(changed.items()):
+        if len(out["queries"]) >= max_searches:
+            break
+        pkg = pkg.lower()
+        if pkg not in RELEASE_DOCS or not _SEMVER.match(str(v.get("to", ""))):
+            continue
+        host, _ = RELEASE_DOCS[pkg]
+        mm = ".".join(str(v["to"]).split(".")[:2])
+        query = f"{pkg} {mm} release notes changes deprecations"
+        out["queries"].append(query)
+        body, call = client.search(query, max_results=4, include_domains=[host])
+        out["calls"].append(call)
+        if body is None:
+            continue
+        q = {"object": pkg, "keyword": mm, "target_version": None}
+        for r in (body.get("results") or [])[:2]:
+            e = gate(r, start_ref + len(out["evidence"]), q, None)
+            e.purpose = "release_review"
+            if e.source_type == "third_party":
+                continue
+            out["evidence"].append(e)
+            if e.status == "ACCEPTED":
+                picks.append(e)
+    picks = picks[:max_extract]
+    if picks:
+        xbody, xcall = client.extract([e.url for e in picks])
+        out["calls"].append(xcall)
+        by_url = {r.get("url"): r for r in (xbody or {}).get("results") or []}
+        for e in picks:
+            raw = by_url.get(e.url)
+            if raw and raw.get("raw_content"):
+                regated = gate({"url": e.url, "title": e.title, "raw_content": raw["raw_content"]},
+                               int(e.source_ref[1:]), {"object": e.publisher.split(" ")[0], "keyword": "deprecat"}, None)
+                if regated.status in ("ACCEPTED", "REJECTED_IRRELEVANT"):
+                    e.excerpt, e.excerpt_sha256, e.extracted = regated.excerpt, regated.excerpt_sha256, True
+                else:
+                    e.status, e.caveats, e.excerpt = regated.status, regated.caveats, ""
+    return out
+
+
+# ── 7. Documents the user asked us to read ───────────────────────────────────
+def read_user_docs(urls: list[str], terms: list[str], client: TavilyClient, start_ref: int) -> dict[str, Any]:
+    """Tavily Extract on public URLs the user supplied (a vendor changelog, a data
+    dictionary). Only the URLs are sent. The excerpt is centred on mentions of the
+    model's feature names, and the injection gate still applies. Context only: never
+    used to justify a code change."""
+    out: dict[str, Any] = {"calls": [], "evidence": []}
+    if not urls:
+        return out
+    xbody, xcall = client.extract(urls[:3])
+    out["calls"].append(xcall)
+    by_url = {r.get("url"): r for r in (xbody or {}).get("results") or []}
+    for i, u in enumerate(urls[:3]):
+        raw = by_url.get(u) or {}
+        content = str(raw.get("raw_content") or "")
+        host = (urlparse(u).hostname or "unknown").removeprefix("www.")
+        hits = [t for t in terms if t and t.lower() in content.lower()]
+        status, caveats = "ACCEPTED", ["supplied by you: context for the planner, not proof"]
+        if not content:
+            status, caveats = "REJECTED_IRRELEVANT", ["Tavily Extract returned no content for this URL"]
+        elif _INJECTION.search(content):
+            status, caveats = "REJECTED_UNTRUSTED", ["contains instruction-like text aimed at an agent; quarantined"]
+        ex = _excerpt(content, hits[:1] + hits[1:2]) if status == "ACCEPTED" else ""
+        out["evidence"].append(ExternalEvidence(
+            source_ref=f"S{start_ref + i}", url=u, title=str(raw.get("title") or u)[:200], publisher=host,
+            source_type="user_docs", fetched_at=utcnow(), version_match="unknown",
+            relevance=round(len(hits) / max(1, len(terms)), 2), status=status, caveats=caveats,
+            excerpt=ex, excerpt_sha256=mlcore.sha256_bytes(ex.encode()) if ex else "", extracted=bool(content),
+            purpose="user_docs"))
     return out

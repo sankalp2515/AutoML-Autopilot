@@ -105,6 +105,18 @@ export default function AutopilotHome() {
         </p>
         <div style={{ marginTop: 14 }}><ProviderBadges p={providers} /></div>
         <HowItWorks />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginTop: 16, padding: '12px 14px',
+                      border: '1px solid var(--acc)', borderRadius: 10, background: 'var(--accw)' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <strong style={{ fontSize: 13.5 }}>Have a model that broke?</strong>
+            <span style={{ display: 'block', fontSize: 12.5, color: 'var(--t2)', marginTop: 2 }}>
+              Upload a healthy window and a recent window as CSV, and Autopilot investigates your incident the same way.
+            </span>
+          </div>
+          <Link href="/autopilot/new" className="ds-btn-acc" style={{ height: 34, padding: '0 14px', fontSize: 12.5, display: 'inline-flex', alignItems: 'center', borderRadius: 8, textDecoration: 'none', color: '#fff' }}>
+            Investigate your own model →
+          </Link>
+        </div>
       </section>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 18, alignItems: 'start' }}>

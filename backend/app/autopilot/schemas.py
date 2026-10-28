@@ -163,7 +163,8 @@ class ExternalEvidence(BaseModel):
     url: str
     title: str
     publisher: str
-    source_type: Literal["official_docs", "release_notes", "maintainer_issue", "third_party"]
+    source_type: Literal["official_docs", "release_notes", "maintainer_issue", "third_party", "user_docs"]
+    purpose: str = "library_fix"     # library_fix | release_review | user_docs
     fetched_at: str
     version_match: Literal["exact", "compatible", "mismatch", "unknown"]
     relevance: float
@@ -194,7 +195,7 @@ class ProviderCall(BaseModel):
 
 class CreateInvestigation(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    scenario_id: str = Field(min_length=2, max_length=16)
+    scenario_id: str = Field(min_length=2, max_length=24, pattern=r"^(S\d{2}|T\d{2}|upload:[0-9a-f]{12})$")
     seed: int = Field(default=7, ge=0, le=10_000)
     planner: Literal["auto", "deterministic", "nemotron"] = "auto"
     research: Literal["auto", "off"] = "auto"

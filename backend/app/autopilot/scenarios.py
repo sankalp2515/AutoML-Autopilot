@@ -85,7 +85,10 @@ class IncidentPack:
     # Config the production model was trained with (defaults to `pipeline`). Differs
     # only when the incident is a failed retrain of an otherwise healthy model.
     incumbent_pipeline: dict[str, Any] | None = None
-    critical_segment: dict[str, Any] = field(default_factory=lambda: dict(CRITICAL_SEGMENT))
+    critical_segment: dict[str, Any] | None = field(default_factory=lambda: dict(CRITICAL_SEGMENT))
+    source: str = "catalog"                  # "catalog" (seeded demo) | "upload" (user data)
+    notes: str = ""                          # free-text team context (uploads); catalog uses INCIDENT_NOTES
+    docs_urls: list[str] = field(default_factory=list)   # public docs the user asked us to read
 
 
 def _population(n: int, rng: np.random.Generator, prevalence_shift: float = 0.0) -> pd.DataFrame:
@@ -263,6 +266,9 @@ _ORACLE = {
 
 
 def build(scenario_id: str, seed: int) -> IncidentPack:
+    if scenario_id.startswith("upload:"):
+        from app.autopilot import uploads
+        return uploads.load_pack(scenario_id.split(":", 1)[1])
     try:
         return _BUILDERS[scenario_id](seed)
     except KeyError:

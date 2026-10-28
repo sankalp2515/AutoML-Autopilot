@@ -88,6 +88,7 @@ def context(findings: list[Finding]) -> dict[str, Any]:
     if pe and pe.value.get("object") and pe.value.get("keyword"):
         probe = {"object": pe.value["object"], "keyword": pe.value["keyword"]}
     return {"labels_available": bool(lab and lab.value["labelled"] >= 200 and "metric_drop" in by),
+            "has_segment": "segment_spread" in by,
             "current_rows": int(lab.value["total"]) if lab else 0, "probe_params": probe}
 
 

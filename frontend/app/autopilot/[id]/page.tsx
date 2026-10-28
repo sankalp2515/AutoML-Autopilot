@@ -76,6 +76,11 @@ export default function InvestigationPage() {
                 {inv.scenario?.title ?? 'Investigation'}
               </h1>
               <p style={{ color: 'var(--t2)', fontSize: 13, margin: 0 }}>Reported symptom: {inv.scenario?.symptom}</p>
+              {inv.scenario?.notes && (
+                <p style={{ color: 'var(--t3)', fontSize: 12, margin: '4px 0 0', lineHeight: 1.45 }}>
+                  Team notes (read by Nemotron, not treated as proof): {inv.scenario.notes}
+                </p>
+              )}
             </header>
 
             <div aria-live="polite"><StageTimeline inv={inv} /></div>

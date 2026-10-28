@@ -32,9 +32,28 @@ def _ident(s: Any) -> bool:
     return isinstance(s, str) and 0 < len(s) <= 40 and set(s.lower()) <= _IDENT
 
 
+_REGISTRY: dict[str, type] | None = None
+
+
+def probe_registry() -> dict[str, type]:
+    """Every public scikit-learn estimator and transformer by class name. The probe only
+    ever resolves names through this registry, so a name from a user's error log can
+    never trigger an arbitrary import."""
+    global _REGISTRY
+    if _REGISTRY is None:
+        from sklearn.utils import all_estimators
+        _REGISTRY = {name: cls for name, cls in all_estimators()}
+    return _REGISTRY
+
+
+def is_probe_object(obj: str | None) -> bool:
+    return bool(obj) and (obj in PROBE_OBJECTS or obj in probe_registry())
+
+
 def _installed_params(obj: str) -> list[str]:
     import importlib
-    cls = getattr(importlib.import_module(PROBE_OBJECTS[obj]), obj)
+    cls = (getattr(importlib.import_module(PROBE_OBJECTS[obj]), obj) if obj in PROBE_OBJECTS
+           else probe_registry()[obj])
     return [p for p in inspect.signature(cls.__init__).parameters if p != "self"]
 
 
@@ -158,7 +177,9 @@ def threshold_study(ws: Workspace, params: dict) -> dict:
 
 def segment_failure_audit(ws: Workspace, params: dict) -> dict:
     pack = ws.pack()
-    target, seg = pack["target"], pack["critical_segment"]
+    target, seg = pack["target"], pack.get("critical_segment")
+    if not seg:
+        return {"bucket": "NOT_APPLICABLE", "measurements": {"reason": "no segment column declared"}}
     inc = ws.incumbent()
     sel, rv = ws.rows("selection_validation"), ws.rows("ref_validation")
     if len(sel) < 50:
@@ -295,7 +316,7 @@ def _p_none(params, ctx):
 
 def _p_probe(params, ctx):
     obj, kw = params.get("object"), params.get("keyword")
-    if obj not in PROBE_OBJECTS or not _ident(kw):
+    if not is_probe_object(obj) or not _ident(kw):
         return False, "object must be an allow-listed sklearn class and keyword an identifier", None
     return True, "", {"object": obj, "keyword": kw}
 
@@ -337,7 +358,7 @@ def _p_family(params, ctx):
 
 def _p_compat(params, ctx):
     obj, old, new = params.get("object"), params.get("from"), params.get("to")
-    if obj not in PROBE_OBJECTS or not (_ident(old) and _ident(new)) or old == new:
+    if not is_probe_object(obj) or not (_ident(old) and _ident(new)) or old == new:
         return False, "object/from/to must be an allow-listed class and two distinct identifiers", None
     return True, "", {"object": obj, "from": old, "to": new}
 
@@ -353,7 +374,7 @@ TEMPLATES: dict[str, Template] = {t.template_id: t for t in [
     Template("THRESHOLD_STUDY", "diagnostic", 2.0,
              ("RANKING_INTACT_THRESHOLD_OFF", "RANKING_DEGRADED", "OPERATING_POINT_OK", "INSUFFICIENT_LABELS"),
              True, "Is ranking (AUC) intact while the operating point is wrong?", threshold_study),
-    Template("SEGMENT_FAILURE_AUDIT", "diagnostic", 2.0, ("UNIFORM", "CONCENTRATED", "INSUFFICIENT_LABELS"),
+    Template("SEGMENT_FAILURE_AUDIT", "diagnostic", 2.0, ("UNIFORM", "CONCENTRATED", "INSUFFICIENT_LABELS", "NOT_APPLICABLE"),
              True, "Does the failure concentrate in one segment?", segment_failure_audit),
     Template("DEPENDENCY_API_PROBE", "diagnostic", 0.5, ("API_COMPATIBLE", "PARAM_REMOVED"), False,
              "Inspects the INSTALLED library signature for a parameter.", dependency_api_probe),

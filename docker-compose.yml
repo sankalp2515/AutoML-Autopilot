@@ -75,8 +75,11 @@ services:
       AUTOPILOT_CREATES_PER_10MIN: ${AUTOPILOT_CREATES_PER_10MIN:-6}
       AUTOPILOT_DAILY_LLM_CALLS: ${AUTOPILOT_DAILY_LLM_CALLS:-400}
       AUTOPILOT_DAILY_TAVILY_CALLS: ${AUTOPILOT_DAILY_TAVILY_CALLS:-200}
+      DATA_DIR: /data
     read_only: true
     tmpfs: ["/tmp"]
+    volumes:
+      - artifacts:/data                  # writes user uploads (data/uploads); never reads run artifacts
     networks: [backplane]
     depends_on:
       postgres: { condition: service_healthy }

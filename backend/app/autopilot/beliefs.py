@@ -62,6 +62,8 @@ def predict(cause: Cause, template_id: str, ctx: dict[str, Any]) -> str | None:
         return "UNLABELED"
     if template_id == "DEPENDENCY_API_PROBE" and not ctx.get("probe_params"):
         return None
+    if template_id == "SEGMENT_FAILURE_AUDIT" and not ctx.get("has_segment", True):
+        return None          # no segment column declared: the audit cannot discriminate
     return _MATRIX[template_id][cause]
 
 

@@ -56,7 +56,7 @@ export interface Experiment {
 export interface Evidence {
   source_ref: string; url: string; title: string; publisher: string; source_type: string; fetched_at: string;
   version_match: string; relevance: number; status: string; caveats: string[]; excerpt: string;
-  excerpt_sha256: string; extracted: boolean;
+  excerpt_sha256: string; extracted: boolean; purpose?: 'library_fix' | 'release_review' | 'user_docs';
 }
 
 export interface ProviderCall {
@@ -79,6 +79,7 @@ export interface Decision {
 export interface Investigation {
   run_id: string; status: Status; config: Record<string, any>; created_at: string;
   scenario: { scenario_id: string; kind: string; title: string; symptom: string; primary_metric: string;
+              notes?: string; source?: 'catalog' | 'upload'; docs_urls?: string[];
               critical_segment: Record<string, any>; rows: { reference: number; current: number } } | null;
   protocol: { protocol_hash: string; counts: Record<string, number>; seed: number; metric: string; keying: string } | null;
   inputs: Record<string, string>;
@@ -202,8 +203,45 @@ export const autopilot = {
     URL.revokeObjectURL(url);
   },
   benchmark: () => req<any>('/benchmark'),
+  samples: () => req<{ samples: Sample[] }>('/samples'),
+  sampleUrl: (id: string, window: 'reference' | 'current') => `${API_BASE}${BASE}/samples/${id}/${window}.csv`,
+  uploads: () => req<{ uploads: UploadInfo[] }>('/uploads'),
+  upload: async (reference: Blob, current: Blob, names: [string, string] = ['reference.csv', 'current.csv']) => {
+    const token = await getAccessToken();
+    const fd = new FormData();
+    fd.append('reference', reference, names[0]);
+    fd.append('current', current, names[1]);
+    const headers: Record<string, string> = { 'X-Autopilot-Session': sessionId() };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${BASE}/uploads`, { method: 'POST', body: fd, headers });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof body.detail === 'string' ? body.detail : `Upload failed (HTTP ${res.status})`);
+    return body as UploadInfo;
+  },
+  configure: (uploadId: string, spec: UploadSpec) =>
+    req<UploadInfo & { features: { numeric: string[]; categorical: string[]; dropped: string[] }; warnings: string[]; labelled_current_rows: number }>(
+      `/uploads/${encodeURIComponent(uploadId)}/configure`, { method: 'POST', body: JSON.stringify(spec) }),
   ablation: () => req<any>('/ablation'),
 };
+
+export interface UploadColumn { name: string; kind: 'numeric' | 'categorical' | 'id_like' | 'high_cardinality'; unique: number; null_rate: number; in_current: boolean; values: string[] }
+export interface UploadInfo {
+  upload_id: string; rows: { reference: number; current: number }; columns: UploadColumn[];
+  target_candidates: string[]; segment_candidates: string[]; configured: boolean; title?: string | null;
+}
+export interface UploadSpec {
+  title: string; symptom: string; notes?: string; target: string; positive_label: string;
+  metric: 'f1' | 'recall' | 'precision' | 'balanced_accuracy';
+  model_family: 'logistic_regression' | 'hist_gradient_boosting';
+  serving_threshold: number; trained_threshold?: number | null;
+  segment_column?: string | null; segment_value?: string | null; segment_max_drop?: number;
+  exclude_columns?: string[]; packages_before?: Record<string, string>; packages_after?: Record<string, string>;
+  error_log?: string; docs_urls?: string[];
+}
+export interface Sample {
+  id: string; title: string; symptom: string; notes: string;
+  suggested: Partial<UploadSpec>;
+}
 
 export const isTerminal = (s: Status) => TERMINAL.includes(s);
 

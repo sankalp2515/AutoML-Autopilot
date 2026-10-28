@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from app.autopilot import guard, service
+from app.autopilot import guard, service, uploads
 from app.autopilot.schemas import TERMINAL, CreateInvestigation, ReviewRequest, Status
 from app.core.auth import PUBLIC_TENANT, current_tenant
 
@@ -67,7 +67,14 @@ async def providers_() -> dict:
 @router.post("/investigations", status_code=202)
 async def create_(body: CreateInvestigation, request: Request, tenant: str = Depends(autopilot_tenant),
                   idempotency_key: str | None = Header(default=None, max_length=128)) -> JSONResponse:
-    if body.scenario_id not in {s["scenario_id"] for s in service.scenario_catalog()}:
+    if body.scenario_id.startswith("upload:"):
+        uid = body.scenario_id.split(":", 1)[1]
+        try:
+            if not uploads.get(tenant, uid)["configured"]:
+                raise HTTPException(409, "configure the upload before investigating it")
+        except KeyError:
+            raise HTTPException(404, "upload not found") from None
+    elif body.scenario_id not in {s["scenario_id"] for s in service.scenario_catalog()}:
         raise HTTPException(422, f"unknown scenario_id {body.scenario_id!r}")
     if not idempotency_key or not await service.get_by_key(tenant, idempotency_key):
         await service.expire_idle(tenant)
@@ -175,3 +182,95 @@ async def ablation_() -> dict:
         return {"available": False, "how_to_run": "python scripts/run_live_ablation.py --seeds 5"}
     data = json.loads(ABLATION_FILE.read_text(encoding="utf-8"))
     return {"available": True, **{k: v for k, v in data.items() if k not in ("rows", "tavily_rows")}}
+
+
+# ── Bring your own incident ──────────────────────────────────────────────────
+async def _read_limited(f: UploadFile, name: str) -> bytes:
+    data = await f.read(uploads.MAX_BYTES + 1)
+    if len(data) > uploads.MAX_BYTES:
+        raise HTTPException(413, f"{name}: larger than {uploads.MAX_BYTES // (1024 * 1024)} MB")
+    return data
+
+
+@router.post("/uploads", status_code=201)
+async def upload_create_(reference: UploadFile = File(...), current: UploadFile = File(...),
+                         tenant: str = Depends(autopilot_tenant)) -> dict:
+    """Step 1: upload the reference (healthy, labelled) and current (recent) windows."""
+    ref, cur = await _read_limited(reference, "reference"), await _read_limited(current, "current")
+    try:
+        return uploads.inspect_and_store(tenant, ref, cur)
+    except uploads.UploadError as e:
+        raise HTTPException(422, str(e)) from None
+
+
+@router.get("/uploads")
+async def upload_list_(tenant: str = Depends(autopilot_tenant)) -> dict:
+    return {"uploads": uploads.list_for(tenant)}
+
+
+@router.get("/uploads/{upload_id}")
+async def upload_get_(upload_id: str, tenant: str = Depends(autopilot_tenant)) -> dict:
+    try:
+        return uploads.get(tenant, upload_id)
+    except (KeyError, uploads.UploadError):
+        raise HTTPException(404, "upload not found") from None
+
+
+@router.post("/uploads/{upload_id}/configure")
+async def upload_configure_(upload_id: str, spec: uploads.UploadSpec,
+                            tenant: str = Depends(autopilot_tenant)) -> dict:
+    """Step 2: say what the target is, how the model is served, and what changed."""
+    try:
+        return uploads.configure(tenant, upload_id, spec)
+    except KeyError:
+        raise HTTPException(404, "upload not found") from None
+    except uploads.UploadError as e:
+        raise HTTPException(422, str(e)) from None
+
+
+@router.delete("/uploads/{upload_id}", status_code=204)
+async def upload_delete_(upload_id: str, tenant: str = Depends(autopilot_tenant)) -> Response:
+    try:
+        uploads.delete(tenant, upload_id)
+    except (KeyError, uploads.UploadError):
+        raise HTTPException(404, "upload not found") from None
+    return Response(status_code=204)
+
+
+SAMPLES = {
+    "units-bug": {"scenario": "S02", "title": "Loan model: false alarms after a data platform release",
+                  "symptom": "Approvals team reports many false alarms since Tuesday.",
+                  "notes": "Data platform shipped ingestion v2.3 on Tuesday: 'standardised monetary fields'.",
+                  "serving_threshold": 0.3},
+    "threshold-change": {"scenario": "S03", "title": "Loan model: recall dropped after a config deploy",
+                         "symptom": "Collections says we miss defaulters we used to catch.",
+                         "notes": "Last Thursday's deploy touched the scoring service config.",
+                         "serving_threshold": 0.62, "trained_threshold": 0.3},
+    "contract-break": {"scenario": "S04", "title": "Loan model: odd scores after a vendor switch",
+                       "symptom": "Scores look strange since the bureau vendor switch.",
+                       "notes": "New vendor may omit employment history for thin-file applicants.",
+                       "serving_threshold": 0.3},
+}
+
+
+@router.get("/samples")
+async def samples_() -> dict:
+    """Sample CSV pairs (synthetic loan data) with suggested settings, to try the upload flow."""
+    return {"samples": [{"id": k, **{x: v[x] for x in ("title", "symptom", "notes")},
+                         "suggested": {"target": "defaulted", "positive_label": "1", "metric": "f1",
+                                       "model_family": "logistic_regression",
+                                       "serving_threshold": v["serving_threshold"],
+                                       "trained_threshold": v.get("trained_threshold"),
+                                       "segment_column": "region", "exclude_columns": ["inquiries_6m"]}}
+                        for k, v in SAMPLES.items()]}
+
+
+@router.get("/samples/{sample_id}/{window}.csv")
+async def sample_csv_(sample_id: str, window: str) -> Response:
+    if sample_id not in SAMPLES or window not in ("reference", "current"):
+        raise HTTPException(404, "unknown sample")
+    from app.autopilot import scenarios
+    pack = scenarios.build(SAMPLES[sample_id]["scenario"], 7)
+    df = pack.reference if window == "reference" else pack.current
+    return Response(df.to_csv(index=False), media_type="text/csv", headers={
+        "Content-Disposition": f'attachment; filename="{sample_id}-{window}.csv"'})

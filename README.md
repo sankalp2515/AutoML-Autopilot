@@ -8,7 +8,7 @@ then has an independent verifier prove the fix before anyone ships it.**
 NVIDIA Nemotron on Nebius Token Factory · Tavily · FastAPI · Next.js · Postgres · Docker
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
-![Tests](https://img.shields.io/badge/autopilot%20tests-96%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/autopilot%20tests-105%20passing-brightgreen)
 ![Services](https://img.shields.io/badge/docker-5%20services-2496ED)
 
 </div>
@@ -56,11 +56,43 @@ nightly retrain fails.
 
 "Rejected" and "not enough evidence" count as correct answers.
 
+## Use it on your own model
+
+Open **Your data** (`/autopilot/new`) and upload two CSV windows of the same columns:
+
+- **Reference:** data from when the model was trained and healthy, with the outcome filled in (≥300 rows).
+- **Current:** recent production inputs, with outcomes where they have arrived (blank is fine).
+
+Then choose the outcome column and positive class, the metric that matters, the model family
+in production (logistic regression or gradient boosting), the serving threshold, and
+optionally a segment that must not get worse. Paste **what changed recently** (the on-call
+thread, release notes, ticket text) and, if relevant, an **error log**, **package versions
+before/after**, and up to three **public documentation URLs**. Three sample incidents
+(downloadable CSVs) let you try the flow in a minute.
+
+Autopilot rebuilds your model family from the reference window to stand in for your model.
+It does not load model binaries: unpickling an uploaded model would let it run code on the
+server. Rows stay on the server; Nemotron sees column names and aggregate statistics only,
+and Tavily sees library names, versions and the URLs you list. Uploads are visible only to
+the browser session that made them. Limits: 20 MB / 200,000 rows / 200 columns per file,
+binary classification.
+
+## How Tavily is used
+
+| When | What Tavily does | What it can and cannot change |
+|---|---|---|
+| A pipeline error names a library argument (yours or ours) | Search official docs first, then Extract; source gate for publisher, version and injection | The only path that can justify a fix, and only if the installed library confirms the parameter it names. On your data it becomes a cited recommendation for your code |
+| Package versions changed (scikit-learn, pandas, NumPy, SciPy, XGBoost, LightGBM, joblib) | Search that project's official docs for the target version's release notes and Extract them | Context for the planner: a reason to test, never proof |
+| You list documentation URLs (vendor changelog, data dictionary) | Extract the pages; excerpts centre on your feature names; injected instructions are quarantined | Context for the planner; never justifies a code change |
+
+Queries contain library names and versions only. Dataset column names and values are blocked
+by a privacy gate.
+
 ## How NVIDIA Nemotron and Nebius Token Factory are used
 
 | Role | Model | Why this size | Guardrail |
 |---|---|---|---|
-| Plan competing causes | `nvidia/Nemotron-3-Ultra-550b-a55b` | Reasoning over measurements plus messy human context | Schema-checked JSON; every cited finding/source must exist; one corrective retry with the exact error; honest fallback to rules |
+| Plan competing causes | `nvidia/Nemotron-3-Ultra-550b-a55b` | Reasoning over measurements plus messy human context: your notes, error log and retrieved documentation, which the rules planner cannot read | Schema-checked JSON; every cited finding/source must exist; one corrective retry with the exact error; honest fallback to rules |
 | Manager summary | `nvidia/Nemotron-3_5-Lightning` | Short, cheap, fast | Every number must appear in the verified facts or the summary is discarded |
 
 - Each call is shown in the UI with model, provider, latency, tokens and estimated cost
@@ -123,8 +155,8 @@ cp .env.example .env     # set POSTGRES_PASSWORD, AUTOPILOT_VERIFIER_TOKEN, a Ne
 docker compose up -d --build
 ```
 
-Open <http://localhost:3000>. Pick an incident, press **Start investigation**, and watch
-the stages. S02 (unit bug), T01 (library upgrade, live Tavily) and S10 (a challenger that
+Open <http://localhost:3000>. Pick a catalog incident or open **Your data** to upload your
+own, press **Start investigation**, and watch the stages. S02 (unit bug), T01 (library upgrade, live Tavily) and S10 (a challenger that
 hurts rural customers) are good first runs.
 
 ## Architecture
@@ -163,7 +195,7 @@ sources, resource ceiling) whose digest the verifier checks before it runs.
 
 ```bash
 cd backend && pip install -r requirements-runtime.txt pytest pytest-asyncio
-python -m pytest tests/test_autopilot -q        # 96 tests, no keys needed
+python -m pytest tests/test_autopilot -q        # 105 tests, no keys needed
 ```
 
 They cover every incident against the hidden oracle, the information-gain maths, the
@@ -174,7 +206,8 @@ fail-safe recovery, per-visitor isolation and the verifier service's authenticat
 
 ## Honest limits
 
-- Incidents are seeded synthetic loan data. Uploading your own incident pack is not built.
+- Your model is represented by its family retrained on your reference window, not your exact
+  binary. Rescaling and threshold fixes transfer directly; a sourced library fix is a recommendation.
 - Belief weights are an uncalibrated heuristic. Information gain is exact only given them.
 - Experiments run as vetted templates in killable processes, not in a gVisor/microVM sandbox.
 - Tabular binary classification with scikit-learn only.

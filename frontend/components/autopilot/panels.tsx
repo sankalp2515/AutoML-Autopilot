@@ -494,6 +494,8 @@ export function ResearchPanel({ inv }: { inv: Investigation }) {
                 <a href={e.url} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 12.5, color: 'var(--acc)', fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>{e.title}</a>
                 <Badge tone={e.status === 'ACCEPTED' ? 'success' : e.status === 'CONTEXT_ONLY' ? 'neutral' : 'danger'}>{e.status === 'CONTEXT_ONLY' ? 'Context only' : pretty(e.status)}</Badge>
                 {r.mapping?.source_ref === e.source_ref && <Badge tone="success">used for the fix</Badge>}
+                {e.purpose === 'release_review' && <Badge tone="neutral">release-notes review</Badge>}
+                {e.purpose === 'user_docs' && <Badge tone="neutral">your document</Badge>}
               </div>
               <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 3 }}>
                 {e.publisher} · {pretty(e.source_type)} · version {e.version_match} · fetched {new Date(e.fetched_at).toLocaleTimeString()}{e.extracted ? ' · extracted' : ''}

@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -7,7 +9,11 @@ from app.config import settings
 # valid for a real pooled backend like Postgres. Pass them conditionally so the
 # same code boots against both.
 _engine_kwargs: dict = {"echo": settings.DEBUG}
-if not settings.DATABASE_URL.startswith("sqlite"):
+if os.environ.get("DB_NULL_POOL"):
+    # Test runs against Postgres: each test has its own event loop, so no pooled connections.
+    from sqlalchemy.pool import NullPool
+    _engine_kwargs["poolclass"] = NullPool
+elif not settings.DATABASE_URL.startswith("sqlite"):
     _engine_kwargs.update(pool_pre_ping=True, pool_size=10, max_overflow=20)
 
 engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)

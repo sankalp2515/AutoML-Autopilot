@@ -282,7 +282,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const dashActive = pathname === '/' || pathname.startsWith('/runs');
   const settingsActive = pathname.startsWith('/settings');
   const showBack = pathname.startsWith('/runs/') || pathname.startsWith('/autopilot/') || settingsActive;
-  const pageTitle = pathname === '/' ? 'Home' : settingsActive ? 'Settings' : pathname === '/runs' ? 'Runs Dashboard' : pathname.startsWith('/runs/') ? 'Run Detail' : pathname === '/autopilot' ? 'Autopilot' : pathname.startsWith('/autopilot/benchmark') ? 'Autopilot · Benchmark' : pathname.startsWith('/autopilot/') ? 'Investigation' : 'AutoML Orchestrator';
+  const pageTitle = pathname === '/' ? 'Home' : settingsActive ? 'Settings' : pathname === '/runs' ? 'Runs Dashboard' : pathname.startsWith('/runs/') ? 'Run Detail' : pathname === '/autopilot' ? 'Autopilot' : pathname.startsWith('/autopilot/benchmark') ? 'Autopilot · Benchmark' : pathname === '/autopilot/new' ? 'Investigate your own model' : pathname.startsWith('/autopilot/') ? 'Investigation' : 'AutoML Orchestrator';
 
   const avatar = (email ? email[0] : 'A').toUpperCase();
 
@@ -308,6 +308,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <button className={`ds-nav-item${pathname.startsWith('/autopilot') ? ' active' : ''}`} onClick={() => router.push('/autopilot')}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><path d="M8 11h6M11 8v6" /></svg>
             Autopilot
+          </button>
+          <button className={`ds-nav-item${pathname === '/autopilot/new' ? ' active' : ''}`} onClick={() => router.push('/autopilot/new')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+            Your data
           </button>
           {AUTOPILOT_ONLY ? (
             <button className={`ds-nav-item${pathname.startsWith('/autopilot/benchmark') ? ' active' : ''}`} onClick={() => router.push('/autopilot/benchmark')}>

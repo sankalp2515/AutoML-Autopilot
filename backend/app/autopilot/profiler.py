@@ -88,6 +88,22 @@ def _sanitize_error(exc: BaseException) -> dict[str, Any]:
             "message": msg[:200] if kw else f"{type(exc).__name__} during pipeline construction"}
 
 
+_EXC = re.compile(r"\b([A-Z][A-Za-z]*(?:Error|Exception|Warning))\b")
+
+
+def sanitize_error_text(text: str) -> dict[str, Any]:
+    """Same contract as _sanitize_error, for a pasted log: exception class, library object
+    and offending keyword only. Paths, values and the rest of the message are dropped."""
+    text = text[-6000:]
+    exc = _EXC.findall(text)
+    kw = re.search(r"unexpected keyword argument '([A-Za-z_][A-Za-z0-9_]*)'", text)
+    obj = re.search(r"([A-Z][A-Za-z]+)\.__init__\(\)", text)
+    return {"exception": exc[-1] if exc else None, "object": obj.group(1) if obj else None,
+            "keyword": kw.group(1) if kw else None,
+            "message": (f"{obj.group(1)}.__init__() got an unexpected keyword argument '{kw.group(1)}'"
+                        if (kw and obj) else (exc[-1] if exc else "unparsed log"))}
+
+
 def profile(ws: Workspace) -> list[Finding]:
     pack = ws.pack()
     target, metric = pack["target"], pack["primary_metric"]
@@ -185,9 +201,22 @@ def profile(ws: Workspace) -> list[Finding]:
                            method="config diff", sample_count=0, severity="warn"))
 
     # retrain configuration: build it for real
+    built_error = None
     try:
         mlcore.build_pipeline(pack["pipeline"])
     except Exception as exc:  # noqa: BLE001 — any construction error is the finding
+        built_error = exc
+    if built_error is None and pack.get("error_log"):
+        # User-supplied log from their own pipeline: parse library identifiers only.
+        info = sanitize_error_text(pack["error_log"])
+        if info["exception"]:
+            out.append(Finding(finding_id=nid(), kind="pipeline_error",
+                               title=f"Submitted error log: {info['exception']}"
+                                     + (f" on {info['object']}({info['keyword']}=…)" if info["keyword"] else ""),
+                               value=info, method="parsed from the submitted error log (identifiers only)",
+                               sample_count=0, severity="critical"))
+    if built_error is not None:
+        exc = built_error
         info = _sanitize_error(exc)
         out.append(Finding(finding_id=nid(), kind="pipeline_error",
                            title=f"Retrain pipeline fails: {info['exception']}"

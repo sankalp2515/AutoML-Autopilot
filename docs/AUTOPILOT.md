@@ -217,8 +217,12 @@ Every call has a real provider request ID in the receipt, and no key appears in 
 
 | Method | Route | Notes |
 |---|---|---|
-| GET | `/scenarios`, `/providers`, `/benchmark` | Provider status reports booleans only, never keys. |
-| POST | `/investigations` | Body `{scenario_id, seed?, planner?, research?, max_experiments?, auto_run?}`. Accepts an `Idempotency-Key` header. Returns 429 above 5 unfinished investigations per tenant. |
+| POST | `/uploads` | Multipart `reference`, `current` CSV files → inferred schema, `upload_id`. 20 MB / 200k rows / 200 columns each. |
+| POST | `/uploads/{id}/configure` | Target, positive label, metric, model family, thresholds, segment, notes, error log, package versions, docs URLs. Validated against the data. |
+| GET/DELETE | `/uploads`, `/uploads/{id}` | Your uploads only (per browser session). |
+| GET | `/samples`, `/samples/{id}/{reference|current}.csv` | Sample incidents for the upload flow, with suggested settings. |
+| GET | `/scenarios`, `/providers`, `/benchmark`, `/ablation`, `/health` | Provider status reports booleans only, never keys. |
+| POST | `/investigations` | Body `{scenario_id ("S02" or "upload:<id>"), seed?, planner?, research?, max_experiments?, auto_run?}`. Accepts an `Idempotency-Key` header. Returns 429 above 5 unfinished investigations per tenant. |
 | GET | `/investigations`, `/investigations/{id}` | Tenant-scoped. Server file paths are stripped. |
 | GET | `/investigations/{id}/events?after=` | Append-only timeline. |
 | GET | `/investigations/{id}/evidence`, `/experiments` | Findings, hypotheses, belief history, research, rankings, denials. |
@@ -230,7 +234,7 @@ Every call has a real provider request ID in the receipt, and no key appears in 
 ## Tests
 
 ```bash
-cd backend && python -m pytest tests/test_autopilot -q      # 96 tests, about 90 s
+cd backend && python -m pytest tests/test_autopilot -q      # 105 tests, about 2 min
 ```
 
 The tests cover every scenario against the oracle, IG maths, the policy gate (unknown template,
