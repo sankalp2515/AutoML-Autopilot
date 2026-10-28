@@ -1,0 +1,12 @@
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.autopilot_data
+*.db
+.env
+.env.*
+tests
+alembic
+tools
+openapi.json
+Dockerfile*

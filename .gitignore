@@ -1,0 +1,44 @@
+# Secrets / env
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+
+# Node / Next.js
+node_modules/
+frontend/node_modules/
+.next/
+*.tsbuildinfo
+
+# Data / artifacts (runtime, not source)
+backend/cookbook/
+test_data/
+*.log
+*.db
+
+# NOTE: docs/, scripts/, and backend/tests are intentionally TRACKED — they back
+# the README's claims (architecture docs, 142 tests, the data generator) and are
+# part of the portfolio. Only runtime/generated artifacts above are ignored.
+# Settings control-panel overlay (runtime-editable config; not committed)
+backend/runtime_config.json
+test_data/bank_full_semicolon.csv
+
+# Playwright E2E artifacts
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.playwright/
+
+# AutoML Autopilot local dev
+backend/.autopilot_data/
+backend/autopilot_dev.db

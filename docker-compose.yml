@@ -1,0 +1,198 @@
+# AutoML Autopilot: production stack (see docs/DEPLOYMENT.md).
+#
+#   cp .env.example .env      # set POSTGRES_PASSWORD, AUTOPILOT_VERIFIER_TOKEN, provider keys
+#   docker compose up -d --build
+#   open http://localhost:3000
+#
+# Five services, one private network. Only `web` publishes a port.
+#
+#   web ──/api──► api ──(postgres: queue + state)◄── worker ──HTTP──► verifier
+#                                                     │
+#                                          Nebius / NVIDIA / Tavily (egress)
+#
+#   backplane  internal network (no internet): web, api, worker, verifier, postgres
+#   egress     outbound internet: worker only (model + search providers)
+#   edge       published port: web only
+#
+# Least privilege: provider keys reach the worker only; the verifier has no internet,
+# no provider keys and a read-only view of the artifacts; every container drops all
+# Linux capabilities (postgres adds back only what its entrypoint needs), cannot gain
+# privileges, runs as non-root (app images) and has CPU / memory / PID limits.
+
+name: automl-autopilot
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-backend: &backend
+  <<: *hardening
+  image: automl-autopilot-backend:latest
+  build:
+    context: ./backend
+    dockerfile: Dockerfile.autopilot
+  environment: &backend-env
+    DATABASE_URL: postgresql+asyncpg://autopilot:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/autopilot
+    DEBUG: "false"
+    AUTH_ENABLED: "false"
+    SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+    AUTOPILOT_EXECUTION: worker
+    AUTOPILOT_LEASE_S: "60"
+    LOG_LEVEL: INFO
+
+services:
+  postgres:
+    <<: *hardening
+    image: postgres:16-alpine
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]   # entrypoint drops to the postgres user
+    environment:
+      POSTGRES_USER: autopilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: autopilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backplane]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autopilot -d autopilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M, pids: 200 }
+
+  api:
+    <<: *backend
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
+              "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header"]
+    environment:
+      <<: *backend-env
+      CORS_ALLOW_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:3000}
+      AUTOPILOT_CREATES_PER_10MIN: ${AUTOPILOT_CREATES_PER_10MIN:-6}
+      AUTOPILOT_DAILY_LLM_CALLS: ${AUTOPILOT_DAILY_LLM_CALLS:-400}
+      AUTOPILOT_DAILY_TAVILY_CALLS: ${AUTOPILOT_DAILY_TAVILY_CALLS:-200}
+    read_only: true
+    tmpfs: ["/tmp"]
+    networks: [backplane]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/autopilot/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 768M, pids: 200 }
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.autopilot.worker"]
+    environment:
+      <<: *backend-env
+      DATA_DIR: /data
+      AUTOPILOT_RUNNER: process
+      AUTOPILOT_WORKER_CONCURRENCY: ${AUTOPILOT_WORKER_CONCURRENCY:-2}
+      AUTOPILOT_EXPERIMENT_TIMEOUT_S: "120"
+      AUTOPILOT_VERIFIER_URL: http://verifier:8100
+      AUTOPILOT_VERIFIER_TOKEN: ${AUTOPILOT_VERIFIER_TOKEN:?set AUTOPILOT_VERIFIER_TOKEN in .env}
+      AUTOPILOT_DAILY_LLM_CALLS: ${AUTOPILOT_DAILY_LLM_CALLS:-400}
+      AUTOPILOT_DAILY_TAVILY_CALLS: ${AUTOPILOT_DAILY_TAVILY_CALLS:-200}
+      # Provider credentials: this is the only container that receives them.
+      NEBIUS_API_KEY: ${NEBIUS_API_KEY:-}
+      NEBIUS_PLANNER_MODEL: ${NEBIUS_PLANNER_MODEL:-nvidia/Nemotron-3-Ultra-550b-a55b}
+      NEBIUS_FAST_MODEL: ${NEBIUS_FAST_MODEL:-nvidia/Nemotron-3_5-Lightning}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+    read_only: true
+    tmpfs: ["/tmp"]
+    shm_size: 256m                       # multiprocessing for experiment child processes
+    volumes:
+      - artifacts:/data
+    networks: [backplane, egress]
+    depends_on:
+      postgres: { condition: service_healthy }
+      verifier: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,time; p='/tmp/autopilot-worker-alive'; sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p) < 60 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+    stop_grace_period: 60s               # finish held investigations before exit
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 3G, pids: 512 }
+
+  verifier:
+    <<: *backend
+    command: ["uvicorn", "app.autopilot.verifier_service:app", "--host", "0.0.0.0", "--port", "8100",
+              "--no-server-header"]
+    environment:
+      DATA_DIR: /data
+      AUTOPILOT_VERIFIER_TOKEN: ${AUTOPILOT_VERIFIER_TOKEN:?set AUTOPILOT_VERIFIER_TOKEN in .env}
+      DEBUG: "false"
+    read_only: true
+    tmpfs: ["/tmp"]
+    volumes:
+      - artifacts:/data:ro               # reads artifacts, can change nothing
+    networks: [backplane]                # no internet route
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8100/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G, pids: 200 }
+
+  web:
+    <<: *hardening
+    image: automl-autopilot-web:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        API_INTERNAL_URL: http://api:8000
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_AUTOPILOT_ONLY: "true"
+    read_only: true
+    tmpfs: ["/tmp", "/app/.next/cache:uid=10001,gid=10001"]
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks: [edge, backplane]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/autopilot"]
+      interval: 20s
+      timeout: 6s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M, pids: 200 }
+
+# Explicit small subnets: deterministic, and independent of Docker's default address
+# pools (which hosts with many projects can exhaust). Override if they collide.
+networks:
+  backplane:
+    internal: true
+    ipam:
+      config: [{ subnet: "${BACKPLANE_SUBNET:-10.88.10.0/24}" }]
+  egress:
+    ipam:
+      config: [{ subnet: "${EGRESS_SUBNET:-10.88.11.0/24}" }]
+  edge:
+    ipam:
+      config: [{ subnet: "${EDGE_SUBNET:-10.88.12.0/24}" }]
+
+volumes:
+  pgdata:
+  artifacts:

@@ -1,0 +1,36 @@
+# AutoML Autopilot web image: Next.js standalone server, non-root.
+#
+#   docker build -f frontend/Dockerfile.prod -t automl-autopilot-web frontend
+#
+# The browser calls the same origin; Next rewrites /api/* to the API service on the
+# private network (API_INTERNAL_URL, baked at build time), so the API is never published.
+
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps --no-audit --no-fund
+
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ARG API_INTERNAL_URL=http://api:8000
+ARG NEXT_PUBLIC_API_URL=""
+ARG NEXT_PUBLIC_AUTOPILOT_ONLY=true
+ENV API_INTERNAL_URL=$API_INTERNAL_URL \
+    NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_AUTOPILOT_ONLY=$NEXT_PUBLIC_AUTOPILOT_ONLY \
+    NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:20-alpine AS runtime
+LABEL org.opencontainers.image.title="automl-autopilot-web" \
+      org.opencontainers.image.source="https://github.com/sankalp2515/AutoML-Autopilot"
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+RUN addgroup -g 10001 -S web && adduser -S -u 10001 -G web web
+COPY --from=build --chown=web:web /app/.next/standalone ./
+COPY --from=build --chown=web:web /app/.next/static ./.next/static
+USER web
+EXPOSE 3000
+CMD ["node", "server.js"]

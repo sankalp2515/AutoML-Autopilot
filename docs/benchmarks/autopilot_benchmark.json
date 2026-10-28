@@ -1,0 +1,3596 @@
+{
+  "generated_at": "2026-10-28T15:14:27Z",
+  "seeds": [
+    100,
+    101,
+    102,
+    103,
+    104
+  ],
+  "budget": {
+    "max_experiments": 4,
+    "max_cost_units": 24.0
+  },
+  "scenarios": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S07",
+    "S12",
+    "T01"
+  ],
+  "arms": {
+    "retrain_first": {
+      "runs": 40,
+      "correct": 22,
+      "accuracy": 0.55,
+      "false_promotions": 0,
+      "median_experiments": 1.0,
+      "mean_experiments": 0.75,
+      "median_cost_units": 10.0,
+      "total_cost_units": 300.0,
+      "median_cpu_seconds": 2.8095,
+      "total_retrains": 30,
+      "holdout_uses": 25
+    },
+    "fixed_order": {
+      "runs": 40,
+      "correct": 35,
+      "accuracy": 0.875,
+      "false_promotions": 0,
+      "median_experiments": 3.0,
+      "mean_experiments": 2.225,
+      "median_cost_units": 5.0,
+      "total_cost_units": 143.0,
+      "median_cpu_seconds": 0.3,
+      "total_retrains": 0,
+      "holdout_uses": 11
+    },
+    "random": {
+      "runs": 40,
+      "correct": 36,
+      "accuracy": 0.9,
+      "false_promotions": 0,
+      "median_experiments": 3.0,
+      "mean_experiments": 2.375,
+      "median_cost_units": 5.0,
+      "total_cost_units": 171.5,
+      "median_cpu_seconds": 0.6985,
+      "total_retrains": 0,
+      "holdout_uses": 12
+    },
+    "autopilot": {
+      "runs": 40,
+      "correct": 40,
+      "accuracy": 1.0,
+      "false_promotions": 0,
+      "median_experiments": 1.0,
+      "mean_experiments": 1.25,
+      "median_cost_units": 2.0,
+      "total_cost_units": 92.5,
+      "median_cpu_seconds": 0.226,
+      "total_retrains": 0,
+      "holdout_uses": 16
+    }
+  },
+  "per_scenario": {
+    "retrain_first": {
+      "S01": {
+        "runs": 5,
+        "correct": 1,
+        "accuracy": 0.2,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 3.587,
+        "total_retrains": 5,
+        "holdout_uses": 5
+      },
+      "S02": {
+        "runs": 5,
+        "correct": 2,
+        "accuracy": 0.4,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 5.864,
+        "total_retrains": 5,
+        "holdout_uses": 5
+      },
+      "S03": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 3.872,
+        "total_retrains": 5,
+        "holdout_uses": 5
+      },
+      "S04": {
+        "runs": 5,
+        "correct": 0,
+        "accuracy": 0.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 3.178,
+        "total_retrains": 5,
+        "holdout_uses": 5
+      },
+      "S05": {
+        "runs": 5,
+        "correct": 4,
+        "accuracy": 0.8,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 2.998,
+        "total_retrains": 5,
+        "holdout_uses": 5
+      },
+      "S07": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0,
+        "median_cost_units": 0.0,
+        "total_cost_units": 0.0,
+        "median_cpu_seconds": 0.123,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S12": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0,
+        "median_cost_units": 0.0,
+        "total_cost_units": 0.0,
+        "median_cpu_seconds": 0.153,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "T01": {
+        "runs": 5,
+        "correct": 0,
+        "accuracy": 0.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 10.0,
+        "total_cost_units": 50.0,
+        "median_cpu_seconds": 0.239,
+        "total_retrains": 5,
+        "holdout_uses": 0
+      }
+    },
+    "fixed_order": {
+      "S01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0.6,
+        "median_cost_units": 0.0,
+        "total_cost_units": 5.0,
+        "median_cpu_seconds": 0.22,
+        "total_retrains": 0,
+        "holdout_uses": 1
+      },
+      "S02": {
+        "runs": 5,
+        "correct": 0,
+        "accuracy": 0.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 3.2,
+        "median_cost_units": 5.0,
+        "total_cost_units": 27.0,
+        "median_cpu_seconds": 1.398,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S03": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 4,
+        "mean_experiments": 3.6,
+        "median_cost_units": 7.0,
+        "total_cost_units": 31.0,
+        "median_cpu_seconds": 2.246,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S04": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 1.0,
+        "total_cost_units": 5.0,
+        "median_cpu_seconds": 0.294,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S05": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 2,
+        "mean_experiments": 2.2,
+        "median_cost_units": 3.0,
+        "total_cost_units": 17.0,
+        "median_cpu_seconds": 1.359,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S07": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 3,
+        "median_cost_units": 5.0,
+        "total_cost_units": 25.0,
+        "median_cpu_seconds": 0.254,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S12": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 2.4,
+        "median_cost_units": 5.0,
+        "total_cost_units": 20.0,
+        "median_cpu_seconds": 0.189,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "T01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1.8,
+        "median_cost_units": 1.0,
+        "total_cost_units": 13.0,
+        "median_cpu_seconds": 0.199,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      }
+    },
+    "random": {
+      "S01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0.4,
+        "median_cost_units": 0.0,
+        "total_cost_units": 4.0,
+        "median_cpu_seconds": 0.148,
+        "total_retrains": 0,
+        "holdout_uses": 1
+      },
+      "S02": {
+        "runs": 5,
+        "correct": 2,
+        "accuracy": 0.4,
+        "false_promotions": 0,
+        "median_experiments": 4,
+        "mean_experiments": 3.4,
+        "median_cost_units": 7.0,
+        "total_cost_units": 34.0,
+        "median_cpu_seconds": 1.016,
+        "total_retrains": 0,
+        "holdout_uses": 2
+      },
+      "S03": {
+        "runs": 5,
+        "correct": 4,
+        "accuracy": 0.8,
+        "false_promotions": 0,
+        "median_experiments": 4,
+        "mean_experiments": 3.8,
+        "median_cost_units": 7.0,
+        "total_cost_units": 35.0,
+        "median_cpu_seconds": 2.201,
+        "total_retrains": 0,
+        "holdout_uses": 4
+      },
+      "S04": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 3.2,
+        "median_cost_units": 5.0,
+        "total_cost_units": 27.0,
+        "median_cpu_seconds": 1.027,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S05": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 2,
+        "mean_experiments": 2.2,
+        "median_cost_units": 4.0,
+        "total_cost_units": 21.0,
+        "median_cpu_seconds": 1.672,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S07": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 2.2,
+        "median_cost_units": 5.0,
+        "total_cost_units": 19.0,
+        "median_cpu_seconds": 0.21,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S12": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 2.4,
+        "median_cost_units": 5.0,
+        "total_cost_units": 20.0,
+        "median_cpu_seconds": 0.174,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "T01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1.4,
+        "median_cost_units": 2.0,
+        "total_cost_units": 11.5,
+        "median_cpu_seconds": 0.242,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      }
+    },
+    "autopilot": {
+      "S01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0.4,
+        "median_cost_units": 0.0,
+        "total_cost_units": 4.0,
+        "median_cpu_seconds": 0.187,
+        "total_retrains": 0,
+        "holdout_uses": 1
+      },
+      "S02": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 2,
+        "mean_experiments": 2,
+        "median_cost_units": 5.0,
+        "total_cost_units": 25.0,
+        "median_cpu_seconds": 0.215,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S03": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 3,
+        "mean_experiments": 2.6,
+        "median_cost_units": 6.0,
+        "total_cost_units": 26.0,
+        "median_cpu_seconds": 1.845,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S04": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 1.0,
+        "total_cost_units": 5.0,
+        "median_cpu_seconds": 0.222,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S05": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 2,
+        "mean_experiments": 2,
+        "median_cost_units": 4.0,
+        "total_cost_units": 20.0,
+        "median_cpu_seconds": 1.235,
+        "total_retrains": 0,
+        "holdout_uses": 5
+      },
+      "S07": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 2.0,
+        "total_cost_units": 10.0,
+        "median_cpu_seconds": 0.212,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "S12": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 0,
+        "mean_experiments": 0,
+        "median_cost_units": 0.0,
+        "total_cost_units": 0.0,
+        "median_cpu_seconds": 0.179,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      },
+      "T01": {
+        "runs": 5,
+        "correct": 5,
+        "accuracy": 1.0,
+        "false_promotions": 0,
+        "median_experiments": 1,
+        "mean_experiments": 1,
+        "median_cost_units": 0.5,
+        "total_cost_units": 2.5,
+        "median_cpu_seconds": 0.25,
+        "total_retrains": 0,
+        "holdout_uses": 0
+      }
+    }
+  },
+  "verifier_must_fail": {
+    "scenarios": [
+      "S08",
+      "S09",
+      "S10"
+    ],
+    "runs": 15,
+    "correct": 15,
+    "accuracy": 1.0,
+    "false_promotions": 0,
+    "median_experiments": 1,
+    "mean_experiments": 1,
+    "median_cost_units": 1.0,
+    "total_cost_units": 15.0,
+    "median_cpu_seconds": 0.334,
+    "total_retrains": 0,
+    "holdout_uses": 5,
+    "decisions": [
+      "REJECT"
+    ]
+  },
+  "not_run": {
+    "nemotron_planner": "live model arm not benchmarked: 40+ paid calls at 10-30 s each; live runs of S02-S12 and T01 are recorded in docs/AUTOPILOT.md",
+    "tavily_on_vs_off_live": "benchmark stays offline and reproducible; the live T01 path is verified manually and by contract tests T01-T10"
+  },
+  "notes": [
+    "Cost units are the templates' planning estimates; cpu_seconds are measured.",
+    "Correct = terminal decision is in the oracle's accepted set for that scenario.",
+    "T01 accepts DIAGNOSIS_SUPPORTED without live research (policy forbids guessing renames)."
+  ],
+  "rows": {
+    "retrain_first": [
+      {
+        "scenario": "S01",
+        "seed": 100,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 4.481,
+        "wall_seconds": 9.108,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 101,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 4.254,
+        "wall_seconds": 4.999,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 102,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.835,
+        "wall_seconds": 3.586,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 103,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.587,
+        "wall_seconds": 4.763,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.784,
+        "wall_seconds": 3.804,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 100,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 9.427,
+        "wall_seconds": 10.759,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.668,
+        "wall_seconds": 3.453,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 8.028,
+        "wall_seconds": 8.739,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 4.54,
+        "wall_seconds": 5.661,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 5.864,
+        "wall_seconds": 6.676,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.2,
+        "wall_seconds": 4.18,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 5.779,
+        "wall_seconds": 6.558,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.942,
+        "wall_seconds": 4.718,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.872,
+        "wall_seconds": 4.617,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.049,
+        "wall_seconds": 3.813,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 100,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 4.896,
+        "wall_seconds": 5.692,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 101,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.022,
+        "wall_seconds": 3.708,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 102,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.48,
+        "wall_seconds": 3.162,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 103,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.178,
+        "wall_seconds": 4.115,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 5.092,
+        "wall_seconds": 5.848,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.264,
+        "wall_seconds": 3.939,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.332,
+        "wall_seconds": 2.937,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.748,
+        "wall_seconds": 3.367,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 103,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 2.998,
+        "wall_seconds": 3.857,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 3.108,
+        "wall_seconds": 3.82,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.113,
+        "wall_seconds": 0.241,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S07",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.123,
+        "wall_seconds": 0.25,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S07",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.157,
+        "wall_seconds": 0.298,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S07",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.121,
+        "wall_seconds": 0.243,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S07",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.151,
+        "wall_seconds": 0.273,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.153,
+        "wall_seconds": 0.239,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.207,
+        "wall_seconds": 0.3,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.124,
+        "wall_seconds": 0.21,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.153,
+        "wall_seconds": 0.248,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.162,
+        "wall_seconds": 0.252,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "T01",
+        "seed": 100,
+        "decision": "FAILED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 0.214,
+        "wall_seconds": 0.381,
+        "holdout_uses": 0,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 101,
+        "decision": "FAILED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 0.233,
+        "wall_seconds": 0.368,
+        "holdout_uses": 0,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 102,
+        "decision": "FAILED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 0.29,
+        "wall_seconds": 0.547,
+        "holdout_uses": 0,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 103,
+        "decision": "FAILED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 0.33,
+        "wall_seconds": 0.692,
+        "holdout_uses": 0,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 104,
+        "decision": "FAILED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 0.239,
+        "wall_seconds": 0.433,
+        "holdout_uses": 0,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      }
+    ],
+    "fixed_order": [
+      {
+        "scenario": "S01",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.217,
+        "wall_seconds": 0.396,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.323,
+        "wall_seconds": 0.47,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.167,
+        "wall_seconds": 0.296,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.187,
+        "wall_seconds": 1.519,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.22,
+        "wall_seconds": 0.379,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S02",
+        "seed": 100,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.131,
+        "wall_seconds": 1.29,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.705,
+        "wall_seconds": 1.851,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 102,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.398,
+        "wall_seconds": 1.546,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.368,
+        "wall_seconds": 1.581,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 104,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.766,
+        "wall_seconds": 1.913,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.369,
+        "wall_seconds": 1.817,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.496,
+        "wall_seconds": 1.93,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 2.323,
+        "wall_seconds": 2.71,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 2.246,
+        "wall_seconds": 2.614,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 2.424,
+        "wall_seconds": 2.931,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 100,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.258,
+        "wall_seconds": 0.444,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 101,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.306,
+        "wall_seconds": 0.462,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 102,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.222,
+        "wall_seconds": 0.387,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 103,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.362,
+        "wall_seconds": 0.533,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 104,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.294,
+        "wall_seconds": 0.465,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 1.271,
+        "wall_seconds": 1.73,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 1.14,
+        "wall_seconds": 1.585,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 1.389,
+        "wall_seconds": 1.803,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 2.353,
+        "wall_seconds": 3.049,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.359,
+        "wall_seconds": 1.916,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.26,
+        "wall_seconds": 0.405,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.224,
+        "wall_seconds": 0.434,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.203,
+        "wall_seconds": 0.321,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.255,
+        "wall_seconds": 0.393,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.254,
+        "wall_seconds": 0.392,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.107,
+        "wall_seconds": 0.197,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.189,
+        "wall_seconds": 0.283,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.216,
+        "wall_seconds": 0.326,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.201,
+        "wall_seconds": 0.305,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.153,
+        "wall_seconds": 0.238,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 100,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.199,
+        "wall_seconds": 0.301,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 101,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.156,
+        "wall_seconds": 0.259,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 102,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.188,
+        "wall_seconds": 0.299,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 0.242,
+        "wall_seconds": 0.35,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.077,
+        "wall_seconds": 1.208,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "TRAIN_SERVE_PARITY"
+        ]
+      }
+    ],
+    "random": [
+      {
+        "scenario": "S01",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.131,
+        "wall_seconds": 0.235,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.135,
+        "wall_seconds": 0.23,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.148,
+        "wall_seconds": 0.255,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.066,
+        "wall_seconds": 1.437,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.167,
+        "wall_seconds": 0.292,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S02",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 9.0,
+        "cpu_seconds": 1.445,
+        "wall_seconds": 1.861,
+        "holdout_uses": 1,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "SEGMENT_FAILURE_AUDIT",
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 0.381,
+        "wall_seconds": 0.533,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SEGMENT_FAILURE_AUDIT",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.669,
+        "wall_seconds": 1.896,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SEGMENT_FAILURE_AUDIT",
+          "THRESHOLD_STUDY",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.016,
+        "wall_seconds": 1.166,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 0.231,
+        "wall_seconds": 0.574,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 8.0,
+        "cpu_seconds": 2.362,
+        "wall_seconds": 2.826,
+        "holdout_uses": 1,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "SEGMENT_FAILURE_AUDIT",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.323,
+        "wall_seconds": 1.74,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SEGMENT_FAILURE_AUDIT",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 2.201,
+        "wall_seconds": 2.389,
+        "holdout_uses": 0,
+        "templates": [
+          "SEGMENT_FAILURE_AUDIT",
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 2.437,
+        "wall_seconds": 2.845,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 6.0,
+        "cpu_seconds": 1.807,
+        "wall_seconds": 2.125,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 100,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.046,
+        "wall_seconds": 1.177,
+        "holdout_uses": 0,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "SHIFT_AND_LABEL_CHECK",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 101,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.026,
+        "wall_seconds": 1.179,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY",
+          "TRAIN_SERVE_PARITY",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 102,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.203,
+        "wall_seconds": 1.333,
+        "holdout_uses": 0,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "SHIFT_AND_LABEL_CHECK",
+          "SEGMENT_FAILURE_AUDIT",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 103,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.027,
+        "wall_seconds": 1.15,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_STUDY",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 104,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 0.198,
+        "wall_seconds": 0.309,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.04,
+        "wall_seconds": 1.353,
+        "holdout_uses": 1,
+        "templates": [
+          "SEGMENT_FAILURE_AUDIT",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 3.943,
+        "wall_seconds": 4.602,
+        "holdout_uses": 1,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 3.616,
+        "wall_seconds": 4.219,
+        "holdout_uses": 1,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 3.0,
+        "cpu_seconds": 1.633,
+        "wall_seconds": 2.169,
+        "holdout_uses": 1,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 6.0,
+        "cpu_seconds": 1.672,
+        "wall_seconds": 2.278,
+        "holdout_uses": 1,
+        "templates": [
+          "SEGMENT_FAILURE_AUDIT",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.304,
+        "wall_seconds": 0.483,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.278,
+        "wall_seconds": 0.453,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.21,
+        "wall_seconds": 0.335,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "CONTRACT_DIAGNOSTIC",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.148,
+        "wall_seconds": 0.266,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.147,
+        "wall_seconds": 0.302,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.113,
+        "wall_seconds": 0.222,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.174,
+        "wall_seconds": 0.253,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.177,
+        "wall_seconds": 0.281,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "SHIFT_AND_LABEL_CHECK",
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.165,
+        "wall_seconds": 0.246,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "TRAIN_SERVE_PARITY",
+          "SHIFT_AND_LABEL_CHECK"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.177,
+        "wall_seconds": 0.3,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 100,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.172,
+        "wall_seconds": 0.274,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 101,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 1.119,
+        "wall_seconds": 1.23,
+        "holdout_uses": 0,
+        "templates": [
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 102,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.312,
+        "wall_seconds": 1.477,
+        "holdout_uses": 0,
+        "templates": [
+          "SEGMENT_FAILURE_AUDIT",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.242,
+        "wall_seconds": 0.355,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 104,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 1.5,
+        "cpu_seconds": 0.206,
+        "wall_seconds": 0.361,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "DEPENDENCY_API_PROBE"
+        ]
+      }
+    ],
+    "autopilot": [
+      {
+        "scenario": "S01",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.178,
+        "wall_seconds": 0.344,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.187,
+        "wall_seconds": 0.321,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.152,
+        "wall_seconds": 0.271,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S01",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.183,
+        "wall_seconds": 1.632,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S01",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.311,
+        "wall_seconds": 0.56,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S02",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.424,
+        "wall_seconds": 1.099,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.451,
+        "wall_seconds": 1.083,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.194,
+        "wall_seconds": 0.575,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.215,
+        "wall_seconds": 0.528,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S02",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.214,
+        "wall_seconds": 0.531,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 0.984,
+        "wall_seconds": 1.36,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.106,
+        "wall_seconds": 1.402,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 6.0,
+        "cpu_seconds": 1.985,
+        "wall_seconds": 2.385,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 6.0,
+        "cpu_seconds": 1.845,
+        "wall_seconds": 2.233,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S03",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 6.0,
+        "cpu_seconds": 1.851,
+        "wall_seconds": 2.176,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "THRESHOLD_STUDY",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 100,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.168,
+        "wall_seconds": 0.284,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 101,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.169,
+        "wall_seconds": 0.31,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 102,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.238,
+        "wall_seconds": 0.361,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 103,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.222,
+        "wall_seconds": 0.398,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S04",
+        "seed": 104,
+        "decision": "BLOCKED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 1.0,
+        "cpu_seconds": 0.255,
+        "wall_seconds": 0.424,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.235,
+        "wall_seconds": 1.606,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.069,
+        "wall_seconds": 1.408,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 2.754,
+        "wall_seconds": 3.12,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.533,
+        "wall_seconds": 1.956,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S05",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 0.976,
+        "wall_seconds": 1.348,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_CANDIDATE"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.154,
+        "wall_seconds": 0.268,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.201,
+        "wall_seconds": 0.31,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.219,
+        "wall_seconds": 0.381,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.225,
+        "wall_seconds": 0.437,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S07",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 2.0,
+        "cpu_seconds": 0.212,
+        "wall_seconds": 0.348,
+        "holdout_uses": 0,
+        "templates": [
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "S12",
+        "seed": 100,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.141,
+        "wall_seconds": 0.319,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.193,
+        "wall_seconds": 0.295,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.199,
+        "wall_seconds": 0.31,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 103,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.179,
+        "wall_seconds": 0.27,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "S12",
+        "seed": 104,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 0,
+        "diagnostics": 0,
+        "retrains": 0,
+        "cost_units": 0.0,
+        "cpu_seconds": 0.172,
+        "wall_seconds": 0.293,
+        "holdout_uses": 0,
+        "templates": []
+      },
+      {
+        "scenario": "T01",
+        "seed": 100,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 0.5,
+        "cpu_seconds": 0.269,
+        "wall_seconds": 0.424,
+        "holdout_uses": 0,
+        "templates": [
+          "DEPENDENCY_API_PROBE"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 101,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 0.5,
+        "cpu_seconds": 0.25,
+        "wall_seconds": 0.418,
+        "holdout_uses": 0,
+        "templates": [
+          "DEPENDENCY_API_PROBE"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 102,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 0.5,
+        "cpu_seconds": 0.227,
+        "wall_seconds": 0.409,
+        "holdout_uses": 0,
+        "templates": [
+          "DEPENDENCY_API_PROBE"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 0.5,
+        "cpu_seconds": 0.218,
+        "wall_seconds": 0.397,
+        "holdout_uses": 0,
+        "templates": [
+          "DEPENDENCY_API_PROBE"
+        ]
+      },
+      {
+        "scenario": "T01",
+        "seed": 104,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 0.5,
+        "cpu_seconds": 0.257,
+        "wall_seconds": 0.401,
+        "holdout_uses": 0,
+        "templates": [
+          "DEPENDENCY_API_PROBE"
+        ]
+      }
+    ]
+  },
+  "review_rows": [
+    {
+      "scenario": "S08",
+      "seed": 100,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 1.286,
+      "wall_seconds": 1.497,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S08",
+      "seed": 101,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 1.08,
+      "wall_seconds": 1.248,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S08",
+      "seed": 102,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 1.25,
+      "wall_seconds": 1.421,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S08",
+      "seed": 103,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 1.011,
+      "wall_seconds": 1.189,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S08",
+      "seed": 104,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 1.083,
+      "wall_seconds": 1.254,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S09",
+      "seed": 100,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.18,
+      "wall_seconds": 0.32,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S09",
+      "seed": 101,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.186,
+      "wall_seconds": 0.302,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S09",
+      "seed": 102,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.237,
+      "wall_seconds": 0.35,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S09",
+      "seed": 103,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.192,
+      "wall_seconds": 0.305,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S09",
+      "seed": 104,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.247,
+      "wall_seconds": 0.364,
+      "holdout_uses": 0,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S10",
+      "seed": 100,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.209,
+      "wall_seconds": 0.6,
+      "holdout_uses": 1,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S10",
+      "seed": 101,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.334,
+      "wall_seconds": 1.032,
+      "holdout_uses": 1,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S10",
+      "seed": 102,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.453,
+      "wall_seconds": 0.814,
+      "holdout_uses": 1,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S10",
+      "seed": 103,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.387,
+      "wall_seconds": 0.869,
+      "holdout_uses": 1,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    },
+    {
+      "scenario": "S10",
+      "seed": 104,
+      "decision": "REJECT",
+      "correct": true,
+      "false_promotion": false,
+      "experiments": 1,
+      "diagnostics": 0,
+      "retrains": 0,
+      "cost_units": 1.0,
+      "cpu_seconds": 0.248,
+      "wall_seconds": 0.571,
+      "holdout_uses": 1,
+      "templates": [
+        "CHALLENGER_REVIEW"
+      ]
+    }
+  ]
+}

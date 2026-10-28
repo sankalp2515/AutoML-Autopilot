@@ -1,0 +1,72 @@
+{
+  "_comment": "Golden agent responses for the prompt-regression harness. 'good' entries are contract-satisfying responses a healthy prompt produces; 'bad' entries are realistic failures a degraded prompt could produce (each must be caught by its validator). Refresh 'good' from live via tools/record_golden.py after an intentional prompt change.",
+  "problem_framer": {
+    "good": {
+      "task_type": "binary_classification",
+      "target_column": "y",
+      "primary_metric": "auc_roc",
+      "good_enough_threshold": 0.85,
+      "decisions": [{"decision": "Binary classification on subscription", "reasoning": "y is yes/no"}]
+    },
+    "bad_regression_metric_on_classifier": {
+      "task_type": "binary_classification",
+      "target_column": "y",
+      "primary_metric": "rmse"
+    },
+    "bad_unknown_task": {
+      "task_type": "clustering",
+      "target_column": "y",
+      "primary_metric": "auc_roc"
+    }
+  },
+  "model_selector": {
+    "good": {
+      "selected_models": [
+        {"name": "XGBoost", "class": "XGBClassifier", "initial_params": {}},
+        {"name": "HistGB", "class": "HistGradientBoostingClassifier", "initial_params": {}}
+      ]
+    },
+    "bad_invented_class": {
+      "selected_models": [
+        {"name": "MagicNet", "class": "QuantumForestClassifier", "initial_params": {}}
+      ]
+    },
+    "bad_empty": {"selected_models": []}
+  },
+  "preprocessor": {
+    "good": {
+      "encoding_strategy": {"job": "onehot", "education": "ordinal"},
+      "imputation_strategy": {"balance": "median"},
+      "scaling_strategy": "robust",
+      "imbalance_strategy": "class_weight"
+    },
+    "bad_invalid_encoding": {
+      "encoding_strategy": {"job": "embed_magic"},
+      "scaling_strategy": "quantum"
+    }
+  },
+  "eda_agent": {
+    "good": {
+      "prioritized_issues": ["High cardinality in job", "Class imbalance 8:1"],
+      "decisions": [{"decision": "Use class weighting", "reasoning": "moderate imbalance"}]
+    },
+    "bad_issues_not_list": {"prioritized_issues": "lots of problems"}
+  },
+  "planner": {
+    "good": {"skip_feature_engineer": false, "skip_tuner": false, "max_iterations": 2, "rationale": "clean mid-size data"},
+    "bad_out_of_range": {"skip_feature_engineer": false, "skip_tuner": false, "max_iterations": 99},
+    "bad_nonbool_skip": {"skip_feature_engineer": "yes", "max_iterations": 1}
+  },
+  "strategist": {
+    "good": {
+      "hypotheses": [
+        {"id": "h1", "statement": "duration leaks", "severity": "high", "primitive": "target_correlation", "params": {"column": "duration"}, "expected": {"direction": ">", "threshold": 0.9}}
+      ]
+    },
+    "bad_unknown_primitive": {
+      "hypotheses": [
+        {"id": "h1", "statement": "x", "primitive": "run_neural_net", "params": {}, "expected": {"direction": ">", "threshold": 0.5}}
+      ]
+    }
+  }
+}

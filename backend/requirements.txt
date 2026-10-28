@@ -1,0 +1,40 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+aiosqlite==0.20.0
+alembic==1.14.0
+dvc==3.59.1
+pyyaml==6.0.2
+pydantic==2.10.3
+pydantic-settings==2.6.1
+redis[asyncio]==5.2.1
+arq==0.26.3
+pyjwt==2.10.1
+cryptography==44.0.0
+langgraph==0.2.60
+groq==0.13.0
+anthropic==0.40.0
+mlflow==2.19.0
+python-multipart==0.0.19
+httpx==0.28.1
+websockets==14.1
+python-dotenv==1.0.1
+psycopg2-binary==2.9.10
+
+# Observability
+structlog==24.4.0
+prometheus-client==0.21.0
+prometheus-fastapi-instrumentator==7.0.0
+# OTel tracing (P2 #12) — optional at runtime; spans export only when
+# OTEL_EXPORTER_OTLP_ENDPOINT is set (see app/core/tracing.py).
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-http==1.29.0
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-httpx==0.35.0
+pytest-cov==6.0.0
+ray[default]==2.40.0

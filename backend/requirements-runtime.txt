@@ -1,0 +1,25 @@
+# Runtime dependencies of the AutoML Autopilot services (api, worker, verifier).
+# The full requirements.txt also covers the pre-existing orchestrator (LangGraph agents,
+# MLflow, Ray, DVC), which this deployment does not run; those modules load lazily.
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+aiosqlite==0.20.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-multipart==0.0.19
+python-dotenv==1.0.1
+httpx==0.28.1
+redis[asyncio]==5.2.1
+pyjwt==2.10.1
+cryptography==44.0.0
+structlog==24.4.0
+prometheus-client==0.21.0
+prometheus-fastapi-instrumentator==7.0.0
+# ML (versions match the development environment the benchmark was produced on)
+numpy==2.4.6
+scipy==1.17.1
+pandas==2.3.3
+scikit-learn==1.8.0
+joblib==1.5.3
