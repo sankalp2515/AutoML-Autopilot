@@ -24,7 +24,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-runtime.txt pytest==8.3.4 pytest-asyncio==0.24.0
-      - name: Test (no provider keys: every live call is a recorded fake)
+      - name: "Test (no provider keys; every live call is a recorded fake)"
         env:
           DATABASE_URL: sqlite+aiosqlite:///./ci.db
         run: python -m pytest tests/test_autopilot -q
