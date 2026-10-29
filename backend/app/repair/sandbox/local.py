@@ -299,7 +299,10 @@ class LocalContainerRunner:
                     for parent in target.parents:
                         if parent == environment.root / "work":
                             break
-                        parent.chmod(0o777)
+                        try:
+                            parent.chmod(0o777)
+                        except PermissionError:
+                            pass        # already writable or owned by the candidate user
                     target.write_bytes(content)
                     target.chmod(0o666)
 

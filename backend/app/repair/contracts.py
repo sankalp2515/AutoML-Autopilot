@@ -234,7 +234,7 @@ class SealedManifest(_Strict):
 class TierTokens(_Strict):
     """Per-tier ceilings on total tokens (prompt + completion) for one task."""
     ultra: int = Field(default=12_000, ge=0)
-    super: int = Field(default=100_000, ge=0)
+    super: int = Field(default=160_000, ge=0)
     nano: int = Field(default=20_000, ge=0)
 
 

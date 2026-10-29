@@ -79,6 +79,7 @@ class CandidateRun(BaseModel):
     code_receipt: c.CodeReceipt | None = None
     screen_receipt: c.MLReceipt | None = None
     eligible: bool = False
+    infra_failed: bool = False
 
 
 class RepairReport(BaseModel):
@@ -293,8 +294,10 @@ class RepairAgent:
                          + "".join(f"COMPETING {o.id}: {o.cause}\n" for o in others)
                          + "Check your hypothesis cheaply first. If the evidence refutes it, say so and fix the real cause.")
             turns: list[tuple[str, str]] = []
-            invalid = refused = 0
+            invalid = refused = lock_refused = 0
             last_edit = last_green_suite = 0
+            own_tests: set[str] = set()       # new test files the agent wrote
+            locked: set[str] = set()          # ...that have since failed: fix the code, not the test
             purpose = f"code:{cid}"
             for n in range(1, max_calls + 1):
                 self._check_stop()
@@ -341,7 +344,29 @@ class RepairAgent:
                                               denied=msg[:200]))
                         turns.append((step.model_dump_json(), msg))
                         continue
+                if act.action == "apply_edit" and act.path in locked and lock_refused < 6:
+                    # Full mode: once the agent's own new test has failed, weakening it is the
+                    # classic way to fake a green suite. The code under test must change instead.
+                    lock_refused += 1
+                    msg = prompts.OWN_TEST_LOCKED.format(path=act.path)
+                    run.steps.append(Step(n=n, thought=redact(step.thought[:300]), action="apply_edit",
+                                          target=act.path, ok=False, denied=msg[:200]))
+                    self._event("tool.denied", "platform", candidate_id=cid, action="apply_edit", rule=msg[:160])
+                    turns.append((step.model_dump_json(), "DENIED: " + msg))
+                    continue
                 res = tools.execute(step)
+                if self.mode == "full" and act.action == "apply_edit" and res.ok and act.old == "" \
+                        and Path(act.path).name.startswith("test_"):
+                    own_tests.add(act.path)
+                if self.mode == "full" and act.action == "run" and act.kind == "test" and not res.ok:
+                    failing_out = res.output or ""
+                    # Lock only tests that ran and failed an assertion. A test that cannot even be
+                    # collected (import/syntax/name error) is broken itself and may still be fixed.
+                    broken_itself = re.search(r"ImportError|ModuleNotFoundError|NameError|SyntaxError|"
+                                              r"IndentationError|error during collection|errors? during collection",
+                                              failing_out)
+                    if not broken_itself and re.search(r"AssertionError|assert ", failing_out):
+                        locked |= {t for t in own_tests if t in failing_out or Path(t).name in failing_out}
                 if act.action == "apply_edit" and res.ok:
                     last_edit = n
                 if act.action == "run" and act.kind == "test" and not act.selector and res.ok:
@@ -378,6 +403,12 @@ class RepairAgent:
             self.runner.discard(env)
         return run
 
+    @staticmethod
+    def _retry(fn):
+        """One retry for an infrastructure failure; a real verdict is never retried."""
+        r = fn()
+        return fn() if r.decision is c.Decision.SYSTEM_FAILURE else r
+
     # 5 screen without labels
     def _screen(self, run: CandidateRun) -> None:
         cand = run.candidate
@@ -388,16 +419,18 @@ class RepairAgent:
             self._event("candidate.rejected", "platform", candidate_id=cand.candidate_id,
                         reason="changed non-text files", files=run.skipped_files[:5])
             return
-        run.code_receipt = self.oracles.code(cand.candidate_id, cand.diff)
+        run.code_receipt = self._retry(lambda: self.oracles.code(cand.candidate_id, cand.diff))
         ok = run.code_receipt.decision is c.Decision.VERIFIED
         self._event("code_oracle.passed" if ok else "code_oracle.rejected", "code_oracle",
                     candidate_id=cand.candidate_id, reasons=run.code_receipt.reasons)
         if ok and self.ml_required:
-            run.screen_receipt = self.oracles.ml(cand.candidate_id, cand.diff, final=False)
+            run.screen_receipt = self._retry(lambda: self.oracles.ml(cand.candidate_id, cand.diff, final=False))
             ok = not any(ch.status is c.CheckStatus.FAIL for ch in run.screen_receipt.checks) \
                 and run.screen_receipt.decision is not c.Decision.SYSTEM_FAILURE
             self._event("ml_oracle.passed" if ok else "ml_oracle.rejected", "ml_oracle",
                         candidate_id=cand.candidate_id, stage="screen", reasons=run.screen_receipt.reasons)
+        run.infra_failed = any(r is not None and r.decision is c.Decision.SYSTEM_FAILURE
+                               for r in (run.code_receipt, run.screen_receipt))
         run.eligible = ok
         if not ok:
             cand.status = "REJECTED"
@@ -439,8 +472,13 @@ class RepairAgent:
             self._screen(run)
         eligible = sorted((r for r in rep.candidates if r.eligible), key=lambda r: r.diff_lines)
         if not eligible:
-            rep.decision = c.Decision.REJECTED if any(r.candidate.diff for r in rep.candidates) else c.Decision.INCONCLUSIVE
-            rep.reasons = ["E_NO_ELIGIBLE_CANDIDATE" if rep.decision is c.Decision.REJECTED else "E_NO_PATCH"]
+            if any(r.infra_failed for r in rep.candidates):
+                # A checker could not run: that is not evidence against the patch.
+                rep.decision, rep.reasons = c.Decision.INCONCLUSIVE, ["E_SYSTEM_FAILURE"]
+            elif any(r.candidate.diff for r in rep.candidates):
+                rep.decision, rep.reasons = c.Decision.REJECTED, ["E_NO_ELIGIBLE_CANDIDATE"]
+            else:
+                rep.decision, rep.reasons = c.Decision.INCONCLUSIVE, ["E_NO_PATCH"]
         else:
             fin = eligible[0]
             rep.finalist = fin.candidate.candidate_id

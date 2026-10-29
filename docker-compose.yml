@@ -218,6 +218,9 @@ services:
     # Prefer a rootless Docker daemon or gVisor (runsc) on the host for untrusted repositories.
     command: ["uvicorn", "app.repair.sandbox.server:app", "--host", "0.0.0.0", "--port", "8200", "--no-server-header"]
     user: "0:0"
+    # Only the file capabilities needed to manage work dirs that candidate containers (uid 10001)
+    # wrote into; everything else stays dropped.
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
     environment:
       DATA_DIR: /tmp
       REPAIR_RUNNER: docker

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 
-PROMPT_VERSION = "repair-v2"
+PROMPT_VERSION = "repair-v3"
 
 HYPOTHESES_SYSTEM = """You diagnose failures in machine-learning repositories.
 Given failing tests, a compact traceback and a file list, propose 2 or 3 COMPETING root-cause
@@ -39,7 +39,11 @@ Rules:
 
 ML_RULES = """- This is ML code. An independent reviewer will check these invariants with checks you cannot see:
   {invariants}. Green tests are necessary but not sufficient: online scoring must equal batch
-  scoring, features must exist at prediction time, and quality must not drop for any group."""
+  scoring, features must exist at prediction time, and quality must not drop for any group.
+- Write the invariant test FIRST, before changing code, and watch it fail for the right reason.
+- If a test you wrote fails, the code is wrong: fix the code under test. Never loosen your own test.
+- Prefer one source of truth: make serving call the same feature-building code and column list as
+  training/batch prediction instead of keeping a second hand-written copy in sync."""
 
 GENERIC_RULES = "- You are done when the tests pass."
 
@@ -54,6 +58,9 @@ INVARIANT_TEXT = {
                          "not: {unavailable}.",
     "segment_guardrail": "recall must not drop for any {segment} group.",
 }
+
+OWN_TEST_LOCKED = ("{path} is a test you wrote and it failed. It is now read-only for you: fix the "
+                   "code under test so this test passes. You may add another new test file if needed.")
 
 FINISH_REFUSED = ("FINISH REFUSED: {why} Add a NEW test file that checks the behaviour you fixed (for ML code, "
                   "the invariants listed in the task), run the full test suite, then finish.")
@@ -75,4 +82,4 @@ def coder_system(roots: list[str], invariants: list[str], *, mode: str = "full")
 
 def prompt_hash() -> str:
     return hashlib.sha256((PROMPT_VERSION + HYPOTHESES_SYSTEM + CODER_SYSTEM + ML_RULES + GENERIC_RULES
-                           + str(sorted(INVARIANT_TEXT.items())) + FINISH_REFUSED).encode()).hexdigest()[:16]
+                           + str(sorted(INVARIANT_TEXT.items())) + FINISH_REFUSED + OWN_TEST_LOCKED).encode()).hexdigest()[:16]
