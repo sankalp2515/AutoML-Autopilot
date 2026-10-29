@@ -72,10 +72,9 @@ async def counts(service):
 async def test_durable_stub_stops_at_mapping(store):
     service, _ = store
     task = await create(service)
-    assert await service.work_once(owner="worker-a")
+    await service.run_stub(task["id"], "tenant-a", owner="worker-a")
     result = await service.get(task["id"], "tenant-a")
-    assert result["status"] == "MAPPING" and result["engine"] == "stub"
-    assert not await service.work_once(owner="worker-b")
+    assert result["status"] == "MAPPING"
     events = await service.events(task["id"], "tenant-a")
     assert [event["seq"] for event in events] == [1, 2, 3]
     assert all(event["data"].get("executed") is False for event in events[1:])

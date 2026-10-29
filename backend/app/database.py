@@ -44,3 +44,5 @@ async def get_db() -> AsyncSession:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        from app.repair.models import ensure_columns
+        await conn.run_sync(ensure_columns)

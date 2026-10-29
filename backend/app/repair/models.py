@@ -20,6 +20,8 @@ class Task(Base):
     lease_owner: Mapped[str | None] = mapped_column(String(96), nullable=True)
     lease_until: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[float] = mapped_column(Float)
+    spec: Mapped[dict | None] = mapped_column(JSON, nullable=True)      # snapshot, sealed ref, mode, source
+    report: Mapped[dict | None] = mapped_column(JSON, nullable=True)    # RepairReport (no labels, no keys)
 
 
 class Candidate(Base):
@@ -56,3 +58,23 @@ class Event(Base):
     task_id: Mapped[str] = mapped_column(ForeignKey("repair_tasks.id", ondelete="CASCADE"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
     payload: Mapped[dict] = mapped_column(JSON)
+
+
+class RepairWorker(Base):
+    __tablename__ = "repair_workers"
+    id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    beat: Mapped[float] = mapped_column(Float)
+    info: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+def ensure_columns(sync_conn) -> None:
+    """Add v5 columns to a repair_tasks table created before they existed (idempotent)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(sync_conn)
+    if "repair_tasks" not in insp.get_table_names():
+        return
+    have = {c["name"] for c in insp.get_columns("repair_tasks")}
+    for col in ("spec", "report"):
+        if col not in have:
+            kind = "JSON" if sync_conn.dialect.name == "postgresql" else "TEXT"
+            sync_conn.execute(text(f"ALTER TABLE repair_tasks ADD COLUMN {col} {kind}"))

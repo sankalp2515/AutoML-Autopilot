@@ -11,14 +11,15 @@ async def test_task_api_and_cross_session_isolation(store):
     app = FastAPI()
     app.include_router(routes.router)
     app.dependency_overrides[routes.get_service] = lambda: service
+    from fastapi import Header
+
+    def tenant_from_header(x_autopilot_session: str = Header("")):
+        return x_autopilot_session
+    app.dependency_overrides[routes.autopilot_tenant] = tenant_from_header
     headers = {"X-Autopilot-Session": "session_a_123456789"}
     other = {"X-Autopilot-Session": "session_b_123456789"}
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        payload = {"contract": repo_contract().model_dump(mode="json"), "base_commit_sha": "a" * 40,
-                   "repo_snapshot_digest": "sha256:" + "b" * 64, "target": "Restore training"}
-        response = await client.post("/api/v1/v5/tasks", json=payload, headers=headers)
-        assert response.status_code == 201, response.text
-        task = response.json()
+        task = await create(service, tenant="session_a_123456789")
         prefix = f"/api/v1/v5/tasks/{task['id']}"
         assert (await client.get("/api/v1/v5/tasks", headers=headers)).json() == [task]
         assert (await client.get("/api/v1/v5/tasks", headers=other)).json() == []

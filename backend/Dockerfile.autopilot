@@ -30,6 +30,8 @@ RUN apt-get update \
  && mkdir -p /data && chown app:app /data
 COPY --from=deps /opt/venv /opt/venv
 WORKDIR /app
+# Docker CLI for the sandbox-runner service only (the socket is mounted nowhere else).
+COPY --from=docker:27.3.1-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY app ./app
 USER app
 ENTRYPOINT ["/usr/bin/tini", "--"]
