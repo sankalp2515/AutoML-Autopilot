@@ -303,6 +303,12 @@ class RepairService:
             return {"ecc": t.ecc, "spec": t.spec or {}, "status": t.status, "report": t.report,
                     "cancel_requested": t.cancel_requested}
 
+    async def annotate(self, task_id, tenant, key, value):
+        """Add a delivery result (e.g. the draft PR) to a finished report. Not a state change."""
+        async with self.sessions() as db, db.begin():
+            t = await self._task(db, task_id, tenant)
+            t.report = {**(t.report or {}), key: value}
+
     async def report(self, task_id, tenant):
         async with self.sessions() as db:
             return (await self._task(db, task_id, tenant)).report
@@ -353,6 +359,12 @@ class RepairService:
             return (await db.execute(select(m.Task.tenant_id, m.Task.status, m.Task.report)
                                      .where(m.Task.created_at >= ts))).all()
 
+    async def recent(self, ts: float):
+        """(status, created_at, report) for every task created since ts, any tenant (metrics only)."""
+        async with self.sessions() as db:
+            return (await db.execute(select(m.Task.status, m.Task.created_at, m.Task.report)
+                                     .where(m.Task.created_at >= ts))).all()
+
     async def active_specs(self) -> list[dict]:
         async with self.sessions() as db:
             return [sp or {} for sp in (await db.execute(select(m.Task.spec).where(
@@ -386,9 +398,14 @@ class RepairService:
             try:
                 from app.repair.engine import run_task
                 await run_task(self, task_id, tenant, owner=owner)
-                return True
             except Conflict:
                 continue
+            try:
+                from app.repair import github_app
+                await github_app.deliver_if_requested(self, task_id, tenant)
+            except Exception:  # noqa: BLE001 - delivery problems never undo a verdict
+                pass
+            return True
         return False
 
 

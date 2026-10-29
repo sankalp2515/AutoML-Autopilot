@@ -206,9 +206,11 @@ def propose_contract(repo: Path) -> tuple[str, list[str]]:
                                       "--input {holdout_features} --out {predictions}")
         doc["data"] = {"train": csvs[0] if csvs else "data/train.csv",
                        "holdout_features": next((x for x in csvs if "holdout" in x), "data/holdout_features.csv"),
-                       "id_column": "<ID_COLUMN>", "target": "<TARGET_COLUMN>", "positive_label": 1}
+                       "id_column": "<ID_COLUMN>", "target": "<TARGET_COLUMN>", "positive_label": 1,
+                       "problem": "binary"}
         doc["task"]["ml_invariants"] = ["holdout_non_inferior"] + (["train_serve_parity"] if serve else [])
         needs += ["commands.train/predict: check the arguments", "data.id_column and data.target",
+                  "data.problem (binary | multiclass | regression) and a task.metric that fits it",
                   "data.holdout_features: a CSV of unseen rows without labels"]
     if serve:
         doc["entrypoints"] = {"serve": serve}
@@ -317,8 +319,9 @@ def freeze(sid: str, tenant: str) -> dict:
         _save(sid, m)
     digest = digests[m["sha"]]
     rc = c.RepoContract.from_yaml((dest / "autopilot.yaml").read_text(encoding="utf-8"))
-    if not rc.task.fail_to_pass:
-        raise StageError("pick at least one failing test (task.fail_to_pass)")
+    if not rc.task.fail_to_pass and not rc.task.ml_invariants:
+        raise StageError("pick at least one failing test (task.fail_to_pass), or declare ML invariants "
+                         "for a model-quality regression")
     return {"snapshot_dir": str(dest), "sha": m["sha"], "upstream_sha": m["upstream_sha"], "contract": rc,
             "digest": digest, "sample": m.get("sample"), "source": m["source"]}
 

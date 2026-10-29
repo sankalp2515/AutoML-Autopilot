@@ -51,6 +51,7 @@ class RemoteRunner:
         res = self._post("/prepare", archive=base64.b64encode(tar_dir(repo_dir)).decode(), python=python,
                          install=install, timeout_s=timeout_s)
         self.name = res.get("runner", self.name)
+        self.image = res.get("image")
         return res["env_id"]
 
     def fork(self, env_id: str) -> str:

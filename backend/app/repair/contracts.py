@@ -80,12 +80,21 @@ class Commands(_Strict):
         return v
 
 
+METRICS = {"binary": ("roc_auc", "f1", "recall", "precision", "balanced_accuracy", "accuracy"),
+           "multiclass": ("accuracy", "macro_f1", "balanced_accuracy"),
+           "regression": ("rmse", "mae", "r2")}
+LOWER_IS_BETTER = {"rmse", "mae"}
+
+
 class DataSpec(_Strict):
     train: str
     holdout_features: str
     id_column: str
     target: str
-    positive_label: str | int = 1
+    positive_label: str | int = 1                 # binary only
+    # binary: predictions are <id>,score[,decision]; multiclass: <id>,prediction (a class label);
+    # regression: <id>,prediction (a number).
+    problem: Literal["binary", "multiclass", "regression"] = "binary"
     # Columns that are only known after the outcome (refunds, cancellation calls...). The ML
     # oracle's leakage check rejects a candidate whose model depends on any of them.
     unavailable_at_prediction: list[str] = Field(default_factory=list, max_length=100)
@@ -101,7 +110,8 @@ class DataSpec(_Strict):
 
 class TaskSpec(_Strict):
     type: Literal["restore", "preserve", "improve"]
-    metric: Literal["roc_auc", "f1", "recall", "precision", "balanced_accuracy"] = "roc_auc"
+    metric: Literal["roc_auc", "f1", "recall", "precision", "balanced_accuracy", "accuracy", "macro_f1",
+                    "rmse", "mae", "r2"] = "roc_auc"
     fail_to_pass: list[str] = Field(default_factory=list, max_length=50)
     ml_invariants: list[Literal["train_serve_parity", "holdout_non_inferior", "holdout_improves",
                                 "segment_guardrail", "no_target_leakage"]] = Field(default_factory=list)
@@ -132,8 +142,10 @@ class LimitsSpec(_Strict):
 
 
 class ArtifactsSpec(_Strict):
-    """Where the train command leaves the model, relative to {artifacts}. The serve entrypoint
-    is called as `fn(payload: dict, model)` with `model = joblib.load(<this file>)`."""
+    """Where the train command leaves the model (a file or a directory), relative to {artifacts}.
+    The serve entrypoint is called as `fn(payload: dict, model)`. The model is loaded with
+    `entrypoints.load_model` (`fn(path) -> model`) when the repository declares one, so any
+    framework works (XGBoost, LightGBM, PyTorch, ...); otherwise with `joblib.load`."""
     model: str = "model.joblib"
 
     @field_validator("model")
@@ -149,7 +161,7 @@ class RepoContract(_Strict):
     python: str = Field(default="3.12", pattern=r"^3\.\d{1,2}$")
     install: str = "pip install -r requirements.txt"
     commands: Commands
-    entrypoints: dict[Literal["serve"], str] = Field(default_factory=dict)
+    entrypoints: dict[Literal["serve", "load_model"], str] = Field(default_factory=dict)
     artifacts: ArtifactsSpec = Field(default_factory=ArtifactsSpec)
     data: DataSpec | None = None
     task: TaskSpec
@@ -178,6 +190,10 @@ class RepoContract(_Strict):
             raise ValueError("ML invariants need data, a train command and a predict command")
         if "train_serve_parity" in ml and "serve" not in self.entrypoints:
             raise ValueError("train_serve_parity needs entrypoints.serve")
+        problem = self.data.problem if self.data else "binary"
+        if self.task.metric not in METRICS[problem]:
+            raise ValueError(f"metric {self.task.metric} does not fit a {problem} problem; "
+                             f"use one of {', '.join(METRICS[problem])}")
         return self
 
     @classmethod
@@ -199,7 +215,8 @@ class SealedManifest(_Strict):
 
     Predictions written by the repository's predict command must have columns
     `<id_column>,score` (probability of the positive label) and may add `decision` (0/1)
-    for threshold metrics. Holdout labels stay on the oracle side and are never copied
+    for threshold metrics; multiclass and regression repositories write `<id_column>,prediction`.
+    Holdout labels stay on the oracle side and are never copied
     into a sandbox."""
     version: Literal[1]
     labels: str                                   # CSV: <id_column>,<target>[,<segment_column>]
@@ -208,7 +225,7 @@ class SealedManifest(_Strict):
     env: dict[str, str] = Field(default_factory=dict)
     parity_rows: int = Field(default=200, ge=10, le=5000)
     # Last known good metric, used when the unpatched repository cannot produce predictions.
-    baseline_metric: float | None = Field(default=None, ge=0, le=1)
+    baseline_metric: float | None = None
 
     @field_validator("labels", "tests")
     @classmethod

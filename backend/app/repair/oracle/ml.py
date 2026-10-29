@@ -9,9 +9,13 @@ Protocol: predictions out, labels in.
     * Gates that can reject without labels (pipeline runs, schema, train/serve parity,
       prediction-time availability) run BEFORE the single-use holdout permit is consumed.
 
-Segment guardrail metric is recall (the miss rate a protected group experiences),
-whatever the task metric is; a group needs ≥30 rows with ≥5 positives and ≥5 negatives
-to be judged.
+Problems: binary (score + optional decision), multiclass (a predicted label) and regression
+(a predicted number). Every delta is an IMPROVEMENT (positive = better); for error metrics
+(rmse, mae) it is relative to the baseline, so a 0.02 margin means "at most 2% worse".
+
+Segment guardrail metric: recall for binary (the miss rate a protected group experiences),
+balanced accuracy for multiclass, relative MAE for regression. A group needs ≥30 rows (and,
+for binary, ≥5 positives and ≥5 negatives) to be judged.
 """
 from __future__ import annotations
 
@@ -24,7 +28,8 @@ from typing import Protocol
 import numpy as np
 import pandas as pd
 
-from app.repair.contracts import (ECC, CheckStatus, Decision, MLReceipt, RepoContract, SealedManifest)
+from app.repair.contracts import (ECC, LOWER_IS_BETTER, CheckStatus, Decision, MLReceipt, RepoContract,
+                                  SealedManifest)
 from app.repair.oracle import common as cm
 from app.repair.sandbox.base import SCRATCH, SandboxError, SandboxRunner, Upload
 
@@ -62,31 +67,48 @@ class FileHoldoutLedger:
 
 # ── metrics ───────────────────────────────────────────────────────────────────
 def _metric(metric: str, y: np.ndarray, score: np.ndarray, decision: np.ndarray) -> float:
-    from sklearn.metrics import (balanced_accuracy_score, f1_score, precision_score, recall_score,
-                                 roc_auc_score)
+    """y is 0/1 (binary), class labels as strings (multiclass) or floats (regression)."""
+    from sklearn import metrics as sk
+    if metric in ("rmse", "mae", "r2"):
+        if len(y) < 2:
+            return float("nan")
+        if metric == "rmse":
+            return float(np.sqrt(sk.mean_squared_error(y, score)))
+        return float(sk.mean_absolute_error(y, score) if metric == "mae" else sk.r2_score(y, score))
     if len(np.unique(y)) < 2:
         return float("nan")
     if metric == "roc_auc":
-        return float(roc_auc_score(y, score))
-    fn = {"f1": f1_score, "recall": recall_score, "precision": precision_score}.get(metric)
+        return float(sk.roc_auc_score(y, score))
+    if metric == "accuracy":
+        return float(sk.accuracy_score(y, decision))
+    if metric == "macro_f1":
+        return float(sk.f1_score(y, decision, average="macro", zero_division=0))
+    fn = {"f1": sk.f1_score, "recall": sk.recall_score, "precision": sk.precision_score}.get(metric)
     if fn:
         return float(fn(y, decision, zero_division=0))
-    return float(balanced_accuracy_score(y, decision))
+    return float(sk.balanced_accuracy_score(y, decision))
+
+
+def improvement(metric: str, base: float, cand: float) -> float:
+    """Positive = better. Error metrics are relative to the baseline so margins stay unit-free."""
+    if metric in LOWER_IS_BETTER:
+        return (base - cand) / max(abs(base), 1e-12)
+    return cand - base
 
 
 def paired_delta(metric: str, y, sa, da, sb, db, n_boot: int = 400, seed: int = 0) -> dict[str, float]:
-    """Paired bootstrap of metric(b) - metric(a) on the same holdout rows."""
+    """Paired bootstrap of the improvement of b over a on the same holdout rows."""
     rng = np.random.default_rng(seed)
     n, deltas = len(y), []
     for _ in range(n_boot):
         i = rng.integers(0, n, n)
-        if len(np.unique(y[i])) < 2:
-            continue
-        deltas.append(_metric(metric, y[i], sb[i], db[i]) - _metric(metric, y[i], sa[i], da[i]))
-    point = _metric(metric, y, sb, db) - _metric(metric, y, sa, da)
+        d = improvement(metric, _metric(metric, y[i], sa[i], da[i]), _metric(metric, y[i], sb[i], db[i]))
+        if np.isfinite(d):
+            deltas.append(d)
+    point = improvement(metric, _metric(metric, y, sa, da), _metric(metric, y, sb, db))
     lo, hi = np.percentile(deltas, [2.5, 97.5]) if deltas else (float("nan"), float("nan"))
     return {"delta": round(float(point), 4), "ci_low": round(float(lo), 4), "ci_high": round(float(hi), 4),
-            "n_boot": len(deltas)}
+            "n_boot": len(deltas), "relative": metric in LOWER_IS_BETTER}
 
 
 # ── predictions ───────────────────────────────────────────────────────────────
@@ -94,21 +116,36 @@ class PredictionError(ValueError):
     pass
 
 
-def read_predictions(raw: bytes, id_col: str, expected_ids: pd.Series) -> pd.DataFrame:
+def read_predictions(raw: bytes, id_col: str, expected_ids: pd.Series, problem: str = "binary") -> pd.DataFrame:
+    """Index: id. Columns: score (binary probability, or the regression value) and decision
+    (binary 0/1, the multiclass label as a string, or the regression value)."""
     try:
-        df = pd.read_csv(io.BytesIO(raw))
+        df = pd.read_csv(io.BytesIO(raw), dtype={"prediction": str} if problem == "multiclass" else None)
     except Exception as e:  # noqa: BLE001
         raise PredictionError(f"predictions are not a readable CSV: {e}") from e
-    if id_col not in df.columns or "score" not in df.columns:
-        raise PredictionError(f"predictions must have columns {id_col},score[,decision]")
+    col = "score" if problem == "binary" else "prediction"
+    if id_col not in df.columns or col not in df.columns:
+        raise PredictionError(f"predictions must have columns {id_col},{col}"
+                              + ("[,decision]" if problem == "binary" else ""))
     if df[id_col].duplicated().any():
         raise PredictionError("duplicate ids in predictions")
     if set(df[id_col].astype(str)) != set(expected_ids.astype(str)):
         raise PredictionError("prediction ids do not match the holdout feature ids")
+    ids = df[id_col].astype(str)
+    if problem == "multiclass":
+        lab = df["prediction"]
+        if lab.isna().any() or (lab.str.strip() == "").any():
+            raise PredictionError("every row needs a predicted class label")
+        return pd.DataFrame({"id": ids, "score": 0.0, "decision": lab.str.strip()}).set_index("id")
+    if problem == "regression":
+        v = pd.to_numeric(df["prediction"], errors="coerce")
+        if v.isna().any() or not np.isfinite(v).all():
+            raise PredictionError("regression predictions must be finite numbers")
+        return pd.DataFrame({"id": ids, "score": v.astype(float), "decision": v.astype(float)}).set_index("id")
     s = pd.to_numeric(df["score"], errors="coerce")
     if s.isna().any() or not np.isfinite(s).all() or (s < 0).any() or (s > 1).any():
         raise PredictionError("scores must be finite probabilities in [0, 1]")
-    out = pd.DataFrame({"id": df[id_col].astype(str), "score": s.astype(float)})
+    out = pd.DataFrame({"id": ids, "score": s.astype(float)})
     if "decision" in df.columns:
         d = pd.to_numeric(df["decision"], errors="coerce")
         if not d.isin([0, 1]).all():
@@ -143,7 +180,8 @@ def baseline_predictions(runner: SandboxRunner, base_dir: str, contract: RepoCon
         if not ok:
             return None
         try:
-            return read_predictions(runner.read_file(env, cm.PREDICTIONS), contract.data.id_column, ids)
+            return read_predictions(runner.read_file(env, cm.PREDICTIONS), contract.data.id_column, ids,
+                                    contract.data.problem)
         except (FileNotFoundError, PredictionError):
             return None
 
@@ -190,7 +228,7 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
                 checks.append(cm.check("pipeline_runs", FAIL, f"the repository's {stage} command failed", tail=log))
                 return receipt(Decision.REJECTED, ["E_PIPELINE_BROKEN"])
             try:
-                preds = read_predictions(runner.read_file(env, cm.PREDICTIONS), data.id_column, ids)
+                preds = read_predictions(runner.read_file(env, cm.PREDICTIONS), data.id_column, ids, data.problem)
             except (FileNotFoundError, PredictionError) as e:
                 checks.append(cm.check("prediction_schema", FAIL, str(e)))
                 return receipt(Decision.REJECTED, ["E_PREDICTIONS_INVALID"])
@@ -198,7 +236,7 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 
             # 2 train/serve parity, executed inside the candidate environment
             if "train_serve_parity" in inv:
-                checks.append(_parity(runner, env, contract, manifest.parity_rows if manifest else 200, tol))
+                checks.append(_parity(runner, env, contract, manifest.parity_rows if manifest else 200, tol, preds))
 
             # 3 prediction-time availability (leakage through post-outcome columns)
             leaky = [c for c in data.unavailable_at_prediction if c in holdout.columns]
@@ -228,11 +266,15 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
     labels = pd.read_csv(Path(sealed_dir) / manifest.labels)
     labels[data.id_column] = labels[data.id_column].astype(str)
     labels = labels.set_index(data.id_column).loc[preds.index]
-    y = (labels[data.target].astype(str) == str(data.positive_label)).astype(int).to_numpy()
+    try:
+        y = _labels(data, labels)
+    except ValueError as e:
+        checks.append(cm.check("holdout_integrity", INCON, str(e)))
+        return receipt(Decision.INCONCLUSIVE, ["E_EVIDENCE_MISSING"])
     checks.append(cm.check("holdout_integrity", PASS, "holdout labels opened once, for the frozen finalist",
-                           rows=int(len(y)), positives=int(y.sum())))
-    if y.sum() < SEG_MIN_CLASS or (len(y) - y.sum()) < SEG_MIN_CLASS:
-        checks.append(cm.check("sample_size", INCON, "too few positives or negatives to judge"))
+                           rows=int(len(y)), **_label_summary(data.problem, y)))
+    if not _enough(data.problem, y):
+        checks.append(cm.check("sample_size", INCON, "too few holdout rows (or classes) to judge"))
         return receipt(Decision.INCONCLUSIVE, ["E_EVIDENCE_MISSING"])
 
     m = ecc.success.metric
@@ -260,27 +302,84 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
     return receipt(Decision.VERIFIED, [])
 
 
-def _parity(runner, env, contract: RepoContract, rows: int, tol: float):
+def _labels(data, labels: pd.DataFrame) -> np.ndarray:
+    raw = labels[data.target]
+    if data.problem == "binary":
+        return (raw.astype(str) == str(data.positive_label)).astype(int).to_numpy()
+    if data.problem == "multiclass":
+        if raw.isna().any():
+            raise ValueError("some holdout labels are missing")
+        return raw.astype(str).str.strip().to_numpy()
+    v = pd.to_numeric(raw, errors="coerce")
+    if v.isna().any():
+        raise ValueError("regression holdout targets must all be numbers")
+    return v.astype(float).to_numpy()
+
+
+def _label_summary(problem: str, y: np.ndarray) -> dict:
+    if problem == "binary":
+        return {"positives": int(y.sum())}
+    if problem == "multiclass":
+        return {"classes": int(len(np.unique(y)))}
+    return {"target_mean": round(float(np.mean(y)), 4)}
+
+
+def _enough(problem: str, y: np.ndarray) -> bool:
+    if problem == "binary":
+        return y.sum() >= SEG_MIN_CLASS and (len(y) - y.sum()) >= SEG_MIN_CLASS
+    if problem == "multiclass":
+        return len(y) >= SEG_MIN_ROWS and len(np.unique(y)) >= 2
+    return len(y) >= SEG_MIN_ROWS
+
+
+def _disagreement(problem: str, a: pd.DataFrame, b: pd.DataFrame) -> float:
+    """Largest score difference; for multiclass, the share of rows whose label changed."""
+    if problem == "multiclass":
+        return float(np.mean(a["decision"].to_numpy() != b["decision"].to_numpy()))
+    return float(np.max(np.abs(a["score"].to_numpy() - b["score"].to_numpy())))
+
+
+def _parity(runner, env, contract: RepoContract, rows: int, tol: float, preds: pd.DataFrame):
+    """The probe only records online outputs; the comparison with the batch predictions the
+    oracle already read happens here, outside the candidate's process."""
     ep = contract.entrypoints.get("serve")
     out = f"{SCRATCH}/parity.json"
+    label = contract.data.problem == "multiclass"
     argv = ["python", f"{SCRATCH}/parity_probe.py", "--entrypoint", ep, "--model", cm.model_path(contract),
-            "--input", contract.data.holdout_features, "--predictions", cm.PREDICTIONS,
-            "--id-column", contract.data.id_column, "--rows", str(rows), "--out", out]
+            "--input", contract.data.holdout_features, "--id-column", contract.data.id_column,
+            "--rows", str(rows), "--out", out, "--kind", "label" if label else "number"]
+    if contract.entrypoints.get("load_model"):
+        argv += ["--loader", contract.entrypoints["load_model"]]
     r = runner.run(env, argv, timeout_s=contract.limits.test_seconds,
                    uploads=[Upload(f"{SCRATCH}/parity_probe.py", HARNESS.read_bytes())], collect=[out])
     try:
         rep = json.loads(runner.read_file(env, out))
-    except (FileNotFoundError, ValueError):
+        online = [(str(i), v) for i, v in rep["online"]]
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
         return cm.check("train_serve_parity", FAIL, "parity probe produced no report", tail=cm.tail(r))
-    diffs = [d for d in rep.get("diffs") or [] if d is not None]
-    mism = sum(1 for d in rep.get("diffs") or [] if d is None or d > tol)
-    ok = not rep.get("errors") and rep.get("n_rows", 0) > 0 and rep.get("max_abs_diff") is not None \
-        and rep["max_abs_diff"] <= tol
-    detail = (f"online scores match batch scores on {rep.get('n_rows')} rows (max |Δ| {rep.get('max_abs_diff'):.2e})"
-              if ok else f"online scoring disagrees with batch scoring on {mism}/{rep.get('n_rows', 0)} rows")
+    diffs: list[float | None] = []
+    for rid, v in online:
+        if v is None or rid not in preds.index:
+            diffs.append(None)
+        elif label:
+            diffs.append(0.0 if str(v) == str(preds.at[rid, "decision"]) else 1.0)
+        else:
+            try:
+                d = abs(float(v) - float(preds.at[rid, "score"]))
+                diffs.append(d if np.isfinite(d) else None)
+            except (TypeError, ValueError):
+                diffs.append(None)
+    n = len(diffs)
+    mism = sum(1 for d in diffs if d is None or d > tol)
+    known = [d for d in diffs if d is not None]
+    max_d = max(known) if known and len(known) == n else None
+    errors = rep.get("errors") or []
+    ok = n > 0 and not errors and max_d is not None and max_d <= tol
+    detail = (f"online scores match batch scores on {n} rows (max |Δ| {max_d:.2e})"
+              if ok else f"online scoring disagrees with batch scoring on {mism}/{n} rows")
     return cm.check("train_serve_parity", PASS if ok else FAIL, detail, entrypoint=ep, tolerance=tol,
-                    max_abs_diff=rep.get("max_abs_diff"), mismatched_rows=mism,
-                    median_abs_diff=float(np.median(diffs)) if diffs else None, errors=rep.get("errors", [])[:3])
+                    max_abs_diff=max_d, mismatched_rows=mism,
+                    median_abs_diff=float(np.median(known)) if known else None, errors=[str(e)[:200] for e in errors[:3]])
 
 
 def _availability(runner, env, contract: RepoContract, holdout: pd.DataFrame, leaky: list[str],
@@ -298,10 +397,11 @@ def _availability(runner, env, contract: RepoContract, holdout: pd.DataFrame, le
         return cm.check("no_target_leakage", FAIL, "the model cannot score without post-outcome columns",
                         columns=leaky, tail=log)
     try:
-        again = read_predictions(runner.read_file(env, dst), contract.data.id_column, holdout[contract.data.id_column])
+        again = read_predictions(runner.read_file(env, dst), contract.data.id_column,
+                                 holdout[contract.data.id_column], contract.data.problem)
     except (FileNotFoundError, PredictionError) as e:
         return cm.check("no_target_leakage", FAIL, f"scoring without post-outcome columns failed: {e}", columns=leaky)
-    diff = float(np.max(np.abs(again.loc[preds.index, "score"].to_numpy() - preds["score"].to_numpy())))
+    diff = _disagreement(contract.data.problem, again.loc[preds.index], preds)
     ok = diff <= tol
     return cm.check("no_target_leakage", PASS if ok else FAIL,
                     "scores do not depend on post-outcome columns" if ok else
@@ -328,7 +428,7 @@ def _objective(ecc: ECC, metrics: dict, have_base: bool, recorded: float | None)
                         f"{m} is not worse than the base by more than {margin} (paired 95% CI)", **d)
     if recorded is not None:
         cand = metrics["holdout"]["candidate"]
-        ok = cand >= recorded - margin
+        ok = improvement(m, recorded, cand) >= -margin
         return cm.check("holdout_non_inferior", PASS if ok else FAIL,
                         f"{m} {cand} vs last known good {recorded} (margin {margin}); the base commit "
                         "cannot produce predictions", candidate=cand, recorded_baseline=recorded)
@@ -345,22 +445,28 @@ def _segments(data, labels: pd.DataFrame, holdout: pd.DataFrame, preds, base, y,
         return cm.check("segment_guardrail", INCON, f"segment column {col} is not available")
     if base is None:
         return cm.check("segment_guardrail", INCON, "no baseline predictions to compare groups against")
+    gm = {"binary": "recall", "multiclass": "balanced_accuracy", "regression": "mae"}[data.problem]
     dc, db = preds["decision"].to_numpy(), base["decision"].to_numpy()
     by, small = {}, []
     for g in sorted(set(seg)):
         mk = seg == g
-        pos = int(y[mk].sum())
-        if mk.sum() < SEG_MIN_ROWS or pos < SEG_MIN_CLASS or (mk.sum() - pos) < SEG_MIN_CLASS:
+        if data.problem == "binary":
+            pos = int(y[mk].sum())
+            too_small = mk.sum() < SEG_MIN_ROWS or pos < SEG_MIN_CLASS or (mk.sum() - pos) < SEG_MIN_CLASS
+        else:
+            too_small = mk.sum() < SEG_MIN_ROWS
+        if too_small:
             small.append(g)
             continue
-        c = _metric("recall", y[mk], dc[mk], dc[mk])
-        b = _metric("recall", y[mk], db[mk], db[mk])
-        by[g] = {"candidate": round(c, 4), "baseline": round(b, 4), "delta": round(c - b, 4), "rows": int(mk.sum())}
-    metrics["segments"] = {"column": col, "metric": "recall", "by_group": by, "too_small": small}
+        c = _metric(gm, y[mk], dc[mk], dc[mk])
+        b = _metric(gm, y[mk], db[mk], db[mk])
+        by[g] = {"candidate": round(c, 4), "baseline": round(b, 4), "delta": round(improvement(gm, b, c), 4),
+                 "rows": int(mk.sum())}
+    metrics["segments"] = {"column": col, "metric": gm, "by_group": by, "too_small": small}
     if not by:
         return cm.check("segment_guardrail", INCON, "no group is large enough to judge", too_small=small)
     worst = min(by, key=lambda g: by[g]["delta"])
     ok = by[worst]["delta"] >= -data.segment_max_drop
     return cm.check("segment_guardrail", PASS if ok else FAIL,
-                    f"recall must not drop more than {data.segment_max_drop} in any {col} group "
+                    f"{gm} must not get worse by more than {data.segment_max_drop} in any {col} group "
                     f"(worst: {worst}, {by[worst]['delta']:+.4f})", worst_group=worst, too_small=small)

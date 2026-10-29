@@ -23,9 +23,10 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+import pandas as pd
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.repair import contracts as c
 from app.repair.agent import prompts
@@ -35,6 +36,7 @@ from app.repair.oracle import common as cm
 from app.repair.sandbox.base import SCRATCH, SandboxRunner
 from app.repair.sandbox.mirror import MirroredEnv, SyncingRunner
 from app.repair.security import redact
+from app.repair.intake import pytest_file
 from app.repair.tools import ToolExecutor
 
 KEEP_TURNS = 6
@@ -48,13 +50,31 @@ class Cancelled(RuntimeError):
 
 
 # ── records ───────────────────────────────────────────────────────────────────
+class Probe(BaseModel):
+    """A falsifiable prediction about the PRISTINE code: this text is present (or absent) in this file."""
+    path: str = Field(min_length=1, max_length=300)
+    pattern: str = Field(min_length=3, max_length=200)
+    expect: Literal["present", "absent"] = "present"
+
+
 class Hypothesis(BaseModel):
     id: str = Field(pattern=r"^H\d{1,2}$")
     cause: str = Field(max_length=400)
     evidence: str = Field(default="", max_length=600)
     files: list[str] = Field(default_factory=list, max_length=10)
     check: str = Field(default="", max_length=400)
+    probe: Probe | None = None
+    status: Literal["untested", "confirmed", "refuted", "unrunnable"] = "untested"
     proposed_by: str = "nemotron"
+
+    @field_validator("probe", mode="before")
+    @classmethod
+    def _lenient(cls, v):
+        # A malformed probe costs the hypothesis its ranking evidence, not the whole plan.
+        try:
+            return Probe.model_validate(v) if v else None
+        except ValidationError:
+            return None
 
 
 class Step(BaseModel):
@@ -92,9 +112,11 @@ class RepairReport(BaseModel):
     models: dict[str, str] = Field(default_factory=dict)
     runner: str
     isolated: bool = False
+    image: str | None = None                  # BE-17: digest of the candidate image every check ran in
     failure_excerpt: str = ""
     research: dict[str, Any] = Field(default_factory=dict)
     hypotheses: list[Hypothesis] = Field(default_factory=list)
+    data_profile: dict[str, Any] = Field(default_factory=dict)
     planner_error: str | None = None
     candidates: list[CandidateRun] = Field(default_factory=list)
     finalist: str | None = None
@@ -224,7 +246,8 @@ class RepairAgent:
 
     def _brief(self, excerpt: str, listing: str) -> str:
         cmds = [k for k in ("test", "train", "predict") if getattr(self.contract.commands, k)]
-        brief = (f"TASK: {redact(self.ecc.target)}\nFAILING TESTS: {', '.join(self.ecc.success.fail_to_pass)}\n"
+        f2p = ", ".join(self.ecc.success.fail_to_pass) or "none declared: this is a model-quality regression"
+        brief = (f"TASK: {redact(self.ecc.target)}\nFAILING TESTS: {f2p}\n"
                  f"FAILURE OUTPUT (compacted):\n{excerpt}\n\nFILES:\n{listing}\n\n"
                  f"RUNNABLE COMMANDS: {', '.join(cmds)}. EDITABLE: {', '.join(self.roots)}.")
         if self.mode == "full":
@@ -236,7 +259,64 @@ class RepairAgent:
             brief += ("\n\n" + inv) if inv else ""
             docs = agent_research.as_brief(self.report.research)
             brief += ("\n\n" + docs) if docs else ""
+            prof = self.report.data_profile
+            if prof.get("flagged"):
+                brief += ("\n\nDATA CHECK (drift profiler, training rows vs holdout features, no labels): "
+                          + "; ".join(f"{f['column']} PSI {f['psi']}, missing {f['missing_shift']:+.0%}"
+                                      for f in prof["flagged"]))
         return brief
+
+    # 2b BE-16: the v4 investigator's drift checks, for "metric dropped" tasks with no failing test
+    def _data_profile(self) -> None:
+        d = self.contract.data
+        if self.mode != "full" or d is None or self.ecc.success.fail_to_pass:
+            return
+        from app.autopilot.profiler import cat_psi, psi
+        base = Path(self.base_dir)
+        try:
+            tr = pd.read_csv(base / d.train, nrows=50_000)
+            ho = pd.read_csv(base / d.holdout_features, nrows=50_000)
+        except Exception:  # noqa: BLE001 - the profile is optional evidence
+            return
+        rows = []
+        for col in ho.columns:
+            if col in (d.id_column, d.target) or col not in tr.columns:
+                continue
+            a, b = tr[col], ho[col]
+            try:
+                numeric = pd.api.types.is_numeric_dtype(a) and pd.api.types.is_numeric_dtype(b)
+                v = psi(a.dropna(), b.dropna()) if numeric else cat_psi(a.astype(str), b.astype(str))
+            except Exception:  # noqa: BLE001
+                continue
+            rows.append({"column": col, "psi": round(float(v), 3),
+                         "missing_shift": round(float(b.isna().mean() - a.isna().mean()), 3)})
+        rows.sort(key=lambda r: -r["psi"])
+        flagged = [r for r in rows if r["psi"] >= 0.2 or abs(r["missing_shift"]) >= 0.1][:8]
+        self.report.data_profile = {"columns": len(rows), "flagged": flagged}
+        self._event("diagnostic.executed", "platform", kind="data_drift", columns=len(rows),
+                    flagged=[r["column"] for r in flagged])
+
+    # 3b BE-15: check every hypothesis's prediction for free, then rank before spending coding tokens
+    def _probe(self, hyps: list[Hypothesis]) -> list[Hypothesis]:
+        base = Path(self.base_dir).resolve()
+        for h in hyps:
+            if h.probe is None:
+                continue
+            p = (base / h.probe.path).resolve()
+            if not p.is_relative_to(base) or not p.is_file() or ".git" in p.relative_to(base).parts:
+                h.status = "unrunnable"
+            else:
+                found = h.probe.pattern in p.read_text(encoding="utf-8", errors="ignore")
+                h.status = "confirmed" if found == (h.probe.expect == "present") else "refuted"
+            self._event("diagnostic.executed", "platform", kind="probe", hypothesis_id=h.id,
+                        path=h.probe.path, pattern=redact(h.probe.pattern[:80]), expect=h.probe.expect,
+                        outcome=h.status)
+        rank = {"confirmed": 0, "untested": 1, "unrunnable": 1, "refuted": 2}
+        ranked = sorted(hyps, key=lambda h: rank[h.status])           # stable: planner order breaks ties
+        if [h.id for h in ranked] != [h.id for h in hyps]:
+            self._event("hypothesis.revised", "platform", order=[h.id for h in ranked],
+                        statuses={h.id: h.status for h in ranked})
+        return ranked
 
     # 2 research
     def _research(self, excerpt: str) -> None:
@@ -269,7 +349,7 @@ class RepairAgent:
     def _finish_gate(self, tools: ToolExecutor, last_edit: int, last_green_suite: int) -> str | None:
         if self.mode != "full":
             return None
-        new_tests = {p.casefold() for p in tools._files(".") if Path(p).name.startswith("test_")} - tools.existing_tests
+        new_tests = {p.casefold() for p in tools._files(".") if pytest_file(p)} - tools.existing_tests
         if not new_tests:
             return "no new test file was added."
         if last_green_suite <= last_edit:
@@ -290,8 +370,8 @@ class RepairAgent:
             system = prompts.coder_system(self.roots, self.ecc.success.ml_invariants, mode=self.mode)
             task = brief
             if hyp:
-                task += (f"\n\nYOUR HYPOTHESIS {hyp.id}: {hyp.cause}\nCheck: {hyp.check}\n"
-                         + "".join(f"COMPETING {o.id}: {o.cause}\n" for o in others)
+                task += (f"\n\nYOUR HYPOTHESIS {hyp.id} (platform probe: {hyp.status}): {hyp.cause}\nCheck: {hyp.check}\n"
+                         + "".join(f"COMPETING {o.id} (probe: {o.status}): {o.cause}\n" for o in others)
                          + "Check your hypothesis cheaply first. If the evidence refutes it, say so and fix the real cause.")
             turns: list[tuple[str, str]] = []
             invalid = refused = lock_refused = 0
@@ -356,7 +436,7 @@ class RepairAgent:
                     continue
                 res = tools.execute(step)
                 if self.mode == "full" and act.action == "apply_edit" and res.ok and act.old == "" \
-                        and Path(act.path).name.startswith("test_"):
+                        and pytest_file(act.path):
                     own_tests.add(act.path)
                 if self.mode == "full" and act.action == "run" and act.kind == "test" and not res.ok:
                     failing_out = res.output or ""
@@ -443,14 +523,16 @@ class RepairAgent:
                     runner=rep.runner, isolated=rep.isolated)
         base_env = self.runner.prepare(self.base_dir, python=self.contract.python, install=self.contract.install,
                                        timeout_s=900)
+        rep.image = getattr(self.runner, "image", None)
         try:
             baseline, excerpt, listing = self._reproduce(base_env)
             self._check_stop()
             self._research(excerpt)
+            self._data_profile()
             brief = self._brief(excerpt, listing)
             n = self.ecc.limits.max_candidates
             if self.mode == "full":
-                hyps = self._hypotheses(brief)
+                hyps = self._probe(self._hypotheses(brief))
                 rep.hypotheses = hyps
                 plan = [(h, [o for o in hyps if o.id != h.id]) for h in hyps[:n]]
             else:

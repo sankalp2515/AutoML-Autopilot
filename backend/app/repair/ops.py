@@ -21,13 +21,15 @@ class Denied(PermissionError):
 
 
 # ── BE-12 admission ───────────────────────────────────────────────────────────
-async def admit_live_run(svc, tenant: str, invite_code: str | None) -> dict[str, Any]:
+async def admit_live_run(svc, tenant: str, invite_code: str | None, *, trusted: bool = False) -> dict[str, Any]:
     """Live runs spend real money once Nebius is on. Refuse unless enabled, invited and under caps.
-    Spend = measured cost of today's finished runs + a worst-case reservation per unfinished run."""
+    Spend = measured cost of today's finished runs + a worst-case reservation per unfinished run.
+    `trusted`: a signed-in workspace member or a linked GitHub repository needs no invite code;
+    the daily task and dollar caps still apply."""
     if not settings.REPAIR_LIVE_ENABLED:
         raise Denied("Live runs are switched off on this server. Watch a recorded run instead.")
     codes = [x.strip() for x in settings.REPAIR_INVITE_CODES.split(",") if x.strip()]
-    if codes and not any(hmac.compare_digest(invite_code or "", x) for x in codes):
+    if codes and not trusted and not any(hmac.compare_digest(invite_code or "", x) for x in codes):
         raise Denied("A valid invite code is required for live runs.")
     day = time.time() - 86400
     rows = await svc.since(day)
@@ -71,6 +73,40 @@ async def status(svc) -> dict[str, Any]:
             "isolated": bool(settings.REPAIR_SANDBOX_URL) or settings.REPAIR_RUNNER != "process",
             "verifier": "service" if settings.REPAIR_VERIFIER_URL else "in-process",
             "daily_cap_usd": settings.REPAIR_DAILY_USD_CAP}
+
+
+# ── BE-22 metrics ─────────────────────────────────────────────────────────────
+async def metrics(svc, *, window_s: int = 86400, now: float | None = None) -> dict[str, Any]:
+    """Queue age, run time, tokens and cost over the window. No tenant data, no task ids."""
+    now = now or time.time()
+    rows = await svc.recent(now - window_s)
+    queued = [created for status, created, _ in rows if status == "CREATED"]
+    done = [r for _, _, r in rows if r]
+    secs = sorted(float(r.get("seconds") or 0) for r in done)
+
+    def pct(q: float) -> float | None:
+        return round(secs[min(len(secs) - 1, int(q * len(secs)))], 1) if secs else None
+    decisions: dict[str, int] = {}
+    for r in done:
+        decisions[str(r.get("decision"))] = decisions.get(str(r.get("decision")), 0) + 1
+    tokens = sum(sum((t.get("prompt_tokens") or 0) + (t.get("completion_tokens") or 0)
+                     for t in (r.get("usage") or {}).values() if isinstance(t, dict)) for r in done)
+    return {"window_hours": round(window_s / 3600, 1), "tasks": len(rows), "queue_depth": len(queued),
+            "oldest_queued_s": round(now - min(queued)) if queued else 0, "finished": len(done),
+            "decisions": decisions, "run_seconds_p50": pct(0.5), "run_seconds_p95": pct(0.95),
+            "model_tokens": tokens,
+            "cost_usd": round(sum((r.get("usage") or {}).get("total_est_cost_usd") or 0 for r in done), 4)}
+
+
+def prometheus(m: dict[str, Any]) -> str:
+    lines = []
+    for k in ("tasks", "queue_depth", "oldest_queued_s", "finished", "run_seconds_p50", "run_seconds_p95",
+              "model_tokens", "cost_usd"):
+        if m.get(k) is not None:
+            lines += [f"# TYPE autopilot_repair_{k} gauge", f"autopilot_repair_{k} {m[k]}"]
+    for d, n in m["decisions"].items():
+        lines.append(f'autopilot_repair_decisions{{decision="{d}"}} {n}')
+    return "\n".join(lines) + "\n"
 
 
 # ── BE-22 readiness ───────────────────────────────────────────────────────────

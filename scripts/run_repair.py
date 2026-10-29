@@ -2,14 +2,13 @@
 
     python scripts/run_repair.py fixtures/repos/churn-service --mode full --out runs/churn.json
 
-Reads provider keys from the repository's .env (never printed). Uses the unisolated
-process runner, so run it only on the bundled fixtures.
+Reads provider keys from the repository's .env (never printed). Goes through the same intake
+and freeze as the API, and uses the Docker runner unless REPAIR_RUNNER=process.
 """
 import argparse
 import json
 import os
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,28 +33,32 @@ def main() -> int:
     a = ap.parse_args()
     load_env()
 
-    from app.repair import contracts as c
+    from app.repair import contracts as c, snapshots
     from app.repair.agent.llm import client_from_settings
     from app.repair.agent.loop import RepairAgent
-    from app.repair.oracle.ml import FileHoldoutLedger
-    from app.repair.sandbox.process import ProcessRunner
+    from app.repair.agent.oracles import LocalOracles
+    from app.repair.oracle.grading import GradeRef
+    from app.repair.sandbox.factory import local_runner
 
+    # Same path as the API: stage the bundled sample, freeze it with the platform intake
+    # (real pinned commit SHA + snapshot digest), then grade with the fixture's sealed bundle.
     fix = (ROOT / a.fixture).resolve()
-    repo, sealed = fix / "repo", fix / "sealed"
-    contract = c.RepoContract.from_yaml((repo / "autopilot.yaml").read_text(encoding="utf-8"))
-    manifest = c.SealedManifest.from_yaml((sealed / "manifest.yaml").read_text(encoding="utf-8"))
+    tenant = f"script-{os.getpid()}"
+    staged = snapshots.stage_sample(tenant, fix.name)
+    frozen = snapshots.freeze(staged["id"], tenant)
+    contract = frozen["contract"]
     task_id = a.task_id or f"{contract.name}-{a.mode}-{os.getpid()}"
-    ecc = c.ECC.build(task_id=task_id, base_commit_sha="0" * 40, repo_snapshot_digest="sha256:fixture",
+    ecc = c.ECC.build(task_id=task_id, base_commit_sha=frozen["sha"], repo_snapshot_digest=frozen["digest"],
                       contract=contract, target=(fix / "TASK.txt").read_text(encoding="utf-8").strip()
                       if (fix / "TASK.txt").is_file() else "Make the failing tests pass without breaking the model.")
     llm = client_from_settings(ecc.limits.model_tokens)
     if llm is None:
         print("no provider key configured", file=sys.stderr)
         return 2
-    tmp = Path(tempfile.mkdtemp(prefix="ap-repair-"))
-    agent = RepairAgent(ProcessRunner(str(tmp / "envs"), allow_unisolated=True), llm, base_dir=str(repo),
-                        contract=contract, ecc=ecc, sealed_dir=str(sealed), manifest=manifest,
-                        ledger=FileHoldoutLedger(str(tmp / "ledger")), mode=a.mode,
+    runner = local_runner()          # Docker by default; REPAIR_RUNNER=process only for trusted fixtures
+    ref = GradeRef(task_id, ecc.model_dump(mode="json"), frozen["snapshot_dir"], f"fixture:{fix.name}")
+    agent = RepairAgent(runner, llm, LocalOracles(runner, ref), base_dir=frozen["snapshot_dir"],
+                        contract=contract, ecc=ecc, mode=a.mode,
                         on_event=lambda e: print(f"[{e['seq']:>3}] {e['type']:<22} {e.get('candidate_id', '')} "
                                                  f"{e.get('cause', e.get('path', e.get('rule', '')))}"[:160], flush=True))
     rep = agent.run()

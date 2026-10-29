@@ -9,6 +9,7 @@ left half-verified.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import threading
 
@@ -123,8 +124,10 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
                             mode=spec.get("mode", "full"), on_event=on_event, should_stop=h.lost.is_set)
         log.info("repair start task=%s mode=%s runner=%s", task_id, agent.report.mode, runner.name)
         report = await asyncio.to_thread(agent.run)
-        log.info("repair done task=%s decision=%s cost=%s", task_id, report.decision.value,
-                 report.usage.get("total_est_cost_usd"))
+        log.info(json.dumps({"event": "repair.done", "task_id": task_id, "tenant": tenant,
+                             "decision": report.decision.value, "seconds": report.seconds,
+                             "model_calls": len(report.calls), "cost_usd": report.usage.get("total_est_cost_usd"),
+                             "candidates": len(report.candidates), "runner": report.runner, "image": report.image}))
 
         for run in report.candidates:
             extra = {"steps": [s.model_dump(mode="json") for s in run.steps], "stop_reason": run.stop_reason,
