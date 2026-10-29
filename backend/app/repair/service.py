@@ -313,8 +313,9 @@ class RepairService:
         live = [s.value for s in c.TaskStatus if s not in c.TERMINAL_TASK and s is not c.TaskStatus.CREATED]
         n = 0
         async with self.sessions() as db, db.begin():
-            rows = (await db.execute(select(m.Task).where(m.Task.status.in_(live), m.Task.lease_until.is_not(None),
-                                                          m.Task.lease_until < now - grace_s))).scalars().all()
+            # Expired leases, and live tasks nobody holds (a worker released without a final state).
+            rows = (await db.execute(select(m.Task).where(m.Task.status.in_(live), or_(
+                m.Task.lease_owner.is_(None), m.Task.lease_until < now - grace_s)))).scalars().all()
             for t in rows:
                 res = await db.execute(update(m.Task).where(m.Task.id == t.id, m.Task.version == t.version)
                                        .values(status=c.TaskStatus.FAILED.value, version=m.Task.version + 1,

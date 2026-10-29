@@ -123,6 +123,7 @@ def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path
 
     assert [h.id for h in rep.hypotheses] == ["H1", "H2"] and rep.planner_error is None
     c1, c2 = rep.candidates
+    assert c1.candidate.candidate_id.endswith("-c1")
     assert c1.candidate.files_changed == ["churn/serve.py", "tests/test_online_batch.py"]
     assert any(s.action == "apply_edit" and s.denied and "E_TEST_CONFIGURATION" in s.denied or
                s.denied and "IMMUTABLE" in s.denied for s in c2.steps)          # conftest refused by the tools
@@ -131,7 +132,7 @@ def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path
     assert c2.code_receipt.decision is c.Decision.VERIFIED                       # tests are green...
     assert c2.screen_receipt.decision is c.Decision.REJECTED                     # ...but online != batch
     assert not c2.eligible and c1.eligible
-    assert rep.finalist == "c1" and rep.decision is c.Decision.VERIFIED, rep.reasons
+    assert rep.finalist == c1.candidate.candidate_id and rep.decision is c.Decision.VERIFIED, rep.reasons
     assert rep.final_ml_receipt.holdout_opened and not c2.screen_receipt.holdout_opened
     assert rep.usage["ultra"]["calls"] == 1 and rep.usage["super"]["calls"] >= 8
     assert any(e["type"] == "tool.denied" for e in rep.events)

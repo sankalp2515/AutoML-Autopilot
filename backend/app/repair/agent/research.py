@@ -20,7 +20,15 @@ _SYMBOL = re.compile(r"\b([A-Z][A-Za-z0-9]+)\.(?:__init__|\w+)\(\)|got an unexpe
                      r"has no attribute '(\w+)'|cannot import name '(\w+)'")
 
 
+# Only failures that look like a library API change justify a search; a shape mismatch that
+# merely passes through sklearn is a local bug and must not trigger research.
+_API_CHANGE = re.compile(r"unexpected keyword argument|has no attribute|cannot import name|No module named|"
+                         r"[Dd]eprecat|removed in|was renamed|got an unexpected")
+
+
 def library_signal(excerpt: str) -> dict[str, Any] | None:
+    if not _API_CHANGE.search(excerpt):
+        return None
     pkg = next((ALIASES[m] for m in re.findall(r"\b(sklearn|scikit_learn|pandas|numpy|scipy|xgboost|lightgbm|joblib)\b",
                                                 excerpt) if m in ALIASES), None)
     if not pkg:

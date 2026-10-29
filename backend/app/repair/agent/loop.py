@@ -426,7 +426,9 @@ class RepairAgent:
             per_tokens = max(4000, self.ecc.limits.model_tokens.super // len(plan))
             self._check_stop()
             with ThreadPoolExecutor(max_workers=len(plan)) as pool:
-                futs = [pool.submit(self._engineer, base_env, f"c{i}", brief, h, others, per_calls, per_tokens)
+                # Candidate ids are global database keys: namespace them by task.
+                futs = [pool.submit(self._engineer, base_env, f"{self.ecc.task_id[:8]}-c{i}", brief, h, others,
+                                    per_calls, per_tokens)
                         for i, (h, others) in enumerate(plan, 1)]
                 rep.candidates = [f.result() for f in futs]
         finally:

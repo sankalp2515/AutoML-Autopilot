@@ -153,12 +153,13 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
         log.info("repair lost authority task=%s", task_id)
     except Exception as e:  # noqa: BLE001 - every failure is recorded, never hidden
         log.exception("repair failed task=%s", task_id)
+        msg = f"{type(e).__name__}: {str(e)[:300]}"
+        h.lost.clear()                      # record the failure even if a stage write was refused
         try:
-            msg = f"{type(e).__name__}: {str(e)[:300]}"
             await h.write(lambda le: svc.set_fields(le, dst=S.FAILED, event_type="task.failed",
                                                      data={"reason": msg}, spec={**spec, "error": msg}))
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception:  # noqa: BLE001 - reap_expired will mark the orphan FAILED
+            log.warning("could not record failure task=%s", task_id)
     finally:
         stop.set()
         renew_task.cancel()

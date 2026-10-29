@@ -35,16 +35,16 @@ class RemoteRunner:
         self._transport = transport
         self.name = "sandbox-service"
 
-    def _post(self, path: str, **body):
+    def _post(self, endpoint: str, **body):
         try:
             with httpx.Client(timeout=self.timeout_s, transport=self._transport) as c:
-                r = c.post(f"{self.base_url}{path}", json=body, headers={"Authorization": f"Bearer {self.token}"})
+                r = c.post(f"{self.base_url}{endpoint}", json=body, headers={"Authorization": f"Bearer {self.token}"})
         except httpx.HTTPError as e:
             raise SandboxError(f"sandbox service unreachable: {type(e).__name__}") from e
-        if r.status_code == 404 and path == "/read":
+        if r.status_code == 404 and endpoint == "/read":
             raise FileNotFoundError(body.get("path"))
         if r.status_code != 200:
-            raise SandboxError(f"sandbox service {path}: HTTP {r.status_code} {r.text[:200]}")
+            raise SandboxError(f"sandbox service {endpoint}: HTTP {r.status_code} {r.text[:200]}")
         return r.json()
 
     def prepare(self, repo_dir: str, *, python: str, install: str, timeout_s: int) -> str:

@@ -85,7 +85,7 @@ services:
       REPAIR_SANDBOX_TOKEN: ${REPAIR_SANDBOX_TOKEN:?set REPAIR_SANDBOX_TOKEN in .env}
       REPAIR_VERIFIER_URL: http://verifier:8100
       REPAIR_PACKS_DIR: /packs
-      REPAIR_FIXTURES_DIR: /fixtures
+      REPAIR_FIXTURES_DIR: /fixtures/repos
       REPAIR_REPLAYS_DIR: /replays
       REPAIR_LIVE_ENABLED: ${REPAIR_LIVE_ENABLED:-false}
       REPAIR_INVITE_CODES: ${REPAIR_INVITE_CODES:-}
@@ -165,7 +165,7 @@ services:
       REPAIR_SANDBOX_TOKEN: ${REPAIR_SANDBOX_TOKEN:?set REPAIR_SANDBOX_TOKEN in .env}
       REPAIR_VERIFIER_STATE_DIR: /verifier-state
       REPAIR_PACKS_DIR: /packs
-      REPAIR_FIXTURES_DIR: /fixtures
+      REPAIR_FIXTURES_DIR: /fixtures/repos
     read_only: true
     tmpfs: ["/tmp"]
     volumes:
