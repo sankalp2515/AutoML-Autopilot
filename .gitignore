@@ -46,3 +46,4 @@ backend/product_review.db
 output/
 .playwright-cli/
 frontend/.playwright-cli/
+runs/

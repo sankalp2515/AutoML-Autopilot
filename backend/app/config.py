@@ -145,6 +145,11 @@ class Settings(BaseSettings):
     # Nemotron 3 reasons before answering by default (40-80 s per plan). The planner
     # output is schema-checked JSON, so the trace adds latency without adding trust.
     NVIDIA_ENABLE_THINKING: bool = False
+    # v5 repair agent tiers. Ultra reasons about hypotheses; the coder writes edits; the fast
+    # tier is reserved for compaction. NVIDIA's catalog does not serve Super to this account,
+    # so the coder falls back to Ultra there. Verify Nebius ids when the key arrives (K9).
+    NEBIUS_CODER_MODEL: str = "nvidia/Nemotron-3-Super-120b-a12b"
+    NVIDIA_CODER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
     # Tavily runtime research. Empty key = research state UNAVAILABLE.
     TAVILY_API_KEY: str = ""
     TAVILY_BASE_URL: str = "https://api.tavily.com"

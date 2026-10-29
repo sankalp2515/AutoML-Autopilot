@@ -57,6 +57,10 @@ class ProcessRunner:
             raise SandboxError(f"unknown environment {env_id}")
         return d
 
+    def work_dir(self, env_id: str) -> str:
+        """Host path of the work directory (local runners only; the agent's file tools use it)."""
+        return str(self._dir(env_id))
+
     def _path(self, env_id: str, rel: str) -> Path:
         base = self._dir(env_id).resolve()
         p = (base / safe_relpath(rel)).resolve()
