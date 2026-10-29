@@ -150,8 +150,10 @@ def baseline_predictions(runner: SandboxRunner, base_dir: str, contract: RepoCon
 
 # ── the oracle ────────────────────────────────────────────────────────────────
 def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc: ECC, task_id: str,
-           candidate_id: str, diff: str, sealed_dir: str, manifest: SealedManifest, ledger: HoldoutLedger,
-           baseline: pd.DataFrame | None) -> MLReceipt:
+           candidate_id: str, diff: str, sealed_dir: str, manifest: SealedManifest, ledger: HoldoutLedger | None,
+           baseline: pd.DataFrame | None, open_holdout: bool = True) -> MLReceipt:
+    """open_holdout=False runs only the label-free gates (used to screen candidates during
+    selection); it never touches labels and returns INCONCLUSIVE/SCREEN_ONLY when they pass."""
     checks: list = []
     metrics: dict = {}
     opened = False
@@ -207,6 +209,8 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 
     if any(c.status is FAIL for c in checks):
         return receipt(Decision.REJECTED, [f"E_{c.name.upper()}" for c in checks if c.status is FAIL])
+    if not open_holdout or ledger is None:
+        return receipt(Decision.INCONCLUSIVE, ["SCREEN_ONLY"])
 
     # 4 single-use holdout: only now, after every label-free gate passed
     try:
