@@ -1,0 +1,11 @@
+--- a/churn/serve.py
++++ b/churn/serve.py
+@@ -6,7 +6,7 @@
+ 
+ SERVING_ORDER = [
+     "tenure_months", "monthly_charge", "support_calls", "late_payments",
+-    "contract_monthly", "auto_pay", "internet_fiber", "paperless",
++    "contract_monthly", "auto_pay", "internet_fiber", "paperless", "usage_gb",
+ ]
+ 
+ 

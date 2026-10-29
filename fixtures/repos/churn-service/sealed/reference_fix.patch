@@ -1,0 +1,36 @@
+--- a/churn/serve.py
++++ b/churn/serve.py
+@@ -2,15 +2,10 @@
+ 
+ import pandas as pd
+ 
+-from .features import build_features
+-
+-SERVING_ORDER = [
+-    "tenure_months", "monthly_charge", "support_calls", "late_payments",
+-    "contract_monthly", "auto_pay", "internet_fiber", "paperless",
+-]
++from . import features
+ 
+ 
+ def score_request(payload: dict, model) -> float:
+-    frame = build_features(pd.DataFrame([payload]))
+-    row = frame[SERVING_ORDER].to_numpy()
++    frame = features.build_features(pd.DataFrame([payload]))
++    row = frame[features.FEATURE_ORDER].to_numpy()
+     return float(model.predict_proba(row)[0, 1])
+--- /dev/null
++++ b/tests/test_online_batch.py
+@@ -0,0 +1,12 @@
++import numpy as np
++
++from churn.predict import predict_frame
++from churn.serve import score_request
++from tests.helpers import accounts, model
++
++
++def test_online_batch_agree():
++    rows = accounts().iloc[[0, 12, 45]]
++    batch = predict_frame(rows, model()).score.to_numpy()
++    online = [score_request(row, model()) for row in rows.to_dict(orient="records")]
++    np.testing.assert_allclose(online, batch, rtol=0, atol=1e-9)

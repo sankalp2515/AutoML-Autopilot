@@ -7,6 +7,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  fixtures:
+    name: Churn service proof
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: fixtures/repos/churn-service/repo/requirements.txt
+      - name: Install service dependencies
+        run: python -m pip install -r fixtures/repos/churn-service/repo/requirements.txt
+      - name: Prove unpatched, wrong and reference outcomes
+        run: python scripts/prove_fixture.py fixtures/repos/churn-service
+
   backend:
     name: Autopilot tests
     runs-on: ubuntu-latest
