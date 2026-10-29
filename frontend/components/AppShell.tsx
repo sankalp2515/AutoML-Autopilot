@@ -8,6 +8,7 @@ import type { Run } from '@/lib/types';
 import type { ToastDetail } from '@/lib/toast';
 import { supabase, authEnabled } from '@/lib/supabase';
 import AuthGate from '@/components/AuthGate';
+import RepairShell from '@/components/repair/Shell';
 import { Button } from '@/components/ui';
 
 // Hackathon build: Autopilot only (the orchestrator pages need services it does not run).
@@ -231,7 +232,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
 }
 
 // ── Shell ─────────────────────────────────────────────────────────────────────
-export default function AppShell({ children }: { children: React.ReactNode }) {
+function LegacyAppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [runs, setRuns] = useState<Run[]>([]);
@@ -395,4 +396,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Toasts />
     </div>
   );
+}
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  if (pathname === '/' || pathname.startsWith('/repair')) return <RepairShell>{children}</RepairShell>;
+  return <LegacyAppShell>{children}</LegacyAppShell>;
 }

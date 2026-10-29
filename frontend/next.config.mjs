@@ -26,7 +26,7 @@ const nextConfig = {
     // (MLflow, sandbox, LangGraph agents) that this deployment does not run.
     return AUTOPILOT_ONLY
       ? [
-          { source: '/', destination: '/autopilot', permanent: false },
+          { source: '/', destination: '/repair', permanent: false },
           { source: '/runs/:path*', destination: '/autopilot', permanent: false },
           { source: '/registry/:path*', destination: '/autopilot', permanent: false },
         ]
