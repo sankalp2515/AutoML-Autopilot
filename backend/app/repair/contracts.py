@@ -131,6 +131,17 @@ class LimitsSpec(_Strict):
     train_seconds: int = Field(default=120, ge=5, le=1800)
 
 
+class ArtifactsSpec(_Strict):
+    """Where the train command leaves the model, relative to {artifacts}. The serve entrypoint
+    is called as `fn(payload: dict, model)` with `model = joblib.load(<this file>)`."""
+    model: str = "model.joblib"
+
+    @field_validator("model")
+    @classmethod
+    def _p(cls, v: str) -> str:
+        return safe_relpath(v)
+
+
 class RepoContract(_Strict):
     """`autopilot.yaml` at the repository root. Written by the repo owner; validated, never executed."""
     version: Literal[1]
@@ -139,6 +150,7 @@ class RepoContract(_Strict):
     install: str = "pip install -r requirements.txt"
     commands: Commands
     entrypoints: dict[Literal["serve"], str] = Field(default_factory=dict)
+    artifacts: ArtifactsSpec = Field(default_factory=ArtifactsSpec)
     data: DataSpec | None = None
     task: TaskSpec
     policy: PolicySpec
@@ -179,6 +191,43 @@ class RepoContract(_Strict):
 
     def digest(self) -> str:
         return canonical_digest(self.model_dump(mode="json"))
+
+
+# ── Sealed grading bundle ─────────────────────────────────────────────────────
+class SealedManifest(_Strict):
+    """`sealed/manifest.yaml`: trusted grader material, never shown to the agent.
+
+    Predictions written by the repository's predict command must have columns
+    `<id_column>,score` (probability of the positive label) and may add `decision` (0/1)
+    for threshold metrics. Holdout labels stay on the oracle side and are never copied
+    into a sandbox."""
+    version: Literal[1]
+    labels: str                                   # CSV: <id_column>,<target>[,<segment_column>]
+    tests: str | None = None                      # directory of sealed pytest files (copied at grading)
+    # Environment for sealed tests. Values may use {artifacts}, {holdout_features}, {predictions}.
+    env: dict[str, str] = Field(default_factory=dict)
+    parity_rows: int = Field(default=200, ge=10, le=5000)
+    # Last known good metric, used when the unpatched repository cannot produce predictions.
+    baseline_metric: float | None = Field(default=None, ge=0, le=1)
+
+    @field_validator("labels", "tests")
+    @classmethod
+    def _p(cls, v: str | None) -> str | None:
+        return None if v is None else safe_relpath(v)
+
+    @field_validator("env")
+    @classmethod
+    def _env(cls, v: dict[str, str]) -> dict[str, str]:
+        for k, val in v.items():
+            if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,40}", k):
+                raise ValueError(f"bad env name {k!r}")
+            if set(_PLACEHOLDER.findall(val)) - PLACEHOLDERS:
+                raise ValueError(f"unknown placeholder in {k}")
+        return v
+
+    @classmethod
+    def from_yaml(cls, text: str) -> "SealedManifest":
+        return cls.model_validate(yaml.safe_load(text))
 
 
 # ── Engineering Change Contract ───────────────────────────────────────────────

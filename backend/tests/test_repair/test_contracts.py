@@ -150,10 +150,11 @@ def test_task_transitions():
 def test_sandbox_protocol_is_checkable():
     class Fake:
         name = "fake"
+        isolated = True
         def prepare(self, repo_dir, *, python, install, timeout_s): return "e"
         def fork(self, env_id): return "f"
         def write_files(self, env_id, files): pass
-        def read_file(self, env_id, path, max_bytes=200_000): return b""
-        def run(self, env_id, argv, *, timeout_s, uploads=None, collect=None): ...
+        def read_file(self, env_id, path, max_bytes=2_000_000): return b""
+        def run(self, env_id, argv, *, timeout_s, uploads=None, collect=None, env=None): ...
         def discard(self, env_id): pass
     assert isinstance(Fake(), SandboxRunner)
