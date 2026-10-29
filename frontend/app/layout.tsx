@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+import './repair/repair.css';
 import AppShell from '@/components/AppShell';
 
 // "Paper-lab" engineering instrument type system: Space Grotesk for display/brand,
@@ -27,10 +28,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_AUTOPILOT_ONLY === 'true' ? 'AutoML Autopilot' : 'AutoML Orchestrator',
-  description: process.env.NEXT_PUBLIC_AUTOPILOT_ONLY === 'true'
-    ? 'When a model breaks, run the experiment that teaches you the most, then prove the fix.'
-    : 'Upload a CSV, state your goal — ten agents build and explain a deployable model.',
+  title: 'AutoML Autopilot',
+  description: 'The ML coding agent that doesn’t stop at green tests. Inspect repository repairs with independent software and ML evidence.',
   icons: { icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%236366f1%22/></svg>' },
 };
 
