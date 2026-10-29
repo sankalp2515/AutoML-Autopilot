@@ -222,7 +222,8 @@ def preprocessing_ablation(ws: Workspace, params: dict, exp_id: str) -> dict:
     cand = mlcore.Candidate(inc.model_path, inc.threshold, input_fix={"rescale": params["rescale"]},
                             label="incumbent + input rescale")
     return {"bucket": "CANDIDATE_BUILT", "candidate": cand.to_dict(),
-            "measurements": {"self_reported_validation": _validation(ws, cand)}}
+            "measurements": {"self_reported_validation": _validation(ws, cand),
+                             "prediction_source": "reconstructed_model"}}
 
 
 def threshold_candidate(ws: Workspace, params: dict, exp_id: str) -> dict:
@@ -231,7 +232,8 @@ def threshold_candidate(ws: Workspace, params: dict, exp_id: str) -> dict:
     sel = ws.rows("selection_validation")
     best = mlcore.best_threshold(sel[pack["target"]].to_numpy(), mlcore.predict_proba(inc, sel),
                                  pack["primary_metric"])
-    cand = mlcore.Candidate(inc.model_path, best, label=f"incumbent @ threshold {best}")
+    cand = mlcore.Candidate(inc.model_path, best, label=f"incumbent @ threshold {best}",
+                            score_column=inc.score_column)
     return {"bucket": "CANDIDATE_BUILT", "candidate": cand.to_dict(),
             "measurements": {"chosen_on": "selection_validation", "threshold": best,
                              "self_reported_validation": _validation(ws, cand)}}

@@ -70,6 +70,15 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --legacy-peer-deps --no-audit --no-fund
       - run: npx tsc --noEmit -p .
+      - name: Production build and Autopilot browser contracts
+        env:
+          NEXT_PUBLIC_AUTOPILOT_ONLY: "true"
+          NEXT_PUBLIC_API_URL: ""
+          E2E_MOCK_API: "1"
+        run: |
+          npm run build
+          npx playwright install --with-deps chromium
+          npx playwright test e2e/autopilot.spec.ts
 
   images:
     name: Build images

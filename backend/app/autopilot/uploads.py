@@ -23,7 +23,7 @@ import json
 import re
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -56,7 +56,8 @@ class UploadSpec(BaseModel):
     target: str = Field(min_length=1, max_length=120)
     positive_label: str = Field(min_length=1, max_length=120)
     metric: Literal["f1", "recall", "precision", "balanced_accuracy"] = "f1"
-    model_family: Literal["logistic_regression", "hist_gradient_boosting"] = "logistic_regression"
+    model_family: Literal["logistic_regression", "hist_gradient_boosting", "random_forest", "xgboost", "lightgbm"] = "logistic_regression"
+    score_column: str | None = Field(default=None, max_length=120)
     serving_threshold: float = Field(default=0.5, gt=0, lt=1)
     trained_threshold: float | None = Field(default=None, gt=0, lt=1)
     segment_column: str | None = Field(default=None, max_length=120)
@@ -127,10 +128,13 @@ def _profile_columns(ref: pd.DataFrame, cur: pd.DataFrame) -> list[dict[str, Any
         s = ref[c]
         nun = int(s.nunique(dropna=True))
         numeric = pd.api.types.is_numeric_dtype(s)
-        kind = ("numeric" if numeric and nun > 10 else
+        kind = ("id_like" if (c.lower() == "id" or c.lower().endswith("_id")) and nun >= 0.9 * len(s) else
+                "numeric" if numeric and nun > 10 else
                 "categorical" if nun <= MAX_CATEGORY_LEVELS else
                 "id_like" if nun >= 0.9 * len(s) else "high_cardinality")
         cols.append({"name": c, "kind": kind, "unique": nun, "null_rate": round(float(s.isna().mean()), 4),
+                     "current_null_rate": round(float(cur[c].isna().mean()), 4) if c in cur else None,
+                     "samples": [str(v)[:80] for v in s.dropna().head(3)],
                      "in_current": c in cur.columns,
                      "values": sorted(map(str, s.dropna().unique()))[:MAX_CATEGORY_LEVELS] if nun <= MAX_CATEGORY_LEVELS else []})
     return cols
@@ -158,7 +162,8 @@ def _public(meta: dict) -> dict[str, Any]:
     segments = [c["name"] for c in meta["columns"] if c["kind"] == "categorical" and 2 <= c["unique"] <= 30]
     return {"upload_id": meta["upload_id"], "rows": meta["rows"], "columns": meta["columns"],
             "target_candidates": targets, "segment_candidates": segments, "configured": meta["spec"] is not None,
-            "title": (meta.get("spec") or {}).get("title")}
+            "title": (meta.get("spec") or {}).get("title"), "spec": meta.get("spec"),
+            "created_at": meta["created_at"], "retention_hours": settings.AUTOPILOT_UPLOAD_TTL_HOURS}
 
 
 def _meta(tenant: str, upload_id: str) -> dict:
@@ -184,19 +189,36 @@ def configure(tenant: str, upload_id: str, spec: UploadSpec) -> dict[str, Any]:
     cur = pd.read_csv(d / "current.csv", low_memory=False)
     if spec.target not in ref.columns:
         raise UploadError(f"target column {spec.target!r} is not in the reference file")
-    labels = set(ref[spec.target].dropna().astype(str))
+    labels = set(ref[spec.target].dropna().map(_label))
     if len(labels) != 2:
         raise UploadError(f"target {spec.target!r} must have exactly two values in the reference file "
                           f"(found {len(labels)}); Autopilot handles binary classification")
     if spec.positive_label not in labels:
         raise UploadError(f"positive label {spec.positive_label!r} is not one of {sorted(labels)}")
+    if spec.target in cur and not set(cur[spec.target].dropna().map(_label)).issubset(labels):
+        raise UploadError("current outcomes contain values outside the two reference labels")
+    if spec.model_family in ("xgboost", "lightgbm"):
+        import importlib.util
+        if importlib.util.find_spec(spec.model_family) is None:
+            raise UploadError(f"{spec.model_family} is not installed on this server")
+    score_col = spec.score_column or ("score" if "score" in ref or "score" in cur else None)
+    if score_col:
+        if score_col == spec.target:
+            raise UploadError("model score column must differ from the outcome column")
+        for name, frame in (("reference", ref), ("current", cur)):
+            if score_col not in frame:
+                raise UploadError(f"{name}: score column {score_col!r} is missing")
+            values = pd.to_numeric(frame[score_col], errors="coerce")
+            if values.isna().any() or not np.isfinite(values).all() or not values.between(0, 1).all():
+                raise UploadError(f"{name}: scores must be finite probabilities in [0, 1] on every row")
+        spec = spec.model_copy(update={"score_column": score_col})
     if spec.segment_column:
         if spec.segment_column not in ref.columns or spec.segment_column == spec.target:
             raise UploadError(f"segment column {spec.segment_column!r} is not a feature in the reference file")
         if spec.segment_value is not None and spec.segment_value not in set(ref[spec.segment_column].dropna().astype(str)):
             raise UploadError(f"segment value {spec.segment_value!r} does not occur in {spec.segment_column!r}")
     kinds = {c["name"]: c["kind"] for c in meta["columns"]}
-    excluded = set(spec.exclude_columns) | {spec.target}
+    excluded = set(spec.exclude_columns) | {spec.target, score_col}
     numeric = [c for c, k in kinds.items() if k == "numeric" and c not in excluded]
     categorical = [c for c, k in kinds.items() if k == "categorical" and c not in excluded]
     dropped = [c for c, k in kinds.items() if k in ("id_like", "high_cardinality") and c not in excluded]
@@ -211,7 +233,9 @@ def configure(tenant: str, upload_id: str, spec: UploadSpec) -> dict[str, Any]:
     return {**_public(meta), "features": meta["features"], "labelled_current_rows": meta["labelled_current_rows"],
             "warnings": ([f"Ignored as ID-like or free text: {', '.join(dropped)}"] if dropped else [])
             + ([] if meta["labelled_current_rows"] else
-               ["The current file has no labels yet: Autopilot can measure drift but not quality loss."])}
+               ["The current file has no labels yet: Autopilot can measure drift but not quality loss."])
+            + (["Your scores are used for measured quality and threshold fixes. Input repairs and retrains "
+                "use a reconstructed model; they do not prove a repair to your production model."] if score_col else [])}
 
 
 def owner(upload_id: str) -> str | None:
@@ -243,8 +267,28 @@ def delete(tenant: str, upload_id: str) -> None:
     shutil.rmtree(_dir(upload_id), ignore_errors=True)
 
 
+def expired(now: datetime | None = None) -> list[tuple[str, str]]:
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(hours=settings.AUTOPILOT_UPLOAD_TTL_HOURS)
+    out = []
+    for p in _root().glob("*/meta.json"):
+        try:
+            m = json.loads(p.read_text(encoding="utf-8"))
+            if datetime.fromisoformat(m["created_at"]) < cutoff:
+                out.append((m["tenant"], m["upload_id"]))
+        except (OSError, ValueError, KeyError):
+            continue
+    return out
+
+
+def _label(value: Any) -> str:
+    # Blank outcomes make pandas promote integer targets to floats in a current CSV.
+    if isinstance(value, (float, np.floating)) and np.isfinite(value) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
 def _y(series: pd.Series, positive: str) -> pd.Series:
-    return series.map(lambda v: np.nan if pd.isna(v) else float(str(v) == positive))
+    return series.map(lambda v: np.nan if pd.isna(v) else float(_label(v) == positive))
 
 
 def load_pack(upload_id: str):
@@ -283,4 +327,5 @@ def load_pack(upload_id: str):
         spec["title"], spec["symptom"], ref, cur, target=t, primary_metric=spec["metric"],
         pipeline=pipeline, serving={"threshold": spec["serving_threshold"]}, environment=env,
         error_log=spec.get("error_log") or None, critical_segment=seg,
-        source="upload", notes=spec.get("notes") or "", docs_urls=list(spec.get("docs_urls") or []))
+        source="upload", notes=spec.get("notes") or "", docs_urls=list(spec.get("docs_urls") or []),
+        score_column=spec.get("score_column"))

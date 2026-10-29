@@ -70,6 +70,7 @@ export interface Check { check: string; status: 'PASS' | 'FAIL' | 'INCONCLUSIVE'
 export interface Verification {
   verifier_version: string; decision: string; reason_codes: string[]; checks: Check[];
   metrics: Record<string, any>; candidate: string; incumbent: string; metric: string; mode: string;
+  prediction_sources?: { incumbent: string; candidate: string };
 }
 
 export interface Decision {
@@ -79,7 +80,8 @@ export interface Decision {
 export interface Investigation {
   run_id: string; status: Status; config: Record<string, any>; created_at: string;
   scenario: { scenario_id: string; kind: string; title: string; symptom: string; primary_metric: string;
-              notes?: string; source?: 'catalog' | 'upload'; docs_urls?: string[];
+              notes?: string; source?: 'catalog' | 'upload' | 'public_dataset'; docs_urls?: string[];
+              prediction_source?: 'user_scores' | 'reconstructed_model';
               critical_segment: Record<string, any>; rows: { reference: number; current: number } } | null;
   protocol: { protocol_hash: string; counts: Record<string, number>; seed: number; metric: string; keying: string } | null;
   inputs: Record<string, string>;
@@ -169,7 +171,38 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {}
     throw new Error(detail);
   }
-  return res.json() as Promise<T>;
+  return res.status === 204 ? undefined as T : res.json() as Promise<T>;
+}
+
+export interface BenchmarkArm {
+  correct: number; runs: number; false_promotions: number; median_experiments: number;
+  mean_experiments: number; total_cost_units: number; total_retrains: number; median_cpu_seconds: number;
+}
+export interface Benchmark {
+  available: boolean; how_to_run?: string; arms: Record<string, BenchmarkArm>;
+  verifier_must_fail: { scenarios: string[]; correct: number; runs: number; false_promotions: number };
+  not_run: Record<string, string>; notes: string[]; seeds: number[]; generated_at: string;
+}
+export interface AblationArm {
+  correct: number; runs: number; false_promotions: number; mean_experiments: number; total_cost_units: number;
+  median_model_seconds: number; est_cost_usd: number; runs_where_anchor_added_a_cause: number; runs_that_fell_back_to_rules: number;
+}
+export interface Ablation {
+  available: boolean; how_to_run?: string; planner_model: string; provider: string; seeds: number[];
+  planner_ablation: Record<string, AblationArm>;
+  tavily_ablation_T01?: Record<'tavily_on' | 'tavily_off', { correct: number; runs: number; decisions: string[] }>;
+}
+
+export function incidentMarkdown(inv: Investigation): string {
+  const v = inv.verification, f = v?.metrics.final_test, delta = v?.metrics.delta;
+  return [`# ${inv.scenario?.title ?? 'Model investigation'}`, '', inv.decision?.summary ?? pretty(inv.status),
+    `Next: ${inv.decision?.next_action ?? 'Investigation in progress.'}`,
+    f ? `${v!.metric}: ${f.incumbent[v!.metric]} → ${f.candidate[v!.metric]} (final test, ${f.rows} rows)` : '',
+    delta ? `Difference ${delta.delta}; paired bootstrap 95% CI [${delta.ci_low}, ${delta.ci_high}]` : '',
+    `Current model predictions: ${v?.prediction_sources?.incumbent ?? inv.scenario?.prediction_source ?? 'reconstructed_model'}`,
+    `Proposed fix predictions: ${v?.prediction_sources?.candidate ?? 'not evaluated'}`,
+    `Tests: ${inv.budget.experiments_used}; experiment cost units: ${inv.budget.cost_units_used}`,
+    'Approval records a decision; no live model is changed.', `Investigation: ${inv.run_id}`].filter(Boolean).join('\n');
 }
 
 export const autopilot = {
@@ -188,6 +221,10 @@ export const autopilot = {
     req<{ status: Status }>(`/investigations/${encodeURIComponent(id)}/review`, {
       method: 'POST', body: JSON.stringify({ action, reviewer, note }),
     }),
+  share: (id: string) => req<{ path: string; expires_at: number }>(`/investigations/${encodeURIComponent(id)}/share`, { method: 'POST' }),
+  shared: (token: string) => req<Investigation>(`/shared/${encodeURIComponent(token)}`),
+  showcase: () => req<Investigation>('/showcase'),
+  deleteUpload: (id: string) => req<void>(`/uploads/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   /** Downloads the receipt with the caller's credentials (a plain link would drop the auth header). */
   exportReceipt: async (id: string) => {
     const token = await getAccessToken();
@@ -202,7 +239,8 @@ export const autopilot = {
     a.click();
     URL.revokeObjectURL(url);
   },
-  benchmark: () => req<any>('/benchmark'),
+  benchmark: () => req<Benchmark>('/benchmark'),
+  publicBenchmark: () => req<{ available: boolean; dataset: string; source: string; fault: string; arms: Record<string, BenchmarkArm> }>('/benchmark/public-data'),
   samples: () => req<{ samples: Sample[] }>('/samples'),
   sampleUrl: (id: string, window: 'reference' | 'current') => `${API_BASE}${BASE}/samples/${id}/${window}.csv`,
   uploads: () => req<{ uploads: UploadInfo[] }>('/uploads'),
@@ -221,18 +259,20 @@ export const autopilot = {
   configure: (uploadId: string, spec: UploadSpec) =>
     req<UploadInfo & { features: { numeric: string[]; categorical: string[]; dropped: string[] }; warnings: string[]; labelled_current_rows: number }>(
       `/uploads/${encodeURIComponent(uploadId)}/configure`, { method: 'POST', body: JSON.stringify(spec) }),
-  ablation: () => req<any>('/ablation'),
+  ablation: () => req<Ablation>('/ablation'),
 };
 
-export interface UploadColumn { name: string; kind: 'numeric' | 'categorical' | 'id_like' | 'high_cardinality'; unique: number; null_rate: number; in_current: boolean; values: string[] }
+export interface UploadColumn { name: string; kind: 'numeric' | 'categorical' | 'id_like' | 'high_cardinality'; unique: number; null_rate: number; current_null_rate?: number; samples?: string[]; in_current: boolean; values: string[] }
 export interface UploadInfo {
   upload_id: string; rows: { reference: number; current: number }; columns: UploadColumn[];
   target_candidates: string[]; segment_candidates: string[]; configured: boolean; title?: string | null;
+  spec?: UploadSpec | null;
 }
 export interface UploadSpec {
   title: string; symptom: string; notes?: string; target: string; positive_label: string;
   metric: 'f1' | 'recall' | 'precision' | 'balanced_accuracy';
-  model_family: 'logistic_regression' | 'hist_gradient_boosting';
+  model_family: 'logistic_regression' | 'hist_gradient_boosting' | 'random_forest' | 'xgboost' | 'lightgbm';
+  score_column?: string | null;
   serving_threshold: number; trained_threshold?: number | null;
   segment_column?: string | null; segment_value?: string | null; segment_max_drop?: number;
   exclude_columns?: string[]; packages_before?: Record<string, string>; packages_after?: Record<string, string>;

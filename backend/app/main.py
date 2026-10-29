@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.artifacts import router as artifacts_router
 from app.autopilot.routes import router as autopilot_router
+from app.autopilot.sharing import install_access_log_filter, redact_path
 import app.autopilot.models  # noqa: F401  (registers Autopilot tables for create_all)
 from app.api.routes.config import router as config_router
 from app.api.routes.discovery import router as discovery_router
@@ -24,6 +25,7 @@ from app.redis_client import close_redis
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    install_access_log_filter()
     # Apply the runtime config overlay (Settings control panel) over env defaults.
     from app.core import runtime_config
     runtime_config.apply_overlay()
@@ -100,7 +102,7 @@ _ID_RE = _re.compile(
 
 
 def _norm_path(p: str) -> str:
-    return _ID_RE.sub("/:id", p)
+    return _ID_RE.sub("/:id", redact_path(p))
 
 
 @app.middleware("http")
@@ -128,7 +130,8 @@ async def request_observability(request, call_next):
         except Exception:
             pass
         _req_log.info("http_request", request_id=request_id, method=request.method,
-                      path=request.url.path, status=status, latency_ms=round(dur * 1000, 1))
+                      path=redact_path(request.url.path),
+                      status=status, latency_ms=round(dur * 1000, 1))
 
 
 # ── P16: opt-in API-key + rate limiting (no-op unless configured) ─────────────

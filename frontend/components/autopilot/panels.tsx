@@ -5,6 +5,7 @@
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Badge, Card } from '@/components/ui';
+import { Metric } from './primitives';
 import {
   PROVIDER_LABEL, TEMPLATE_INFO, modelLabel, pretty, templateLabel, type CandidateScore, type Experiment, type Finding,
   type Hypothesis, type Investigation, type Status, type Verification,
@@ -63,7 +64,12 @@ export function StageTimeline({ inv }: { inv: Investigation }) {
   if (inv.verification) visited.add('verify');
   if (inv.decision) visited.add('decide');
   return (
-    <ol aria-label="Investigation stages" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+    <div>
+    <div className="ap-stage-compact" style={{ fontSize: 12 }}>
+      Stage {idx + 1} of {STAGES.length}: {STAGES[idx]?.label ?? pretty(inv.status)}
+      <progress aria-label="Investigation stage" max={STAGES.length} value={idx + 1} style={{ width: '100%', accentColor: 'var(--acc)' }} />
+    </div>
+    <ol className="ap-stage-list" aria-label="Investigation stages" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {STAGES.map((s, i) => {
         const current = i === idx && !inv.decision;
         const done = visited.has(s.key) && !current;
@@ -74,13 +80,14 @@ export function StageTimeline({ inv }: { inv: Investigation }) {
                      border: `1px solid ${current ? 'var(--acc)' : 'var(--bd)'}`,
                      background: current ? 'var(--accw)' : done ? 'var(--sur)' : 'transparent',
                      color: skipped ? 'var(--t4)' : current ? 'var(--acc)' : 'var(--t2)' }}>
-            <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: current ? 'var(--acc)' : done ? '#16a34a' : 'var(--t4)',
+            <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: current ? 'var(--acc)' : done ? 'var(--success)' : 'var(--t4)',
                                               animation: current ? 'ds-pulse 1.2s ease-in-out infinite' : undefined }} />
             {s.label}{skipped ? ' · not needed' : ''}
           </li>
         );
       })}
     </ol>
+    </div>
   );
 }
 
@@ -122,7 +129,7 @@ export function VerdictSummary({ inv }: { inv: Investigation }) {
       {challenger ? (
         <>
           <Fact label="Candidate under review">{v?.candidate ?? '…'}</Fact>
-          <Fact label="Verifier checks" tone={failed.length ? '#ef4444' : v ? '#16a34a' : undefined}>
+          <Fact label="Verifier checks" tone={failed.length ? 'var(--danger)' : v ? 'var(--success)' : undefined}>
             {v ? (failed.length ? `Failed: ${failed.join(', ')}` : 'All passed') : '…'}
           </Fact>
         </>
@@ -133,7 +140,7 @@ export function VerdictSummary({ inv }: { inv: Investigation }) {
         </>
       )}
       <Fact label={`Result on held-out test${v ? ` (${v.metric})` : ''}`}
-        tone={delta ? (delta.ci_low > 0 ? '#16a34a' : delta.ci_high < 0 ? '#ef4444' : undefined) : undefined}>
+        tone={delta ? (delta.ci_low > 0 ? 'var(--success)' : delta.ci_high < 0 ? 'var(--danger)' : undefined) : undefined}>
         {f && delta ? (
           <>{f.incumbent[v!.metric]} → {f.candidate[v!.metric]}
             <span style={{ display: 'block', fontSize: 11.5, fontWeight: 500, color: 'var(--t2)' }}>
@@ -197,7 +204,7 @@ export function ModelCallsPanel({ inv }: { inv: Investigation }) {
           <tr key={c.correlation_id}>
             <td style={td}>{role}</td>
             <td style={td}>{modelLabel(c.model)}<span style={{ display: 'block', fontSize: 11, color: 'var(--t3)' }}>{PROVIDER_LABEL[c.provider] ?? c.provider}</span></td>
-            <td style={{ ...td, fontSize: 11.5, color: c.ok ? '#16a34a' : '#ef4444' }}>{c.ok ? 'accepted' : c.error}</td>
+            <td style={{ ...td, fontSize: 11.5, color: c.ok ? 'var(--success)' : 'var(--danger)' }}>{c.ok ? 'accepted' : c.error}</td>
             <td style={{ ...td, ...mono }}>{(c.latency_ms / 1000).toFixed(1)} s</td>
             <td style={{ ...td, ...mono }}>{c.prompt_tokens ?? '—'} / {c.completion_tokens ?? '—'}</td>
             <td style={{ ...td, ...mono }}>{c.est_cost_usd != null ? `$${c.est_cost_usd.toFixed(5)}` : '—'}</td>
@@ -292,12 +299,15 @@ export function HypothesesPanel({ inv }: { inv: Investigation }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div role="meter" aria-label={`Belief weight ${h.hypothesis_id}`} aria-valuemin={0} aria-valuemax={1} aria-valuenow={h.belief_weight}
                   style={{ flex: 1, height: 8, background: 'var(--sur)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
-                  <div style={{ width: `${Math.round(h.belief_weight * 100)}%`, height: '100%', background: h.status === 'SUPPORTED' ? '#16a34a' : 'var(--acc)', transition: 'width .5s' }} />
+                  <div style={{ width: `${Math.round(h.belief_weight * 100)}%`, height: '100%', background: h.status === 'SUPPORTED' ? 'var(--success)' : 'var(--acc)', transition: 'width .5s' }} />
                 </div>
                 <span style={{ ...mono, minWidth: 92, textAlign: 'right' }}>
                   {(first[h.hypothesis_id] ?? h.belief_weight).toFixed(2)} → {h.belief_weight.toFixed(2)}
                 </span>
               </div>
+              <svg viewBox="0 0 120 24" role="img" aria-label={`Uncalibrated weight history for ${h.hypothesis_id}`} style={{ width: 120, height: 24, marginTop: 6 }}>
+                <polyline fill="none" stroke="var(--acc)" strokeWidth="2" points={inv.belief_history.map((b, i, all) => `${all.length > 1 ? i * 116 / (all.length - 1) + 2 : 2},${22 - (b.weights[h.hypothesis_id] ?? 0) * 20}`).join(' ')} />
+              </svg>
               <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 6 }}>
                 Evidence: {h.supporting_findings.join(', ') || '—'}
                 {h.source_refs.length > 0 && <> · Sources: {h.source_refs.join(', ')}</>}
@@ -326,7 +336,7 @@ export function SelectionPanel({ inv }: { inv: Investigation }) {
     const fixes = r.candidates.filter((c) => c.kind === 'corrective');
     return (
       <>
-        <Table label={`Ranked tests, step ${r.step}`} head={['Test', 'Info gain (bits)', 'Cost', 'Score', 'Status']}>
+        <Table label={`Ranked tests, step ${r.step}`} head={['Test', 'Expected separation (bits)', 'Cost', 'Score', 'Status']}>
           {diag.map((c: CandidateScore) => {
             const picked = c.eligible && chosen[r.step - 1] === c.template_id;
             return (
@@ -436,7 +446,7 @@ export function ExperimentsPanel({ inv }: { inv: Investigation }) {
               {e.envelope && (
                 <details style={{ marginTop: 6 }}>
                   <summary style={{ fontSize: 11.5, color: 'var(--t3)', cursor: 'pointer' }}>
-                    Experiment envelope <span style={mono}>{String(e.envelope.envelope_digest).slice(0, 19)}…</span>
+                    Test authorization record (envelope) <span style={mono}>{String(e.envelope.envelope_digest).slice(0, 19)}…</span>
                   </summary>
                   <pre style={{ ...mono, fontSize: 10.5, background: 'var(--sur)', padding: 8, borderRadius: 6, overflowX: 'auto', margin: '6px 0 0' }}>
                     {JSON.stringify(e.envelope, null, 2)}
@@ -446,13 +456,13 @@ export function ExperimentsPanel({ inv }: { inv: Investigation }) {
                   </p>
                 </details>
               )}
-              {e.error && <p role="alert" style={{ fontSize: 12, color: '#ef4444', margin: '6px 0 0' }}>{e.error}</p>}
+              {e.error && <p role="alert" style={{ fontSize: 12, color: 'var(--danger)', margin: '6px 0 0' }}>{e.error}</p>}
             </div>
           ))}
         </div>
       )}
       {inv.denials.length > 0 && (
-        <div role="alert" style={{ marginTop: 12, fontSize: 12, color: '#d97706' }}>
+        <div role="alert" style={{ marginTop: 12, fontSize: 12, color: 'var(--warning)' }}>
           Policy denials: {inv.denials.map((d) => `${d.code} (${d.reason})`).join('; ')}
         </div>
       )}
@@ -488,7 +498,7 @@ export function ResearchPanel({ inv }: { inv: Investigation }) {
       {r.evidence.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 8 }}>
           {[...r.evidence].sort((a, b) => evRank(a, r.mapping) - evRank(b, r.mapping)).map((e) => (
-            <li key={e.source_ref} style={{ border: `1px solid ${r.mapping?.source_ref === e.source_ref ? '#16a34a' : 'var(--bd2)'}`, borderRadius: 8, padding: 10, opacity: e.status === 'ACCEPTED' ? 1 : 0.7 }}>
+            <li key={e.source_ref} style={{ border: `1px solid ${r.mapping?.source_ref === e.source_ref ? 'var(--success)' : 'var(--bd2)'}`, borderRadius: 8, padding: 10, opacity: e.status === 'ACCEPTED' ? 1 : 0.7 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ ...mono, color: 'var(--t3)' }}>{e.source_ref}</span>
                 <a href={e.url} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 12.5, color: 'var(--acc)', fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>{e.title}</a>
@@ -500,7 +510,7 @@ export function ResearchPanel({ inv }: { inv: Investigation }) {
               <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 3 }}>
                 {e.publisher} · {pretty(e.source_type)} · version {e.version_match} · fetched {new Date(e.fetched_at).toLocaleTimeString()}{e.extracted ? ' · extracted' : ''}
               </div>
-              {e.caveats.length > 0 && <div style={{ fontSize: 11.5, color: '#d97706', marginTop: 3 }}>{e.caveats.join(' · ')}</div>}
+              {e.caveats.length > 0 && <div style={{ fontSize: 11.5, color: 'var(--warning)', marginTop: 3 }}>{e.caveats.join(' · ')}</div>}
               {e.excerpt && <blockquote style={{ margin: '6px 0 0', paddingLeft: 10, borderLeft: '2px solid var(--bd)', fontSize: 11.5, color: 'var(--t2)' }}>{e.excerpt.slice(0, 320)}{e.excerpt.length > 320 ? '…' : ''}</blockquote>}
             </li>
           ))}
@@ -549,14 +559,5 @@ export function VerificationPanel({ v }: { v: Verification | null }) {
         </div>
       )}
     </Panel>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div style={{ background: 'var(--sur)', borderRadius: 8, padding: '10px 12px' }}>
-      <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{label}</div>
-      <div style={{ ...mono, fontSize: 14, fontWeight: 600, marginTop: 3 }}>{value}</div>
-    </div>
   );
 }

@@ -14,9 +14,9 @@ export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 const TONES: Record<BadgeTone, { bg: string; c: string }> = {
   neutral: { bg: 'var(--sur)', c: 'var(--t2)' },
   accent: { bg: 'var(--accw)', c: 'var(--acc)' },
-  success: { bg: 'rgba(34,197,94,0.12)', c: '#16a34a' },
-  warning: { bg: 'rgba(217,119,6,0.12)', c: '#d97706' },
-  danger: { bg: 'rgba(239,68,68,0.12)', c: '#ef4444' },
+  success: { bg: 'rgba(34,197,94,0.12)', c: 'var(--success)' },
+  warning: { bg: 'rgba(217,119,6,0.12)', c: 'var(--warning)' },
+  danger: { bg: 'rgba(239,68,68,0.12)', c: 'var(--danger)' },
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

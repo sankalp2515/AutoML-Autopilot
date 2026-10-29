@@ -25,7 +25,7 @@ def build_pipeline(cfg: dict[str, Any], features: list[str] | None = None):
     outdated keyword (e.g. OneHotEncoder(sparse=...)) raises the library's REAL
     error — the T01 incident is reproduced, not simulated."""
     from sklearn.compose import ColumnTransformer
-    from sklearn.ensemble import HistGradientBoostingClassifier
+    from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
     from sklearn.impute import SimpleImputer
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import Pipeline
@@ -41,6 +41,16 @@ def build_pipeline(cfg: dict[str, Any], features: list[str] | None = None):
     if cfg.get("model") == "hist_gradient_boosting":
         est = HistGradientBoostingClassifier(max_iter=200, learning_rate=0.08, random_state=0,
                                              class_weight=cfg.get("class_weight"))
+    elif cfg.get("model") == "random_forest":
+        est = RandomForestClassifier(n_estimators=100, max_depth=12, n_jobs=1, random_state=0,
+                                     class_weight=cfg.get("class_weight"))
+    elif cfg.get("model") == "xgboost":
+        from xgboost import XGBClassifier
+        est = XGBClassifier(n_estimators=100, max_depth=4, n_jobs=1, random_state=0, eval_metric="logloss")
+    elif cfg.get("model") == "lightgbm":
+        from lightgbm import LGBMClassifier
+        est = LGBMClassifier(n_estimators=100, n_jobs=1, random_state=0, verbosity=-1,
+                             class_weight=cfg.get("class_weight"))
     else:
         est = LogisticRegression(max_iter=2000, C=1.0, class_weight=cfg.get("class_weight"))
     return Pipeline([("pre", pre), ("model", est)])
@@ -53,10 +63,11 @@ class Candidate:
     input_fix: dict[str, Any] = field(default_factory=dict)   # {"rescale": {"income": 1000.0}}
     features: list[str] | None = None
     label: str = "candidate"
+    score_column: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {"model_path": self.model_path, "threshold": self.threshold, "input_fix": self.input_fix,
-                "features": self.features, "label": self.label}
+                "features": self.features, "label": self.label, "score_column": self.score_column}
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "Candidate":
@@ -73,6 +84,11 @@ def apply_input_fix(df: pd.DataFrame, fix: dict[str, Any]) -> pd.DataFrame:
 
 
 def predict_proba(cand: Candidate, df: pd.DataFrame) -> np.ndarray:
+    if cand.score_column:
+        values = pd.to_numeric(df[cand.score_column], errors="raise").to_numpy(dtype=float)
+        if not np.isfinite(values).all() or ((values < 0) | (values > 1)).any():
+            raise ValueError("model scores must be finite probabilities between 0 and 1")
+        return values
     import joblib
     model = joblib.load(cand.model_path)
     X = apply_input_fix(df, cand.input_fix)

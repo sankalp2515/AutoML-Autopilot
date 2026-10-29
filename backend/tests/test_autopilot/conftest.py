@@ -1,8 +1,25 @@
 from types import SimpleNamespace
 
 import pytest
+import pytest_asyncio
 
 from app.autopilot import engine
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def finish_background_drivers():
+    """Do not leave DB-writing threads behind when the test event loop closes.
+
+    Especially important on Postgres: a cancelled persistence transaction can
+    otherwise hold the relation lock needed by session teardown.
+    """
+    yield
+    import asyncio
+    from app.autopilot import service
+    loop = asyncio.get_running_loop()
+    tasks = [task for task in list(service._active.values()) if task.get_loop() is loop and not task.done()]
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 @pytest.fixture

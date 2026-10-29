@@ -73,13 +73,17 @@ services:
       <<: *backend-env
       CORS_ALLOW_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:3000}
       AUTOPILOT_CREATES_PER_10MIN: ${AUTOPILOT_CREATES_PER_10MIN:-6}
+      AUTOPILOT_ALERT_TOKEN: ${AUTOPILOT_ALERT_TOKEN:-}
+      AUTOPILOT_SHARE_SECRET: ${AUTOPILOT_SHARE_SECRET:-}
+      AUTOPILOT_UPLOAD_TTL_HOURS: ${AUTOPILOT_UPLOAD_TTL_HOURS:-24}
       AUTOPILOT_DAILY_LLM_CALLS: ${AUTOPILOT_DAILY_LLM_CALLS:-400}
       AUTOPILOT_DAILY_TAVILY_CALLS: ${AUTOPILOT_DAILY_TAVILY_CALLS:-200}
       DATA_DIR: /data
     read_only: true
     tmpfs: ["/tmp"]
     volumes:
-      - artifacts:/data                  # writes user uploads (data/uploads); never reads run artifacts
+      - artifacts:/data                  # uploads, signing key and owner-authorized artifact deletion
+      - ./docs/benchmarks:/docs/benchmarks:ro  # recorded showcase and benchmark evidence
     networks: [backplane]
     depends_on:
       postgres: { condition: service_healthy }
@@ -101,6 +105,7 @@ services:
       DATA_DIR: /data
       AUTOPILOT_RUNNER: process
       AUTOPILOT_WORKER_CONCURRENCY: ${AUTOPILOT_WORKER_CONCURRENCY:-2}
+      AUTOPILOT_UPLOAD_TTL_HOURS: ${AUTOPILOT_UPLOAD_TTL_HOURS:-24}
       AUTOPILOT_EXPERIMENT_TIMEOUT_S: "120"
       AUTOPILOT_VERIFIER_URL: http://verifier:8100
       AUTOPILOT_VERIFIER_TOKEN: ${AUTOPILOT_VERIFIER_TOKEN:?set AUTOPILOT_VERIFIER_TOKEN in .env}
@@ -165,6 +170,7 @@ services:
         API_INTERNAL_URL: http://api:8000
         NEXT_PUBLIC_API_URL: ""
         NEXT_PUBLIC_AUTOPILOT_ONLY: "true"
+        NEXT_PUBLIC_SITE_URL: ${PUBLIC_ORIGIN:-http://localhost:3000}
     read_only: true
     tmpfs: ["/tmp", "/app/.next/cache:uid=10001,gid=10001"]
     ports:

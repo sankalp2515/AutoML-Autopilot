@@ -86,7 +86,8 @@ class Workspace:
     def incumbent(self) -> mlcore.Candidate:
         pack = self.pack()
         thr = float((pack.get("serving") or {}).get("threshold", pack["pipeline"]["threshold"]))
-        return mlcore.Candidate(self.model_path("incumbent"), thr, label="incumbent")
+        return mlcore.Candidate(self.model_path("incumbent"), thr, label="incumbent",
+                                score_column=pack.get("score_column"))
 
     def write_output(self, name: str, payload: dict[str, Any]) -> str:
         p = self.outputs / f"{name}.json"

@@ -46,6 +46,8 @@ def verify(ws: Workspace, candidate: dict[str, Any], self_report: dict[str, Any]
     cfg = pack.get("incumbent_pipeline") or pack["pipeline"]
     contract = set(cfg["numeric"] + cfg["categorical"] + cfg.get("optional_features", []))
     cand = mlcore.Candidate.from_dict(candidate)
+    if cand.score_column and (cand.score_column != pack.get("score_column") or cand.input_fix):
+        raise ValueError("score candidates must use the declared immutable scores without input repairs")
     inc = ws.incumbent()
     checks: list[dict[str, Any]] = []
     metrics: dict[str, Any] = {}
@@ -53,7 +55,9 @@ def verify(ws: Workspace, candidate: dict[str, Any], self_report: dict[str, Any]
     def receipt(decision: str, reasons: list[str]) -> dict[str, Any]:
         return {"verifier_version": VERIFIER_VERSION, "decision": decision, "reason_codes": reasons,
                 "checks": checks, "metrics": metrics, "candidate": cand.label, "incumbent": inc.label,
-                "metric": metric, "mode": mode, "protocol_hash": expected_protocol_hash, "at": utcnow()}
+                "metric": metric, "mode": mode, "protocol_hash": expected_protocol_hash, "at": utcnow(),
+                "prediction_sources": {"incumbent": "user_scores" if inc.score_column else "reconstructed_model",
+                                       "candidate": "user_scores" if cand.score_column else "reconstructed_model"}}
 
     # 1 artifact integrity
     try:

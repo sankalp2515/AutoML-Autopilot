@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="590" viewBox="0 0 1100 590">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#0b6e74"/></marker></defs>
+<rect width="1100" height="590" rx="16" fill="#fbfaf6"/>
+<g font-family="Arial,sans-serif" fill="#1c1a14"><text x="40" y="48" font-size="26" font-weight="bold">AutoML Autopilot · reasoning proposes, verification decides</text>
+<text x="40" y="77" font-size="15" fill="#5c574a">Built service boundaries. Approval records a decision; it does not deploy a model.</text>
+<g stroke="#0b6e74" stroke-width="2" fill="#eef5f3">
+<rect x="40" y="115" width="230" height="96" rx="10"/><rect x="325" y="115" width="300" height="96" rx="10"/><rect x="700" y="115" width="350" height="96" rx="10"/>
+<rect x="325" y="265" width="300" height="110" rx="10"/><rect x="700" y="265" width="350" height="110" rx="10"/>
+<rect x="40" y="265" width="230" height="110" rx="10"/>
+<rect x="325" y="435" width="300" height="100" rx="10"/><rect x="700" y="435" width="350" height="100" rx="10"/>
+</g>
+<g font-size="18" font-weight="bold"><text x="60" y="145">Next.js experience</text><text x="345" y="145">FastAPI control plane</text><text x="720" y="145">Worker · investigation engine</text><text x="60" y="295">Postgres</text><text x="345" y="295">Nemotron + Tavily</text><text x="720" y="295">Bounded experiment process</text><text x="345" y="465">Shared artifact volume</text><text x="720" y="465">Independent verifier service</text></g>
+<g font-size="14"><text x="60" y="171">Upload / sample / guided example</text><text x="60" y="193">Summary / evidence / audit report</text>
+<text x="345" y="171">Session scope, validation, review, sharing</text><text x="345" y="193">Queues work; holds no provider keys</text>
+<text x="720" y="171">Leases, findings, hypotheses, test selection</text><text x="720" y="193">Policy admits only approved templates</text>
+<text x="60" y="323">Run state, queue, worker leases</text><text x="60" y="348">Append-only events and receipts</text>
+<text x="345" y="323">Proposes causes / reads documents</text><text x="345" y="348">Context and citations; no metric authority</text>
+<text x="720" y="323">Killable child · fixed templates</text><text x="720" y="348">Validation predictions and artifacts</text>
+<text x="345" y="493">Frozen inputs / split protocol / models</text><text x="345" y="516">Hashes identify the evaluated artifacts</text>
+<text x="720" y="493">Read-only volume · no provider keys</text><text x="720" y="516">Holdout, paired CI, group guardrail, verdict</text></g>
+<g stroke="#0b6e74" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M270 163H320"/><path d="M625 163H695"/><path d="M325 185L270 290"/><path d="M700 185H670V315H630"/><path d="M875 211V260"/><path d="M875 375V430"/><path d="M760 375V405H475V430"/><path d="M625 485H695"/></g>
+<text x="40" y="570" font-size="13" fill="#5c574a">Model score columns are optional. Threshold fixes can use real scores; input repair and retraining require a reconstructed model.</text>
+</g></svg>

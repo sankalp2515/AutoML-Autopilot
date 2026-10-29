@@ -169,6 +169,9 @@ class Settings(BaseSettings):
     AUTOPILOT_DAILY_LLM_CALLS: int = 400       # Nemotron calls per UTC day, all visitors
     AUTOPILOT_DAILY_TAVILY_CALLS: int = 200    # Tavily calls per UTC day, all visitors
     AUTOPILOT_IDLE_EXPIRY_MIN: int = 15        # step-mode runs untouched this long are cancelled
+    AUTOPILOT_SHARE_SECRET: str = ""          # otherwise persisted in DATA_DIR/.share-key
+    AUTOPILOT_ALERT_TOKEN: str = ""           # disabled until configured
+    AUTOPILOT_UPLOAD_TTL_HOURS: int = 24
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

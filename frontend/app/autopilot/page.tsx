@@ -77,11 +77,11 @@ export default function AutopilotHome() {
       .catch((e: Error) => setError(e.message));
   }, []);
 
-  async function start() {
+  async function start(sample = false) {
     setBusy(true);
     try {
       const key = `${picked}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const r = await autopilot.create({ scenario_id: picked, auto_run: !stepMode, research, planner }, key);
+      const r = await autopilot.create({ scenario_id: sample ? 'S02' : picked, auto_run: sample || !stepMode, research: sample ? 'auto' : research, planner: sample ? 'auto' : planner }, key);
       router.push(`/autopilot/${r.run_id}`);
     } catch (e) {
       toast((e as Error).message, 'error');
@@ -103,6 +103,11 @@ export default function AutopilotHome() {
           an independent verifier on a frozen, single-use holdout. Rejecting a bad fix or saying &ldquo;not enough
           evidence&rdquo; counts as a correct answer.
         </p>
+        <div className="ap-actions" style={{ marginTop: 14 }}>
+          <Button onClick={() => start(true)} loading={busy}>Run a sample incident (~40 s)</Button>
+          <Link href="/autopilot/new" className="ds-ghost ap-link">Use your own data</Link>
+          <Link href="/autopilot/example" className="ap-link">See a 60-second example →</Link>
+        </div>
         <div style={{ marginTop: 14 }}><ProviderBadges p={providers} /></div>
         <HowItWorks />
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginTop: 16, padding: '12px 14px',
@@ -138,7 +143,13 @@ export default function AutopilotHome() {
                   ...group.map((s) => {
                 const on = s.scenario_id === picked;
                 return (
-                  <button key={s.scenario_id} role="radio" aria-checked={on} onClick={() => setPicked(s.scenario_id)}
+                  <button key={s.scenario_id} role="radio" aria-checked={on} tabIndex={on ? 0 : -1} onClick={() => setPicked(s.scenario_id)}
+                    onKeyDown={(e) => {
+                      const radios = Array.from(e.currentTarget.closest('[role=radiogroup]')!.querySelectorAll<HTMLButtonElement>('[role=radio]'));
+                      const index = radios.indexOf(e.currentTarget);
+                      const next = e.key === 'Home' ? 0 : e.key === 'End' ? radios.length - 1 : ['ArrowRight', 'ArrowDown'].includes(e.key) ? (index + 1) % radios.length : ['ArrowLeft', 'ArrowUp'].includes(e.key) ? (index + radios.length - 1) % radios.length : -1;
+                      if (next >= 0) { e.preventDefault(); radios[next].click(); radios[next].focus(); }
+                    }}
                     style={{ textAlign: 'left', padding: '12px 18px', border: 'none', borderBottom: '1px solid var(--bd2)', cursor: 'pointer',
                              background: on ? 'var(--accw)' : 'transparent', color: 'var(--t1)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                     <span className="ds-mono" style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--acc)' : 'var(--t3)', minWidth: 30, paddingTop: 2 }}>{s.scenario_id}</span>
@@ -164,6 +175,7 @@ export default function AutopilotHome() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <Card aria-labelledby="run-opts">
             <h2 id="run-opts" style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>2 · Run the investigation</h2>
+            <details><summary style={{ marginBottom: 12, cursor: 'pointer' }}>Advanced investigation options</summary>
             <fieldset style={{ border: 'none', padding: 0, margin: '0 0 12px' }}>
               <legend style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 6 }}>Execution</legend>
               <label style={{ display: 'flex', gap: 8, fontSize: 13, alignItems: 'center', marginBottom: 6 }}>
@@ -191,7 +203,8 @@ export default function AutopilotHome() {
                 <input type="radio" name="research" checked={research === 'off'} onChange={() => setResearch('off')} /> Off (ablation)
               </label>
             </fieldset>
-            <Button onClick={start} loading={busy} disabled={!scenarios} fullWidth>
+            </details>
+            <Button onClick={() => start()} loading={busy} disabled={!scenarios} fullWidth>
               Start investigation · {picked}
             </Button>
           </Card>
@@ -208,8 +221,8 @@ export default function AutopilotHome() {
                 {recent.map((r) => (
                   <li key={r.run_id}>
                     <Link href={`/autopilot/${r.run_id}`} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--bd2)', color: 'var(--t1)', textDecoration: 'none' }}>
-                      <span className="ds-mono" style={{ fontSize: 11, color: 'var(--t3)', minWidth: 30 }}>{r.scenario_id}</span>
-                      <span style={{ flex: 1, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title ?? r.run_id.slice(0, 8)}</span>
+                      <Badge tone="neutral">{r.scenario_id.startsWith('upload:') ? 'Your data' : r.scenario_id}</Badge>
+                      <span style={{ flex: 1, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title ?? 'New investigation'}</span>
                       <Badge tone={decisionTone(r.decision)}>{r.decision ? pretty(r.decision) : pretty(r.status)}</Badge>
                     </Link>
                   </li>

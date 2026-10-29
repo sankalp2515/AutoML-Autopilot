@@ -8,12 +8,34 @@ then has an independent verifier prove the fix before anyone ships it.**
 NVIDIA Nemotron on Nebius Token Factory · Tavily · FastAPI · Next.js · Postgres · Docker
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
-![Tests](https://img.shields.io/badge/autopilot%20tests-105%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/autopilot%20tests-offline%20%2B%20Postgres-brightgreen)
 ![Services](https://img.shields.io/badge/docker-5%20services-2496ED)
 
 </div>
 
 ---
+
+## Test it in 2 minutes
+
+Open the app and choose **See a 60-second example** for an instant, explicitly recorded
+investigation with a five-stop evidence tour. Choose **Run a sample incident (~40 s)**
+for a new investigation. Read **Summary**, inspect **Evidence**, then open **Audit trail**
+for the selector, model calls and protocol. **Share read-only link** creates a 24-hour
+report link; approval records a named decision and never changes a live model.
+
+Try **Your data → Public data: UCI Adult adapter incident** for real census rows with
+a disclosed injected fault. Optional probability columns let threshold studies use
+your actual model scores. [Input and integration contracts](docs/PRODUCT_OPERATIONS.md).
+
+The screenshots below were captured from a local run with real API/experiment/verifier
+execution and provider keys disabled. The guided example is a recorded rules-planner
+run, not evidence of a live Nemotron call.
+
+| Start an investigation | Read the decision |
+|---|---|
+| ![Home](docs/assets/autopilot-home.png) | ![Verified result](docs/assets/autopilot-verdict.png) |
+| Inspect measured evidence | Bring your own incident |
+| ![Evidence](docs/assets/autopilot-evidence.png) | ![Upload](docs/assets/autopilot-upload.png) |
 
 ## The problem
 
@@ -70,11 +92,19 @@ thread, release notes, ticket text) and, if relevant, an **error log**, **packag
 before/after**, and up to three **public documentation URLs**. Three sample incidents
 (downloadable CSVs) let you try the flow in a minute.
 
-Autopilot rebuilds your model family from the reference window to stand in for your model.
+If both windows contain a `score` probability column (or you choose another score column),
+Autopilot uses those scores for measured quality, threshold study and threshold-only
+verification. Scores must be for the chosen positive class, finite and between 0 and 1.
+They are excluded from training. Without scores, Autopilot rebuilds your model family
+from the reference window to stand in for your model. Input repairs and retraining
+produce reconstructed candidates; the receipt identifies both prediction sources.
 It does not load model binaries: unpickling an uploaded model would let it run code on the
-server. Rows stay on the server; Nemotron sees column names and aggregate statistics only,
+server. Rows stay on the server; Nemotron receives column names, aggregates and the team
+notes you supply (do not paste secrets),
 and Tavily sees library names, versions and the URLs you list. Uploads are visible only to
-the browser session that made them. Limits: 20 MB / 200,000 rows / 200 columns per file,
+the browser session that made them unless you explicitly share a report. Uploads and
+derived investigations are eligible for deletion after 24 hours; active jobs are retained
+until they finish. Limits: 20 MB / 200,000 rows / 200 columns per file,
 binary classification.
 
 ## How Tavily is used
@@ -164,6 +194,8 @@ hurts rural customers) are good first runs.
 Five containers on one private network; only `web` publishes a port
 ([details](docs/DEPLOYMENT.md)).
 
+![Implemented architecture](docs/assets/autopilot-architecture.svg)
+
 ```
  browser ──► web (Next.js) ──/api──► api (FastAPI control plane) ──┐
                                                                     ├──► postgres (state, queue, leases)
@@ -177,25 +209,27 @@ Five containers on one private network; only `web` publishes a port
 |---|---|---|---|
 | Experience | `web` | Show evidence, receipts, approvals | Hold any secret |
 | Control | `api` | Validate, scope per visitor, rate-limit, queue | Execute investigations, hold provider keys |
-| Execution | `worker` | Claim by lease, run vetted templates, call Nemotron/Tavily | Read final-test rows, change a live model |
+| Execution | `worker` | Claim by lease, run vetted templates, call Nemotron/Tavily | Use final-test rows through diagnostic templates, change a live model |
 | Verification | `verifier` | Read the frozen split, issue verdicts | Reach the internet, write artifacts, call a model |
 | State | `postgres` | Store investigations, append-only events, leases | Be reached from outside |
 
 **Reliability, tested in containers:** killing the worker mid-investigation leaves the run
 `FAILED / E_INTERRUPTED` when its lease expires (about 60 s). It is never resumed half-way
-and never reported as a success. Claims are compare-and-swap, so two workers can never run
-the same investigation.
+and never reported as a success in the tested crash path. Claims use compare-and-swap;
+stale-worker write fencing is a known open item.
 
 **Trust records:** every item is labelled *observed* (measured), *retrieved* (Tavily) or
 *inferred* (model or rule). Every experiment is admitted as an envelope (dataset, split and
 evaluation-protocol digests, template version, parameters, expected outcomes, cited
-sources, resource ceiling) whose digest the verifier checks before it runs.
+sources, resource ceiling). The engine checks envelope self-consistency before requesting
+verification. This is a checksum, not a cryptographic signature. OS-enforced sole access
+to final labels and verifier-owned durable holdout consumption remain readiness items.
 
 ## Tests
 
 ```bash
 cd backend && pip install -r requirements-runtime.txt pytest pytest-asyncio
-python -m pytest tests/test_autopilot -q        # 105 tests, no keys needed
+python -m pytest tests/test_autopilot -q        # no provider keys needed
 ```
 
 They cover every incident against the hidden oracle, the information-gain maths, the
@@ -207,10 +241,12 @@ fail-safe recovery, per-visitor isolation and the verifier service's authenticat
 ## Honest limits
 
 - Your model is represented by its family retrained on your reference window, not your exact
-  binary. Rescaling and threshold fixes transfer directly; a sourced library fix is a recommendation.
+  binary unless you supply probability scores. Threshold-only fixes can use those scores;
+  input repairs and retrains are evaluated as reconstructed candidates. A sourced library fix is a recommendation.
 - Belief weights are an uncalibrated heuristic. Information gain is exact only given them.
 - Experiments run as vetted templates in killable processes, not in a gVisor/microVM sandbox.
-- Tabular binary classification with scikit-learn only.
+- Tabular binary classification; logistic regression, histogram gradient boosting and
+  random forest, plus XGBoost/LightGBM when installed.
 - Approval records a decision; there is deliberately no path that changes a live model.
 
 ## What was built during the hackathon
@@ -228,6 +264,13 @@ Written during the submission period:
 - The Docker deployment (`docker-compose.yml`, `backend/Dockerfile.autopilot`,
   `frontend/Dockerfile.prod`).
 - The docs in `docs/`.
+
+**Repository map:** `backend/app/autopilot`, `frontend/app/autopilot`,
+`frontend/components/autopilot`, and `frontend/lib/autopilot.ts` are the submission's
+main implementation. `backend/app/agents`, legacy API routes, and frontend
+`runs/registry/settings/login` belong to the earlier orchestrator. Shared config,
+auth, database and logging remain dependencies. Commits `6f2f49a..5387bc6` on 28 Oct
+2026 document the prior Autopilot work; see the review for the current working-tree scope.
 
 ## Docs
 

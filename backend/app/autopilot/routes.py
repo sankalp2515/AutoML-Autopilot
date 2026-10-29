@@ -6,12 +6,14 @@ tenants' runs). Responses never include server file paths or secrets.
 from __future__ import annotations
 
 import json
+import hmac
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, ConfigDict, Field
 
-from app.autopilot import guard, service, uploads
+from app.autopilot import guard, service, uploads, sharing
 from app.autopilot.schemas import TERMINAL, CreateInvestigation, ReviewRequest, Status
 from app.core.auth import PUBLIC_TENANT, current_tenant
 
@@ -184,6 +186,12 @@ async def ablation_() -> dict:
     return {"available": True, **{k: v for k, v in data.items() if k not in ("rows", "tavily_rows")}}
 
 
+@router.get("/benchmark/public-data")
+async def public_benchmark_() -> dict:
+    path = BENCHMARK_FILE.with_name("adult_benchmark.json")
+    return {"available": True, **json.loads(path.read_text(encoding="utf-8"))} if path.exists() else {"available": False}
+
+
 # ── Bring your own incident ──────────────────────────────────────────────────
 async def _read_limited(f: UploadFile, name: str) -> bytes:
     data = await f.read(uploads.MAX_BYTES + 1)
@@ -231,13 +239,77 @@ async def upload_configure_(upload_id: str, spec: uploads.UploadSpec,
 @router.delete("/uploads/{upload_id}", status_code=204)
 async def upload_delete_(upload_id: str, tenant: str = Depends(autopilot_tenant)) -> Response:
     try:
-        uploads.delete(tenant, upload_id)
+        await service.delete_upload(tenant, upload_id)
     except (KeyError, uploads.UploadError):
         raise HTTPException(404, "upload not found") from None
+    except PermissionError as e:
+        raise HTTPException(409, str(e)) from None
     return Response(status_code=204)
 
 
+@router.post("/investigations/{investigation_id}/share")
+async def share_create_(investigation_id: str, tenant: str = Depends(autopilot_tenant)) -> dict:
+    st = await _load(investigation_id, tenant)
+    if Status(st["status"]) not in TERMINAL:
+        raise HTTPException(409, "Finish the investigation before sharing it")
+    token, expires = sharing.sign(investigation_id)
+    return {"token": token, "expires_at": expires, "path": f"/autopilot/share/{token}"}
+
+
+@router.get("/shared/{token}")
+async def share_get_(token: str) -> JSONResponse:
+    try:
+        run_id = sharing.resolve(token)
+    except ValueError:
+        raise HTTPException(404, "Invalid or expired share link") from None
+    st = await service.shared_get(run_id)
+    if st is None:
+        raise HTTPException(404, "Investigation no longer available")
+    return JSONResponse(st, headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"})
+
+
+@router.get("/showcase")
+async def showcase_() -> dict:
+    path = BENCHMARK_FILE.parent / "autopilot_showcase.json"
+    if not path.exists():
+        raise HTTPException(503, "Showcase unavailable")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+class AlertHook(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    upload_id: str = Field(pattern=r"^[0-9a-f]{12}$")
+    source: str = Field(default="monitoring", max_length=80)
+    alert_id: str = Field(min_length=1, max_length=100)
+
+
+@router.post("/hooks/alert", status_code=202)
+async def alert_(body: AlertHook, request: Request, tenant: str = Depends(autopilot_tenant),
+                 x_alert_token: str | None = Header(default=None)) -> JSONResponse:
+    expected = service.settings.AUTOPILOT_ALERT_TOKEN
+    if not expected or not x_alert_token or not hmac.compare_digest(expected, x_alert_token):
+        raise HTTPException(401, "Invalid alert token")
+    # Adapter contract: monitoring systems reference an already configured private upload.
+    # No arbitrary URL fetching or outbound Slack messages take place here.
+    import hashlib
+    key = "alert-" + hashlib.sha256(f"{body.source}:{body.alert_id}".encode()).hexdigest()
+    return await create_(CreateInvestigation(scenario_id=f"upload:{body.upload_id}"), request, tenant, key)
+
+
+@router.get("/investigations/{investigation_id}/summary")
+async def summary_(investigation_id: str, tenant: str = Depends(autopilot_tenant)) -> dict:
+    st = await _load(investigation_id, tenant)
+    d = st.get("decision") or {}
+    text = f"{(st.get('scenario') or {}).get('title', 'Investigation')}: {d.get('summary', st['status'])}"
+    return {"text": text, "blocks": [{"type": "section", "text": {"type": "plain_text", "text": text[:2900]}}],
+            "next_action": d.get("next_action"), "run_id": investigation_id}
+
+
 SAMPLES = {
+    "adult-adapter": {"scenario": "A01", "title": "Public data: UCI Adult adapter incident",
+                      "symptom": "Income classifier quality fell after an adapter release.",
+                      "notes": "UCI Adult CC BY 4.0. Random windows with an injected age-unit fault, not a real production outage.",
+                      "serving_threshold": 0.4},
     "units-bug": {"scenario": "S02", "title": "Loan model: false alarms after a data platform release",
                   "symptom": "Approvals team reports many false alarms since Tuesday.",
                   "notes": "Data platform shipped ingestion v2.3 on Tuesday: 'standardised monetary fields'.",
@@ -261,7 +333,10 @@ async def samples_() -> dict:
                                        "model_family": "logistic_regression",
                                        "serving_threshold": v["serving_threshold"],
                                        "trained_threshold": v.get("trained_threshold"),
-                                       "segment_column": "region", "exclude_columns": ["inquiries_6m"]}}
+                                       "segment_column": "region", "exclude_columns": ["inquiries_6m"]}
+                         if k != "adult-adapter" else {"target": "above_50k", "positive_label": "1", "metric": "f1",
+                            "model_family": "logistic_regression", "serving_threshold": 0.4,
+                            "exclude_columns": ["fnlwgt", "education", "race", "sex", "native_country"]}}
                         for k, v in SAMPLES.items()]}
 
 
