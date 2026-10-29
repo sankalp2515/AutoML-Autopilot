@@ -1,0 +1,229 @@
+{
+  "fixture": "fraud-batch",
+  "kind": "checker-proof",
+  "runner": "process-unisolated",
+  "autonomous_agent": false,
+  "base_commit_sha": "f99f9042bf776d461ef01c45481d03b3df1bc5cf",
+  "snapshot_digest": "sha256:f6b9504a8f90198e532ed23c7cd449199e2ccc50f52bc8d2f7d3b1fe5ca22c5b",
+  "receipts": {
+    "wrong_fix": {
+      "code": {
+        "task_id": "proof-fraud-batch",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0",
+        "diff_digest": "sha256:47693fde68f660f470d945755f77176c62e4497b80333f6dadf10842f5440d4a",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (1 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 3,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:51:06.905+00:00",
+        "receipt_digest": "sha256:88cc8daacc296419e990cb61c07c4ad9e782ebac064cd4e911ac1254ee3f1669",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-fraud-batch",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0",
+        "diff_digest": "sha256:47693fde68f660f470d945755f77176c62e4497b80333f6dadf10842f5440d4a",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "train_serve_parity",
+            "status": "FAIL",
+            "detail": "online scoring produced no valid row-aligned report",
+            "evidence": {
+              "tail": ""
+            }
+          }
+        ],
+        "decision": "REJECTED",
+        "reasons": [
+          "E_TRAIN_SERVE_PARITY"
+        ],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:51:21.634+00:00",
+        "receipt_digest": "sha256:54b6b3f01c4af34049ca78e42a81e4fd9eebcbab61442f13990578f5d0257125",
+        "kind": "ml",
+        "metrics": {},
+        "holdout_opened": false
+      }
+    },
+    "reference_fix": {
+      "code": {
+        "task_id": "proof-fraud-batch",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0",
+        "diff_digest": "sha256:788602cd8799dbd21826f01a2bcad0663d36a5c1d306e33305964d93a5cad860",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (3 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 4,
+              "added_tests": [
+                "tests/test_fraud_regression.py::test_probability_roundtrip"
+              ]
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:51:37.995+00:00",
+        "receipt_digest": "sha256:c5b2c666e304778ca736b2e4125dad8aded41137b81b8360d791f7e7f0550b5e",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-fraud-batch",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:83ec6644a06967ebd090754213b5444f43ece91c9a294891b8958bb89536f0b0",
+        "diff_digest": "sha256:788602cd8799dbd21826f01a2bcad0663d36a5c1d306e33305964d93a5cad860",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "train_serve_parity",
+            "status": "PASS",
+            "detail": "online scores match batch scores on 200 rows (max |\u0394| 1.11e-16)",
+            "evidence": {
+              "entrypoint": "fraud.serve:score_request",
+              "tolerance": 1e-06,
+              "max_abs_diff": 1.1102230246251565e-16,
+              "mismatched_rows": 0,
+              "median_abs_diff": 3.382710778154774e-17,
+              "errors": [],
+              "comparison_authority": "verifier",
+              "fresh_execution_branch": true
+            }
+          },
+          {
+            "name": "holdout_integrity",
+            "status": "PASS",
+            "detail": "holdout labels opened once, for the frozen finalist",
+            "evidence": {
+              "rows": 600,
+              "positives": 300
+            }
+          },
+          {
+            "name": "holdout_non_inferior",
+            "status": "PASS",
+            "detail": "roc_auc 1.0 vs last known good 1.0 (margin 0.02); the base commit cannot produce predictions",
+            "evidence": {
+              "candidate": 1.0,
+              "recorded_baseline": 1.0
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:51:57.158+00:00",
+        "receipt_digest": "sha256:3f6a55cfaae9959558ca267f7596557bbd8e760dd194c2fc334973bd5c647958",
+        "kind": "ml",
+        "metrics": {
+          "holdout": {
+            "metric": "roc_auc",
+            "candidate": 1.0,
+            "rows": 600
+          }
+        },
+        "holdout_opened": true
+      }
+    }
+  }
+}

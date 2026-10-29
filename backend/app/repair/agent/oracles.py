@@ -6,6 +6,7 @@ handles labels or sealed tests, and receipts are never shown to the model.
 from __future__ import annotations
 
 import httpx
+import os
 
 from app.config import settings
 from app.repair import contracts as c
@@ -54,4 +55,6 @@ class RemoteOracles:
 def make_oracles(runner, ref: GradeRef):
     if settings.REPAIR_VERIFIER_URL:
         return RemoteOracles(ref, settings.REPAIR_VERIFIER_URL, settings.REPAIR_VERIFIER_TOKEN)
-    return LocalOracles(runner, ref)
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return LocalOracles(runner, ref)
+    raise RuntimeError("Configure REPAIR_VERIFIER_URL: production workers cannot grade their own candidates")

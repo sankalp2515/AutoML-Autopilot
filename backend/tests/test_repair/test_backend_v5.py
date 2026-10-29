@@ -180,6 +180,7 @@ def test_draft_pr_uses_git_data_api_and_never_merges(tmp_path):
     assert out["number"] == 1 and not any("merge" in p for _, p in seen)
 
 
+@pytest.mark.slow
 async def test_durable_run_end_to_end(svc, tmp_path, monkeypatch):
     """Sample repo → frozen task → worker engine with a scripted model → REVIEW_READY with
     persisted events, candidates and receipts."""

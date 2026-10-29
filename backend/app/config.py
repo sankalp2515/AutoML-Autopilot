@@ -146,9 +146,10 @@ class Settings(BaseSettings):
     # output is schema-checked JSON, so the trace adds latency without adding trust.
     NVIDIA_ENABLE_THINKING: bool = False
     # v5 repair agent tiers. Ultra reasons about hypotheses; the coder writes edits; the fast
-    # tier is reserved for compaction. NVIDIA's catalog does not serve Super to this account,
-    # so the coder falls back to Ultra there. Verify Nebius ids when the key arrives (K9).
-    NEBIUS_CODER_MODEL: str = "nvidia/Nemotron-3-Super-120b-a12b"
+    # tier is reserved for compaction. Historical NVIDIA catalog probes returned 404 for
+    # cheaper tiers, so its explicit coding fallback remains Ultra pending a successful probe.
+    # Nebius IDs follow the official cookbook; account-level verification is still required.
+    NEBIUS_CODER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b"
     NVIDIA_CODER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
     # v5 services. Empty URLs mean "in-process" (development); production sets both.
     REPAIR_SANDBOX_URL: str = ""             # sandbox-runner service (only component with Docker access)

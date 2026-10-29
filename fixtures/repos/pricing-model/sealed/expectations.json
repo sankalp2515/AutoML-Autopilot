@@ -1,0 +1,6 @@
+{
+  "fault": "B14",
+  "rejection_check": "train_serve_parity",
+  "story": "Make scoring handle a zero list price without changing valid predictions.",
+  "synthetic": true
+}

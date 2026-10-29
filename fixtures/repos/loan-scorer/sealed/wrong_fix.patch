@@ -1,0 +1,16 @@
+--- a/scorer/features.py
++++ b/scorer/features.py
+@@ -3,4 +3,4 @@
+ 
+ def build_preprocessor():
+     return ColumnTransformer([("numeric", StandardScaler(), ["signal", "aux"]),
+-        ("category", OneHotEncoder(sparse=False, handle_unknown="ignore"), ["employment_type"])])
++        ("category", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), ["employment_type"])])
+--- a/scorer/serve.py
++++ b/scorer/serve.py
+@@ -2,4 +2,4 @@
+ from scorer.model import scores
+ 
+ def score_request(payload, model):
+-    return float(scores(pd.DataFrame([payload]), model)[0])
++    return float(scores(pd.DataFrame([payload]), model)[0]) * 0.9

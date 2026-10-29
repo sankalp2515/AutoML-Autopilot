@@ -79,6 +79,7 @@ function normalize(
     diff_lines: raw.diff_lines || 0,
     eligible: !!raw.eligible,
     screen_receipt: raw.screen_receipt,
+    skipped_files: raw.skipped_files,
   };
 }
 

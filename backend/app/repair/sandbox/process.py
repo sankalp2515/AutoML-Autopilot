@@ -105,7 +105,9 @@ class ProcessRunner:
         argv = [sys.executable if i == 0 and a == "python" else a for i, a in enumerate(argv)]
         penv = {k: os.environ[k] for k in _ENV_KEEP if k in os.environ}
         penv.update({"PYTHONHASHSEED": "0", "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": str(cwd),
-                     "PYTHONIOENCODING": "utf-8"})
+                     "PYTHONIOENCODING": "utf-8", "OMP_NUM_THREADS": "1",
+                     "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
+                     "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"})
         penv.update(env or {})
         kw = {"start_new_session": True} if os.name != "nt" else {
             "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}

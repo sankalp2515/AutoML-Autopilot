@@ -111,6 +111,7 @@ def scripted_transport():
     return httpx.MockTransport(handler)
 
 
+@pytest.mark.slow
 def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path):
     contract = c.RepoContract.from_yaml((REPO / "autopilot.yaml").read_text(encoding="utf-8"))
     manifest = c.SealedManifest.from_yaml((SEALED / "manifest.yaml").read_text(encoding="utf-8"))
@@ -138,6 +139,7 @@ def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path
     assert any(e["type"] == "tool.denied" for e in rep.events)
 
 
+@pytest.mark.slow
 def test_budget_exhaustion_stops_a_candidate_honestly(tmp_path):
     contract = c.RepoContract.from_yaml((REPO / "autopilot.yaml").read_text(encoding="utf-8"))
     manifest = c.SealedManifest.from_yaml((SEALED / "manifest.yaml").read_text(encoding="utf-8"))

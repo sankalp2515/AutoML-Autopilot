@@ -1,0 +1,9 @@
+--- a/pricing/serve.py
++++ b/pricing/serve.py
+@@ -2,4 +2,6 @@
+ from pricing.model import scores
+ 
+ def score_request(payload, model):
++    if payload["list_price"] == 0:
++        return 0.5
+     return float(scores(pd.DataFrame([payload]), model)[0])

@@ -1,0 +1,237 @@
+{
+  "fixture": "refund-risk",
+  "kind": "checker-proof",
+  "runner": "process-unisolated",
+  "autonomous_agent": false,
+  "base_commit_sha": "3b5c01b80814851139037cd12cc550d82da668e2",
+  "snapshot_digest": "sha256:ed123745077d1af62e7410fa7a577277af4c571c5c44caae77426a833470b9db",
+  "receipts": {
+    "wrong_fix": {
+      "code": {
+        "task_id": "proof-refund-risk",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "diff_digest": "sha256:8cd4d75a8d2015a74c9dd697466ade9005afe2a5f2a7ebe35114c27ba1ee995a",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (2 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 3,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:48:56.551+00:00",
+        "receipt_digest": "sha256:4404370366f9b9104fe2abab2319263bdb710de4d02c64f78f00cae8ef3fefd5",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-refund-risk",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "diff_digest": "sha256:8cd4d75a8d2015a74c9dd697466ade9005afe2a5f2a7ebe35114c27ba1ee995a",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "no_target_leakage",
+            "status": "FAIL",
+            "detail": "scores change when post-outcome columns are removed: the model uses information that does not exist at prediction time",
+            "evidence": {
+              "columns": [
+                "support_contact_after_delivery"
+              ],
+              "max_abs_diff": 0.882871530780609
+            }
+          }
+        ],
+        "decision": "REJECTED",
+        "reasons": [
+          "E_NO_TARGET_LEAKAGE"
+        ],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:49:09.110+00:00",
+        "receipt_digest": "sha256:04ae54ef7176b9339bbbff1325924594f6db600cb28db2047ac9ff080d02a045",
+        "kind": "ml",
+        "metrics": {},
+        "holdout_opened": false
+      }
+    },
+    "reference_fix": {
+      "code": {
+        "task_id": "proof-refund-risk",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "diff_digest": "sha256:36dc82841cfb0909b2d48a976b5f3a845e70578a868891543ba4b2871c9719be",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (2 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 4,
+              "added_tests": [
+                "tests/test_refunds_regression.py::test_probability_roundtrip"
+              ]
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:49:15.655+00:00",
+        "receipt_digest": "sha256:b2bdb50d39f666c546598299222e1d152ec7739407a174da9a6a499635d2a884",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-refund-risk",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "diff_digest": "sha256:36dc82841cfb0909b2d48a976b5f3a845e70578a868891543ba4b2871c9719be",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "no_target_leakage",
+            "status": "PASS",
+            "detail": "scores do not depend on post-outcome columns",
+            "evidence": {
+              "columns": [
+                "support_contact_after_delivery"
+              ],
+              "max_abs_diff": 0.0
+            }
+          },
+          {
+            "name": "holdout_integrity",
+            "status": "PASS",
+            "detail": "holdout labels opened once, for the frozen finalist",
+            "evidence": {
+              "rows": 600,
+              "positives": 300
+            }
+          },
+          {
+            "name": "holdout_improves",
+            "status": "PASS",
+            "detail": "recall improves; 95% CI excludes zero",
+            "evidence": {
+              "delta": 0.3733,
+              "ci_low": 0.3175,
+              "ci_high": 0.4277,
+              "n_boot": 400
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T21:49:31.078+00:00",
+        "receipt_digest": "sha256:4bdd716cb4f350ff5d57d83940ac1d71a3a1bc4bd2060b695114ff0788de080f",
+        "kind": "ml",
+        "metrics": {
+          "holdout": {
+            "metric": "recall",
+            "candidate": 0.9967,
+            "rows": 600,
+            "baseline": 0.6233
+          },
+          "delta": {
+            "delta": 0.3733,
+            "ci_low": 0.3175,
+            "ci_high": 0.4277,
+            "n_boot": 400
+          }
+        },
+        "holdout_opened": true
+      }
+    }
+  }
+}

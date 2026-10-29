@@ -1,0 +1,19 @@
+--- a/refunds/policy.py
++++ b/refunds/policy.py
+@@ -1,4 +1,4 @@
+-THRESHOLD = 0.95
++THRESHOLD = 0.5
+ 
+ def decisions(frame, scores):
+     return (scores >= THRESHOLD).astype(int)
+--- /dev/null
++++ b/tests/test_refunds_regression.py
+@@ -0,0 +1,8 @@
++from refunds.model import fit
++from refunds.serve import score_request
++import pandas as pd
++
++def test_probability_roundtrip():
++    frame = pd.read_csv("data/train.csv")
++    model = fit(frame)
++    assert all(0 <= score_request(row, model) <= 1 for row in frame.head(10).to_dict("records"))

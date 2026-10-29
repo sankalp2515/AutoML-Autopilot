@@ -7,6 +7,7 @@ the oracle on the unpatched snapshot, never taken from the agent.
 from __future__ import annotations
 
 import re
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -86,6 +87,13 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
     checks.append(cm.check("contract_integrity", PASS, "contract digest verified", digest=ecc.contract_digest))
 
     bad = _policy(ecc, base_dir, diff)
+    if ecc.immutable_existing_tests:
+        discovered = {node.split("::", 1)[0].casefold() for node in baseline.outcomes}
+        changed_tests = [change.path for change in cm.parse_diff(diff)
+                         if change.path.casefold() in discovered and (Path(base_dir) / change.path).is_file()]
+        if changed_tests:
+            bad.append(cm.check("diff_policy", FAIL, "existing test files collected by pytest may not be edited or deleted",
+                                files=changed_tests, code="E_EXISTING_TEST"))
     if bad:
         checks.extend(bad)
         return receipt(Decision.REJECTED, ["E_DIFF_POLICY"])
@@ -152,6 +160,8 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 def _sealed(runner: SandboxRunner, env: str, contract: RepoContract, sealed: Path, m: SealedManifest):
     """Sealed tests run against the candidate after the oracle builds its own artifacts.
     Only test files are uploaded; labels never are."""
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        return cm.check("sealed_tests", INCON, "legacy in-process sealed pytest is disabled in production; use verifier-owned prediction probes")
     ph = cm.placeholders(contract)
     for kind in ("train", "predict"):
         cmd = getattr(contract.commands, kind)

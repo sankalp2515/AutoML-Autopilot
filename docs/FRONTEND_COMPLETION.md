@@ -1,7 +1,8 @@
 # AutoML Autopilot v5 — frontend delivery and review
 
-This implements the v5 repair experience in `v5/frontend`, isolated from ongoing
-backend work. It replaces the primary v4 entry point with repository repair while
+The v5 repair experience was delivered in `v5/frontend` and is now integrated into
+`codex/fixtures-bug-hardening` alongside backend `c61da72` for verification.
+It is still branch work pending merge into `v5/main`. It replaces the primary v4 entry point with repository repair while
 retaining the data incident investigator as a secondary workflow.
 
 ## Review paths
@@ -79,10 +80,10 @@ The full token/component specification is in [FRONTEND_DESIGN.md](FRONTEND_DESIG
 Validated 2026-10-30:
 
 - Production Next build and TypeScript check passed.
-- 22 browser contract/regression cases passed: 13 v5 cases and 9 legacy cases.
+- 23 browser contract/regression cases passed: 14 v5 cases and 9 legacy cases.
 - 38 v5 view/state audits passed the selected WCAG A/AA axe checks, across light/dark
   themes, 1280 px desktop and 375 px mobile; the suite also checks page overflow.
-- The real-stack smoke and actual-API screenshot case both passed.
+- Two actual-stack smoke paths passed: original intake/replay and all-six-samples plus regional-contract review. The latter saves a real-API gallery screenshot.
 - The final source/contract/discovery/pack/task test was rerun after the last form
   polish and passed. No paid inference or real GitHub write was performed.
 
@@ -113,11 +114,11 @@ The production build used already-cached, real font files through Next's test
 font-fetch hook; it did not require a Google Fonts network request. Product font
 configuration is unchanged.
 
-**Backend integration matters:** this branch starts at `8c58aeb`. The actual-stack
-smoke exercises the additional v5 backend work present in the original checkout,
-which was uncommitted when this frontend work began. That backend work must be
-landed alongside this frontend; the older base API alone does not implement all
-the staging, discovery, evaluation-pack, delivery and operations endpoints.
+**Backend integration:** the original frontend delivery started at `8c58aeb` and
+needed additional backend endpoints. The present `codex/fixtures-bug-hardening`
+integration starts at `c61da72` and revalidates intake against the backend now
+committed in `v5/main`; the two actual-API checks pass. This does not establish
+paid inference, external PR writes or production-service acceptance.
 
 ## Visual review ledger
 
@@ -147,3 +148,7 @@ accuracy gain. These are two recordings of one fault family, not a broad benchma
 No production-readiness or first-place guarantee is implied by visual polish.
 The missing server/evaluation dependencies above remain real launch and judging
 risks, and are deliberately visible instead of hidden behind sample UI.
+
+Latest fixture/bug and remaining frontend audit: [CODEX_V5_COMPLETION_AUDIT.md](CODEX_V5_COMPLETION_AUDIT.md).
+
+Integration revalidation also corrected the ignored Runs route and adds a visible unsupported-file rejection regression. See [six sample repositories](assets/repair/source-six-repositories.png).

@@ -1,0 +1,19 @@
+--- a/scorer/features.py
++++ b/scorer/features.py
+@@ -3,4 +3,4 @@
+ 
+ def build_preprocessor():
+     return ColumnTransformer([("numeric", StandardScaler(), ["signal", "aux"]),
+-        ("category", OneHotEncoder(sparse=False, handle_unknown="ignore"), ["employment_type"])])
++        ("category", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), ["employment_type"])])
+--- /dev/null
++++ b/tests/test_scorer_regression.py
+@@ -0,0 +1,8 @@
++from scorer.model import fit
++from scorer.serve import score_request
++import pandas as pd
++
++def test_probability_roundtrip():
++    frame = pd.read_csv("data/train.csv")
++    model = fit(frame)
++    assert all(0 <= score_request(row, model) <= 1 for row in frame.head(10).to_dict("records"))

@@ -1,3 +1,11 @@
+> **V5 repository repair:** open `/repair` for the coding-agent workspace. Samples include
+> churn serving parity, loan preprocessing, refund leakage, credit group recall,
+> fraud serialization and pricing input boundaries. Source is pinned through intake;
+> Docker and the separate verifier service are required for live worker execution.
+> V5 proposes hypothesis checks; it does **not** currently rank them by information gain.
+> The information-gain selector described below belongs to the earlier data-incident mode.
+> See [the v5 backlog](docs/V5_BACKLOG_FINAL.md) for exact completion status and limitations.
+
 <div align="center">
 
 # AutoML Autopilot

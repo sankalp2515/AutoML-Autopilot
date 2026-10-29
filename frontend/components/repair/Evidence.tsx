@@ -71,6 +71,10 @@ export function Comparison({ candidates }: { candidates: Candidate[] }) {
         const failed = run.screen_receipt?.checks.find(
           (c) => c.status === "FAIL",
         );
+        const rejected =
+          !!failed ||
+          run.candidate.status === "REJECTED" ||
+          !!run.skipped_files?.length;
         return (
           <Panel
             key={run.candidate.candidate_id}
@@ -85,7 +89,7 @@ export function Comparison({ candidates }: { candidates: Candidate[] }) {
               </code>
               <Badge
                 value={
-                  failed
+                  rejected
                     ? "REJECTED"
                     : run.code_receipt
                       ? run.eligible
@@ -94,7 +98,7 @@ export function Comparison({ candidates }: { candidates: Candidate[] }) {
                       : undefined
                 }
               >
-                {failed
+                {rejected
                   ? "Not eligible"
                   : run.code_receipt
                     ? run.eligible
@@ -103,6 +107,24 @@ export function Comparison({ candidates }: { candidates: Candidate[] }) {
                     : "Awaiting checks"}
               </Badge>
             </div>
+            {!!run.skipped_files?.length && (
+              <Notice
+                title="Unsupported file changes were refused"
+                tone="warning"
+              >
+                <p>
+                  These files were excluded from the text patch. This candidate
+                  cannot be approved.
+                </p>
+                <ul>
+                  {run.skipped_files.map((file) => (
+                    <li key={file}>
+                      <code>{file}</code>
+                    </li>
+                  ))}
+                </ul>
+              </Notice>
+            )}
             {run.code_receipt?.decision === "VERIFIED" && failed ? (
               <div className="r-ineligible">
                 <strong>Tests green — rejected by ML check</strong>

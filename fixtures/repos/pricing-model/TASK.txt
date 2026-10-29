@@ -1,0 +1,1 @@
+Make scoring handle a zero list price without changing valid predictions.

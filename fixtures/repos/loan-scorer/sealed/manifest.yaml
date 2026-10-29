@@ -1,0 +1,4 @@
+version: 1
+labels: holdout_labels.csv
+parity_rows: 200
+baseline_metric: 1.0

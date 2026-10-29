@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import os
+import sys
+import threading
+import importlib.metadata
 import re
 import shlex
 import shutil
@@ -19,6 +23,52 @@ from app.repair.sandbox.base import SCRATCH, RunResult, SandboxRunner
 
 ARTIFACTS = f"{SCRATCH}/artifacts"
 PREDICTIONS = f"{SCRATCH}/predictions.csv"
+_TRAIN_CONTEXT: dict[tuple[int, str], str] = {}
+_TRAIN_CACHE: dict[str, bytes] = {}
+_TRAIN_LOCK = threading.RLock()
+
+
+def _training_key(base_dir, contract, files):
+    """Every admitted byte, patch byte and installed runtime version contributes.
+
+    Test-only and opt-in: deterministic fixture training can reuse opaque artifact
+    bytes. We never unpickle them in the controller or enable this for live work.
+    """
+    digest = hashlib.sha256(contract.model_dump_json().encode())
+    for path in sorted(Path(base_dir).rglob("*")):
+        rel = path.relative_to(base_dir).as_posix()
+        if path.is_file() and not path.is_symlink() and not ({".git", SCRATCH, "__pycache__", ".pytest_cache"} & set(Path(rel).parts)):
+            digest.update(rel.encode() + b"\0" + hashlib.sha256(path.read_bytes()).digest())
+    for path, content in sorted((files or {}).items()):
+        digest.update(path.encode() + b"\0" + (b"deleted" if content is None else hashlib.sha256(content).digest()))
+    digest.update(sys.version.encode())
+    for name in ("numpy", "pandas", "scikit-learn", "joblib"):
+        digest.update(importlib.metadata.version(name).encode())
+    return digest.hexdigest()
+
+
+def train(runner, env_id, contract):
+    argv = expand(contract.commands.train, placeholders(contract))
+    key = _TRAIN_CONTEXT.get((id(runner), env_id))
+    if key is None:
+        return runner.run(env_id, argv, timeout_s=contract.limits.train_seconds)
+    with _TRAIN_LOCK:
+        if key in _TRAIN_CACHE:
+            raw = _TRAIN_CACHE[key]
+            runner.write_files(env_id, {model_path(contract): raw})
+            return RunResult(0, False, 0, "[test-only deterministic fixture artifact cache hit]", "", False,
+                             {model_path(contract): hashlib.sha256(raw).hexdigest()}, runner.name)
+        result = runner.run(env_id, argv, timeout_s=contract.limits.train_seconds)
+        if result.exit_code == 0 and not result.timed_out:
+            try:
+                raw = runner.read_file(env_id, model_path(contract), max_bytes=8_000_001)
+                if len(raw) <= 8_000_000:
+                    if len(_TRAIN_CACHE) >= 32:
+                        _TRAIN_CACHE.pop(next(iter(_TRAIN_CACHE)))
+                    _TRAIN_CACHE[key] = raw
+            except FileNotFoundError:
+                pass
+        return result
 
 
 def check(name: str, status: CheckStatus, detail: str, **evidence) -> Check:
@@ -168,10 +218,14 @@ def environment(runner: SandboxRunner, base_dir: str, contract: RepoContract,
                 files: dict[str, bytes | None] | None = None) -> Iterator[str]:
     env_id = runner.prepare(base_dir, python=contract.python, install=contract.install, timeout_s=900)
     try:
+        if (os.environ.get("PYTEST_CURRENT_TEST") and os.environ.get("REPAIR_TEST_TRAIN_CACHE") == "1"
+                and runner.name == "process-unisolated"):
+            _TRAIN_CONTEXT[id(runner), env_id] = _training_key(base_dir, contract, files)
         if files:
             runner.write_files(env_id, files)
         yield env_id
     finally:
+        _TRAIN_CONTEXT.pop((id(runner), env_id), None)
         runner.discard(env_id)
 
 
@@ -200,6 +254,9 @@ def _node_id(classname: str, name: str) -> str:
 
 def run_pytest(runner: SandboxRunner, env_id: str, argv: list[str], *, timeout_s: int, report: str,
                uploads=None, env: dict[str, str] | None = None) -> TestRun:
+    # Tests are arbitrary candidate execution and may mutate source; don't reuse
+    # an input key computed before they ran.
+    _TRAIN_CONTEXT.pop((id(runner), env_id), None)
     full = [*argv, "-p", "no:cacheprovider", "-o", "junit_family=xunit1", f"--junitxml={report}"]
     res = runner.run(env_id, full, timeout_s=timeout_s, uploads=uploads, env=env, collect=[report])
     outcomes: dict[str, str] = {}
@@ -209,6 +266,11 @@ def run_pytest(runner: SandboxRunner, env_id: str, argv: list[str], *, timeout_s
         return TestRun(res, outcomes, parsed=False)
     for case in root.iter("testcase"):
         nid = _node_id(case.get("classname", ""), case.get("name", ""))
+        if file := case.get("file"):
+            # xunit1 records the collected path, including custom *_spec.py files.
+            classes = case.get("classname", "").split(".")
+            suffix = classes[classes.index(Path(file).stem) + 1:] if Path(file).stem in classes else []
+            nid = "::".join([file.replace("\\", "/"), *suffix, case.get("name", "")])
         if case.find("failure") is not None:
             outcomes[nid] = "failed"
         elif case.find("error") is not None:

@@ -124,7 +124,7 @@ def _pipeline(runner: SandboxRunner, env: str, contract: RepoContract, *, holdou
     """Run train (optional) and predict. Returns (ok, stage, log tail)."""
     ph = cm.placeholders(contract, predictions=predictions, **({"holdout_features": holdout} if holdout else {}))
     if train:
-        r = runner.run(env, cm.expand(contract.commands.train, ph), timeout_s=contract.limits.train_seconds)
+        r = cm.train(runner, env, contract)
         if r.exit_code != 0:
             return False, "train", cm.tail(r)
     r = runner.run(env, cm.expand(contract.commands.predict, ph), timeout_s=contract.limits.train_seconds,
@@ -198,7 +198,7 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 
             # 2 train/serve parity, executed inside the candidate environment
             if "train_serve_parity" in inv:
-                checks.append(_parity(runner, env, contract, manifest.parity_rows if manifest else 200, tol))
+                checks.append(_parity(runner, env, contract, manifest.parity_rows if manifest else 200, tol, holdout))
 
             # 3 prediction-time availability (leakage through post-outcome columns)
             leaky = [c for c in data.unavailable_at_prediction if c in holdout.columns]
@@ -260,27 +260,50 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
     return receipt(Decision.VERIFIED, [])
 
 
-def _parity(runner, env, contract: RepoContract, rows: int, tol: float):
+def _parity(runner, env, contract: RepoContract, rows: int, tol: float, holdout=None):
+    """Compare in the trusted verifier, with candidate imports confined to a fresh branch.
+
+    Candidate code returns probabilities only. It cannot author the check outcome,
+    tolerance, expected row count, mismatch count or final receipt.
+    """
     ep = contract.entrypoints.get("serve")
-    out = f"{SCRATCH}/parity.json"
-    argv = ["python", f"{SCRATCH}/parity_probe.py", "--entrypoint", ep, "--model", cm.model_path(contract),
-            "--input", contract.data.holdout_features, "--predictions", cm.PREDICTIONS,
-            "--id-column", contract.data.id_column, "--rows", str(rows), "--out", out]
-    r = runner.run(env, argv, timeout_s=contract.limits.test_seconds,
-                   uploads=[Upload(f"{SCRATCH}/parity_probe.py", HARNESS.read_bytes())], collect=[out])
+    out = f"{SCRATCH}/online.json"
+    all_features = holdout if holdout is not None else pd.read_csv(io.BytesIO(runner.read_file(env, contract.data.holdout_features)))
+    features = all_features.head(rows)
+    expected = read_predictions(runner.read_file(env, cm.PREDICTIONS), contract.data.id_column,
+                                all_features[contract.data.id_column])
+    expected_values = expected.loc[features[contract.data.id_column].astype(str), "score"].to_numpy()
+    branch = runner.fork(env)
     try:
-        rep = json.loads(runner.read_file(env, out))
-    except (FileNotFoundError, ValueError):
-        return cm.check("train_serve_parity", FAIL, "parity probe produced no report", tail=cm.tail(r))
-    diffs = [d for d in rep.get("diffs") or [] if d is not None]
-    mism = sum(1 for d in rep.get("diffs") or [] if d is None or d > tol)
-    ok = not rep.get("errors") and rep.get("n_rows", 0) > 0 and rep.get("max_abs_diff") is not None \
-        and rep["max_abs_diff"] <= tol
-    detail = (f"online scores match batch scores on {rep.get('n_rows')} rows (max |Δ| {rep.get('max_abs_diff'):.2e})"
-              if ok else f"online scoring disagrees with batch scoring on {mism}/{rep.get('n_rows', 0)} rows")
-    return cm.check("train_serve_parity", PASS if ok else FAIL, detail, entrypoint=ep, tolerance=tol,
-                    max_abs_diff=rep.get("max_abs_diff"), mismatched_rows=mism,
-                    median_abs_diff=float(np.median(diffs)) if diffs else None, errors=rep.get("errors", [])[:3])
+        runner.write_files(branch, {cm.PREDICTIONS: None, contract.data.holdout_features: all_features.to_csv(index=False).encode()})
+        result = runner.run(branch, ["python", f"{SCRATCH}/online_scores.py", "--entrypoint", ep,
+                            "--model", cm.model_path(contract), "--input", contract.data.holdout_features,
+                            "--rows", str(rows), "--out", out], timeout_s=contract.limits.test_seconds,
+                            uploads=[Upload(f"{SCRATCH}/online_scores.py", HARNESS.with_name("online_scores.py").read_bytes())], collect=[out])
+        try:
+            report = json.loads(runner.read_file(branch, out))
+            values = report["scores"]
+            if not isinstance(values, list) or len(values) != len(features) or not len(values):
+                raise ValueError("online row count differs")
+            valid = [isinstance(v, (int, float)) and not isinstance(v, bool) and np.isfinite(v) and 0 <= v <= 1 for v in values]
+            diffs = [abs(v - float(expected_values[i])) if valid[i] else None for i, v in enumerate(values)]
+            errors = report.get("errors", [])
+            if not isinstance(errors, list) or not all(isinstance(x, str) for x in errors):
+                raise ValueError("invalid online error record")
+        except (FileNotFoundError, KeyError, TypeError, ValueError):
+            return cm.check("train_serve_parity", FAIL, "online scoring produced no valid row-aligned report", tail=cm.tail(result))
+    finally:
+        runner.discard(branch)
+    mismatch = sum(v is None or v > tol for v in diffs)
+    finite = [v for v in diffs if v is not None]
+    maximum = max(finite) if finite else None
+    ok = result.exit_code == 0 and not result.timed_out and not errors and mismatch == 0
+    detail = (f"online scores match batch scores on {len(features)} rows (max |Δ| {maximum:.2e})" if ok else
+              f"online scoring disagrees with batch scoring on {mismatch}/{len(features)} rows")
+    return cm.check("train_serve_parity", PASS if ok else FAIL, detail, entrypoint=ep,
+                    tolerance=tol, max_abs_diff=maximum, mismatched_rows=mismatch,
+                    median_abs_diff=float(np.median(finite)) if finite else None,
+                    errors=errors[:3], comparison_authority="verifier", fresh_execution_branch=True)
 
 
 def _availability(runner, env, contract: RepoContract, holdout: pd.DataFrame, leaky: list[str],

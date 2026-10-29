@@ -18,7 +18,7 @@ from app.repair.sandbox.process import ProcessRunner
 
 FIX = Path(__file__).resolve().parents[3] / "fixtures" / "repos" / "churn-service"
 REPO, SEALED = FIX / "repo", FIX / "sealed"
-pytestmark = pytest.mark.skipif(not REPO.is_dir(), reason="churn-service fixture not present")
+pytestmark = [pytest.mark.slow, pytest.mark.skipif(not REPO.is_dir(), reason="churn-service fixture not present")]
 
 
 def make_diff(changes: dict[str, str | None]) -> str:

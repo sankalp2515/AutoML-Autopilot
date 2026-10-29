@@ -43,6 +43,40 @@ type Mock = {
   empty?: boolean;
   calls?: { path: string; method: string; body: unknown }[];
 };
+
+test("unsupported changed files are visibly refused rather than shown as awaiting checks", async ({
+  page,
+}) => {
+  await mock(page, { complete: true });
+  const report = structuredClone(verified);
+  report.candidates[0].skipped_files = ["churn/model.onnx"];
+  report.candidates[0].candidate.status = "REJECTED";
+  report.candidates[0].eligible = false;
+  report.candidates[0].code_receipt = null;
+  report.decision = "REJECTED";
+  report.finalist = null;
+  report.final_ml_receipt = null;
+  await page.route("**/tasks/task-browser/report", (route) =>
+    route.fulfill({ json: report }),
+  );
+  await page.goto("/repair/tasks/task-browser");
+  await page.getByRole("tab", { name: "Candidates", exact: true }).click();
+  await expect(
+    page.getByText("Unsupported file changes were refused"),
+  ).toBeVisible();
+  await expect(
+    page.getByText("churn/model.onnx", { exact: true }),
+  ).toBeVisible();
+  const candidate = page
+    .locator(".r-panel")
+    .filter({ hasText: "Unsupported file changes were refused" });
+  await expect(
+    candidate.getByText("Not eligible", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    candidate.getByText("Awaiting checks", { exact: true }),
+  ).toHaveCount(0);
+});
 async function mock(page: Page, options: Mock = {}) {
   let cancelled = false;
   await page.route("**/api/v1/v5/**", async (route) => {
@@ -217,13 +251,11 @@ test("source, contract, discovery, evaluation pack and task submission use the r
   await expect(
     page.getByRole("checkbox", { name: /test_train/ }),
   ).not.toBeChecked();
-  await page
-    .getByLabel("Holdout labels CSV (optional)")
-    .setInputFiles({
-      name: "labels.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from("customer_id,churned\n1,0\n2,1\n"),
-    });
+  await page.getByLabel("Holdout labels CSV (optional)").setInputFiles({
+    name: "labels.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("customer_id,churned\n1,0\n2,1\n"),
+  });
   await page.getByRole("button", { name: "Upload evaluation pack" }).click();
   await expect(
     page.getByText("Evaluation pack uploaded · 2 rows"),
@@ -261,13 +293,11 @@ test("invalid URL is rejected, source tabs work by keyboard, and ZIP intake can 
   await page.getByRole("tab", { name: "Git repository" }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("tab", { name: "ZIP upload" })).toBeFocused();
-  await page
-    .getByLabel("Repository ZIP")
-    .setInputFiles({
-      name: "repo.zip",
-      mimeType: "application/zip",
-      buffer: Buffer.from("fixture is handled by mocked intake"),
-    });
+  await page.getByLabel("Repository ZIP").setInputFiles({
+    name: "repo.zip",
+    mimeType: "application/zip",
+    buffer: Buffer.from("fixture is handled by mocked intake"),
+  });
   await page.getByRole("button", { name: "Continue to contract" }).click();
   await expect(
     page.getByRole("heading", { name: "Repair boundaries" }),

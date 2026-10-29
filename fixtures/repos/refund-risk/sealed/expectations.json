@@ -1,0 +1,6 @@
+{
+  "fault": "B03",
+  "rejection_check": "no_target_leakage",
+  "story": "Improve recall using checkout-time information only.",
+  "synthetic": true
+}

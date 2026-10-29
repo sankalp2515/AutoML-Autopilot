@@ -1,0 +1,9 @@
+--- a/credit/policy.py
++++ b/credit/policy.py
+@@ -1,4 +1,4 @@
+-THRESHOLD = 0.99
++THRESHOLD = 0.5
+ 
+ def decisions(frame, scores):
+-    return (scores >= THRESHOLD).astype(int)
++    return ((scores >= THRESHOLD) & (frame.region != "rural")).astype(int)

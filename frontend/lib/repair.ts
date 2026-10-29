@@ -43,6 +43,7 @@ export interface Candidate {
   steps: Step[];
   stop_reason: string;
   diff_lines: number;
+  skipped_files?: string[];
   code_receipt?: Receipt | null;
   screen_receipt?: Receipt | null;
   eligible: boolean;

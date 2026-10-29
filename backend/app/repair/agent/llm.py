@@ -55,10 +55,25 @@ class ChatClient:
         self._transport = transport
         self.retry_pause_s = retry_pause_s
         self.calls: list[CallRecord] = []
+        self._purpose_scope: str | None = None
+
+    def scoped(self, purpose: str, token_cap: int) -> ChatClient:
+        """An independent candidate allowance with a shared, auditable call ledger.
+
+        The planner allocates disjoint slices before starting candidate threads.
+        A sibling's prompt/token use never consumes this client's allowance.
+        """
+        child = ChatClient(provider=self.provider, base_url=self.base_url, api_key=self._key,
+                           models=dict(self.models), budget=self.budget.model_copy(update={"super": token_cap}),
+                           timeout_s=self.timeout_s, extra_body=dict(self.extra_body),
+                           transport=self._transport, retry_pause_s=self.retry_pause_s)
+        child.calls, child._purpose_scope = self.calls, purpose
+        return child
 
     # ── ledger ────────────────────────────────────────────────────────────────
     def used(self, tier: str) -> int:
-        return sum(c.prompt_tokens + c.completion_tokens for c in self.calls if c.tier == tier)
+        return sum(c.prompt_tokens + c.completion_tokens for c in self.calls if c.tier == tier
+                   and (self._purpose_scope is None or c.purpose == self._purpose_scope))
 
     def remaining(self, tier: str) -> int:
         return getattr(self.budget, tier) - self.used(tier)
@@ -80,6 +95,8 @@ class ChatClient:
                  json_mode: bool = True) -> str:
         """Return the reply text, or raise BudgetExceeded / RuntimeError (after one retry for
         transient failures). Nothing is retried for a reply the model chose to give."""
+        if self._purpose_scope is not None and purpose != self._purpose_scope:
+            raise ValueError("candidate call purpose differs from its budget scope")
         if self.remaining(tier) <= 0:
             raise BudgetExceeded(f"{tier} token budget exhausted ({getattr(self.budget, tier)})")
         max_tokens = max(64, min(max_tokens, self.remaining(tier)))
