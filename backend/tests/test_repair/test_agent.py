@@ -13,8 +13,23 @@ import pytest
 from app.repair import contracts as c
 from app.repair.agent.llm import ChatClient, parse_json
 from app.repair.agent.loop import RepairAgent, compact_failure, workdir_diff
-from app.repair.oracle import ml as ml_oracle
+from app.repair.agent.oracles import LocalOracles
+from app.repair.oracle.grading import GradeRef
 from app.repair.sandbox.process import ProcessRunner
+from app.config import settings
+
+
+@pytest.fixture(autouse=True)
+def _data_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setattr(settings, "REPAIR_VERIFIER_STATE_DIR", "")
+    monkeypatch.setattr(settings, "TAVILY_API_KEY", "")
+
+
+def _agent(tmp_path, llm, contract, ecc):
+    runner = ProcessRunner(str(tmp_path / "envs"), allow_unisolated=True)
+    oracles = LocalOracles(runner, GradeRef(ecc.task_id, ecc.model_dump(mode="json"), str(REPO), "fixture:churn-service"))
+    return RepairAgent(runner, llm, oracles, base_dir=str(REPO), contract=contract, ecc=ecc)
 
 FIX = Path(__file__).resolve().parents[3] / "fixtures" / "repos" / "churn-service"
 REPO, SEALED = FIX / "repo", FIX / "sealed"
@@ -99,15 +114,12 @@ def scripted_transport():
 def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path):
     contract = c.RepoContract.from_yaml((REPO / "autopilot.yaml").read_text(encoding="utf-8"))
     manifest = c.SealedManifest.from_yaml((SEALED / "manifest.yaml").read_text(encoding="utf-8"))
-    ecc = c.ECC.build(task_id="t-agent", base_commit_sha="0" * 40, repo_snapshot_digest="sha256:fixture",
+    ecc = c.ECC.build(task_id="0000aaaa-0000-0000-0000-000000000001", base_commit_sha="0" * 40, repo_snapshot_digest="sha256:fixture",
                       contract=contract, target="Online scoring raises after the feature refactor")
     llm = ChatClient(provider="scripted", base_url="http://model.test/v1", api_key="x", budget=ecc.limits.model_tokens,
                      models={"ultra": "nemotron-3-ultra", "super": "nemotron-3-super", "nano": "nemotron-nano"},
                      transport=scripted_transport())
-    agent = RepairAgent(ProcessRunner(str(tmp_path / "envs"), allow_unisolated=True), llm, base_dir=str(REPO),
-                        contract=contract, ecc=ecc, sealed_dir=str(SEALED), manifest=manifest,
-                        ledger=ml_oracle.FileHoldoutLedger(str(tmp_path / "ledger")))
-    rep = agent.run()
+    rep = _agent(tmp_path, llm, contract, ecc).run()
 
     assert [h.id for h in rep.hypotheses] == ["H1", "H2"] and rep.planner_error is None
     c1, c2 = rep.candidates
@@ -129,14 +141,12 @@ def test_budget_exhaustion_stops_a_candidate_honestly(tmp_path):
     contract = c.RepoContract.from_yaml((REPO / "autopilot.yaml").read_text(encoding="utf-8"))
     manifest = c.SealedManifest.from_yaml((SEALED / "manifest.yaml").read_text(encoding="utf-8"))
     limits = c.Limits(max_candidates=1, model_tokens=c.TierTokens(ultra=5000, super=1500, nano=0))
-    ecc = c.ECC.build(task_id="t-budget", base_commit_sha="0" * 40, repo_snapshot_digest="sha256:fixture",
+    ecc = c.ECC.build(task_id="0000aaaa-0000-0000-0000-000000000002", base_commit_sha="0" * 40, repo_snapshot_digest="sha256:fixture",
                       contract=contract, target="Online scoring raises", limits=limits)
     llm = ChatClient(provider="scripted", base_url="http://model.test/v1", api_key="x", budget=limits.model_tokens,
                      models={"ultra": "nemotron-3-ultra", "super": "nemotron-3-super", "nano": "n"},
                      transport=scripted_transport())
-    rep = RepairAgent(ProcessRunner(str(tmp_path / "envs"), allow_unisolated=True), llm, base_dir=str(REPO),
-                      contract=contract, ecc=ecc, sealed_dir=str(SEALED), manifest=manifest,
-                      ledger=ml_oracle.FileHoldoutLedger(str(tmp_path / "ledger"))).run()
+    rep = _agent(tmp_path, llm, contract, ecc).run()
     run = rep.candidates[0]
     assert run.stop_reason.startswith("budget") and any(e["type"] == "budget.exhausted" for e in rep.events)
     # Work done before the budget ran out is still graded by the oracles, never assumed good:
@@ -153,4 +163,4 @@ def test_helpers():
           "E   ValueError: X has 8 features, but expects 9\nsome noise\n")
     out = compact_failure(tb, ["churn/", "tests/"])
     assert "Users" not in out and "churn" in out and "ValueError" in out
-    assert workdir_diff(str(REPO), str(REPO), ["churn/", "tests/"]) == ""
+    assert workdir_diff(str(REPO), str(REPO), ["churn/", "tests/"]) == ("", [])

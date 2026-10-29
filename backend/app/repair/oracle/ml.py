@@ -150,7 +150,8 @@ def baseline_predictions(runner: SandboxRunner, base_dir: str, contract: RepoCon
 
 # ── the oracle ────────────────────────────────────────────────────────────────
 def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc: ECC, task_id: str,
-           candidate_id: str, diff: str, sealed_dir: str, manifest: SealedManifest, ledger: HoldoutLedger | None,
+           candidate_id: str, diff: str, sealed_dir: str | None, manifest: SealedManifest | None,
+           ledger: HoldoutLedger | None,
            baseline: pd.DataFrame | None, open_holdout: bool = True) -> MLReceipt:
     """open_holdout=False runs only the label-free gates (used to screen candidates during
     selection); it never touches labels and returns INCONCLUSIVE/SCREEN_ONLY when they pass."""
@@ -197,7 +198,7 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 
             # 2 train/serve parity, executed inside the candidate environment
             if "train_serve_parity" in inv:
-                checks.append(_parity(runner, env, contract, manifest, tol))
+                checks.append(_parity(runner, env, contract, manifest.parity_rows if manifest else 200, tol))
 
             # 3 prediction-time availability (leakage through post-outcome columns)
             leaky = [c for c in data.unavailable_at_prediction if c in holdout.columns]
@@ -211,6 +212,11 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
         return receipt(Decision.REJECTED, [f"E_{c.name.upper()}" for c in checks if c.status is FAIL])
     if not open_holdout or ledger is None:
         return receipt(Decision.INCONCLUSIVE, ["SCREEN_ONLY"])
+    if manifest is None or sealed_dir is None:
+        # No evaluation pack: every label-free gate passed, quality on unseen data is unmeasured.
+        checks.append(cm.check("holdout_quality", INCON, "no holdout labels were provided, so predictive "
+                               "quality was not measured; parity and availability were"))
+        return receipt(Decision.VERIFIED, ["LIMITED_NO_LABELS"])
 
     # 4 single-use holdout: only now, after every label-free gate passed
     try:
@@ -254,12 +260,12 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
     return receipt(Decision.VERIFIED, [])
 
 
-def _parity(runner, env, contract: RepoContract, manifest: SealedManifest, tol: float):
+def _parity(runner, env, contract: RepoContract, rows: int, tol: float):
     ep = contract.entrypoints.get("serve")
     out = f"{SCRATCH}/parity.json"
     argv = ["python", f"{SCRATCH}/parity_probe.py", "--entrypoint", ep, "--model", cm.model_path(contract),
             "--input", contract.data.holdout_features, "--predictions", cm.PREDICTIONS,
-            "--id-column", contract.data.id_column, "--rows", str(manifest.parity_rows), "--out", out]
+            "--id-column", contract.data.id_column, "--rows", str(rows), "--out", out]
     r = runner.run(env, argv, timeout_s=contract.limits.test_seconds,
                    uploads=[Upload(f"{SCRATCH}/parity_probe.py", HARNESS.read_bytes())], collect=[out])
     try:

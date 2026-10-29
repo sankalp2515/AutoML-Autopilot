@@ -150,6 +150,28 @@ class Settings(BaseSettings):
     # so the coder falls back to Ultra there. Verify Nebius ids when the key arrives (K9).
     NEBIUS_CODER_MODEL: str = "nvidia/Nemotron-3-Super-120b-a12b"
     NVIDIA_CODER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
+    # v5 services. Empty URLs mean "in-process" (development); production sets both.
+    REPAIR_SANDBOX_URL: str = ""             # sandbox-runner service (only component with Docker access)
+    REPAIR_SANDBOX_TOKEN: str = ""
+    REPAIR_VERIFIER_URL: str = ""            # verifier service v5 (only component with labels)
+    REPAIR_VERIFIER_TOKEN: str = ""
+    REPAIR_RUNNER: str = "docker"            # docker | process (process = unisolated, tests/dev only)
+    REPAIR_ENV_ROOT: str = ""                # where environments live; must be the same path on the Docker host
+    REPAIR_FIXTURES_DIR: str = ""            # bundled sample repositories (api + verifier only)
+    # Access and spend (BE-12). Live runs are off unless enabled; replays always work.
+    REPAIR_LIVE_ENABLED: bool = False
+    REPAIR_INVITE_CODES: str = ""            # comma-separated; empty = no code needed when live is enabled
+    REPAIR_DAILY_USD_CAP: float = 5.0
+    REPAIR_TASK_USD_CEILING: float = 0.40    # worst-case estimate reserved per task against the daily cap
+    REPAIR_DAILY_TASKS_PER_TENANT: int = 5
+    REPAIR_MAX_REPO_MB: int = 50
+    REPAIR_MAX_FILES: int = 5000
+    REPAIR_ALLOWED_GIT_HOSTS: str = "github.com,gitlab.com,bitbucket.org"
+    REPAIR_RETENTION_HOURS: int = 72
+    REPAIR_PIP_INDEX_URL: str = ""           # optional allow-listed package index for installs
+    REPAIR_VERIFIER_STATE_DIR: str = ""      # verifier-only writable state (ledger, admissions, caches)
+    REPAIR_PACKS_DIR: str = ""               # holdout label packs: api writes, verifier reads, worker never mounts
+    REPAIR_REPLAYS_DIR: str = ""             # bundled recorded runs (docs/benchmarks/repair)
     # Tavily runtime research. Empty key = research state UNAVAILABLE.
     TAVILY_API_KEY: str = ""
     TAVILY_BASE_URL: str = "https://api.tavily.com"
