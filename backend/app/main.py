@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.artifacts import router as artifacts_router
 from app.autopilot.routes import router as autopilot_router
+from app.repair.routes import router as repair_router
 from app.autopilot.sharing import install_access_log_filter, redact_path
 import app.autopilot.models  # noqa: F401  (registers Autopilot tables for create_all)
 from app.api.routes.config import router as config_router
@@ -207,6 +208,7 @@ app.include_router(ws_router)
 # AutoML Autopilot: tenant scoping is enforced inside each route (path param is
 # investigation_id, not run_id, so the Run-ownership guard does not apply).
 app.include_router(autopilot_router)
+app.include_router(repair_router)
 
 
 @app.get("/metrics", include_in_schema=False)
