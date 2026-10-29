@@ -1,4 +1,5 @@
 "use client";
+import { useIdentity } from "@/lib/repair-identity";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -276,6 +277,7 @@ export function ReceiptView({
   taskId?: string;
   recorded: boolean;
 }) {
+  const identity = useIdentity();
   const [share, setShare] = useState(false),
     [shared, setShared] = useState(""),
     [error, setError] = useState("");
@@ -287,6 +289,12 @@ export function ReceiptView({
   return (
     <div className="r-stack">
       <Verdict report={report} />
+      {report.reasons.includes("LIMITED_NO_LABELS") && (
+        <Notice title="Quality on unseen data was not measured" tone="warning">
+          No holdout labels were provided. Verification covers the configured
+          software and label-free checks only.
+        </Notice>
+      )}
       <div className="r-actions">
         <Button
           icon="download"
@@ -317,7 +325,7 @@ export function ReceiptView({
             title="Copy replay link"
           />
         ) : (
-          <Button onClick={() => setShare(true)}>
+          <Button disabled={!identity.canWrite} onClick={() => setShare(true)}>
             Share a read-only replay
           </Button>
         )}
@@ -353,19 +361,109 @@ export function ReceiptView({
             )}
             {delta && (
               <div>
-                <strong>{delta.delta.toFixed(4)}</strong>
+                <strong>
+                  {delta.relative
+                    ? `${(delta.delta * 100).toFixed(2)}%`
+                    : delta.delta.toFixed(4)}
+                </strong>
                 <span>
-                  Paired change · 95% CI [{delta.ci_low.toFixed(4)},{" "}
-                  {delta.ci_high.toFixed(4)}]
+                  Paired improvement · 95% CI [
+                  {delta.relative
+                    ? `${(delta.ci_low * 100).toFixed(2)}%`
+                    : delta.ci_low.toFixed(4)}
+                  ,{" "}
+                  {delta.relative
+                    ? `${(delta.ci_high * 100).toFixed(2)}%`
+                    : delta.ci_high.toFixed(4)}
+                  ]
                 </span>
               </div>
             )}
           </div>
           <p>
-            Predictive quality was preserved in this recording; this is not a
-            claim of an accuracy increase.
+            Positive paired change means better quality. Error metrics use
+            relative improvement against the baseline. The receipt defines which
+            checks passed.
           </p>
         </Panel>
+      )}
+      {report.final_ml_receipt?.metrics?.segments &&
+        (() => {
+          const groups = report.final_ml_receipt.metrics.segments;
+          const relative = ["rmse", "mae"].includes(groups.metric);
+          return (
+            <Panel
+              title="Group quality guardrails"
+              subtitle={`${label(groups.metric)} by ${groups.column}. Positive change is better.`}
+            >
+              <div
+                className="r-table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Group quality results"
+              >
+                <table className="r-table">
+                  <thead>
+                    <tr>
+                      <th>Group</th>
+                      <th>Rows</th>
+                      <th>Baseline</th>
+                      <th>Candidate</th>
+                      <th>Improvement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(groups.by_group).map(([name, g]) => (
+                      <tr key={name}>
+                        <th scope="row">{name}</th>
+                        <td>{g.rows}</td>
+                        <td>{g.baseline.toFixed(4)}</td>
+                        <td>{g.candidate.toFixed(4)}</td>
+                        <td>
+                          {relative
+                            ? `${(g.delta * 100).toFixed(2)}%`
+                            : g.delta.toFixed(4)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {groups.too_small.length > 0 && (
+                <Notice title="Some groups could not be judged" tone="warning">
+                  Too few usable rows: {groups.too_small.join(", ")}. A passing
+                  measured group does not establish quality for these groups.
+                </Notice>
+              )}
+            </Panel>
+          );
+        })()}
+      {report.image && (
+        <Panel title="Execution image">
+          <code className="r-wrap">{report.image}</code>
+        </Panel>
+      )}
+      {report.maintainability_notes?.length ? (
+        <Panel title="Maintainability review notes">
+          <ul>
+            {report.maintainability_notes.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+          <p>Static review prompts, not a maintainability certification.</p>
+        </Panel>
+      ) : null}
+      {report.pull_request?.url && safeGithub(report.pull_request.url) && (
+        <Panel title="Draft pull request">
+          <a href={report.pull_request.url} target="_blank" rel="noreferrer">
+            Review draft PR #{report.pull_request.number}
+          </a>
+        </Panel>
+      )}
+      {report.pull_request?.error && (
+        <Notice title="Draft PR could not be opened" tone="warning">
+          {report.pull_request.error}
+        </Notice>
       )}
       {finalist && (
         <DiffViewer
@@ -540,6 +638,7 @@ export function PRHandoff({
   taskId?: string;
   recorded: boolean;
 }) {
+  const identity = useIdentity();
   const [token, setToken] = useState(""),
     [repo, setRepo] = useState(""),
     [base, setBase] = useState("main"),
@@ -605,6 +704,10 @@ export function PRHandoff({
             <Notice title="This is a recorded run">
               External PR creation is unavailable for historical recordings. You
               can download the recorded patch and review its evidence.
+            </Notice>
+          ) : !identity.canWrite ? (
+            <Notice title="Read-only workspace">
+              A member role is required to create a draft PR.
             </Notice>
           ) : report.decision !== "VERIFIED" ? (
             <Notice

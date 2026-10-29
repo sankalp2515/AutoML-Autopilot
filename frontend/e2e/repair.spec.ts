@@ -582,3 +582,110 @@ test("contract/task forms, active workspace, candidate comparison and mobile nav
       .evaluate((e) => getComputedStyle(e).scrollBehavior),
   ).not.toBe("smooth");
 });
+
+test("handoff report renders probe evidence, drift, image and relative error improvement", async ({
+  page,
+}) => {
+  await mock(page, { complete: true });
+  const report = structuredClone(verified);
+  report.hypotheses[0].status = "confirmed";
+  report.data_profile = {
+    columns: 3,
+    flagged: [{ column: "tenure", psi: 0.4, missing_shift: 0.1 }],
+  };
+  report.image = "sha256:" + "a".repeat(64);
+  report.final_ml_receipt.metrics.segments={column:"region",metric:"mae",by_group:{north:{candidate:10.5,baseline:10,delta:-.05,rows:120}},too_small:["small"]};
+  report.maintainability_notes = ["Review the shared feature-building path."];
+  report.final_ml_receipt.metrics.holdout = {
+    metric: "rmse",
+    candidate: 9,
+    baseline: 10,
+    rows: 600,
+  };
+  report.final_ml_receipt.metrics.delta = {
+    delta: 0.1,
+    ci_low: 0.05,
+    ci_high: 0.15,
+    relative: true,
+  };
+  await page.route("**/tasks/task-browser/report", (r) =>
+    r.fulfill({ json: report }),
+  );
+  await page.goto("/repair/tasks/task-browser");
+  await expect(
+    page.getByText("Probe confirmed", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Data drift findings" }),
+  ).toBeVisible();
+  await page
+    .getByRole("tab", { name: "Verdict & receipt", exact: true })
+    .click();
+  await expect(page.getByText("10.00%", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/Paired improvement.*5.00%.*15.00%/),
+  ).toBeVisible();
+  await expect(page.getByText(report.image, { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Maintainability review notes" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Group quality guardrails"})).toBeVisible();
+  await expect(page.getByText("-5.00%",{exact:true})).toBeVisible();
+  await expect(page.getByText("Some groups could not be judged",{exact:true})).toBeVisible();
+  await page.setViewportSize({width:375,height:900});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect((await new AxeBuilder({page}).include(".repair").withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);
+
+});
+
+test("no-label verification prominently states its unmeasured quality limit", async ({
+  page,
+}) => {
+  await mock(page, { complete: true });
+  const report = structuredClone(verified);
+  report.reasons = ["LIMITED_NO_LABELS"];
+  report.final_ml_receipt.holdout_opened = false;
+  report.final_ml_receipt.metrics = {};
+  await page.route("**/tasks/task-browser/report", (r) =>
+    r.fulfill({ json: report }),
+  );
+  await page.goto("/repair/tasks/task-browser");
+  await page
+    .getByRole("tab", { name: "Verdict & receipt", exact: true })
+    .click();
+  await expect(
+    page.getByText("Quality on unseen data was not measured", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Held-out predictive quality" }),
+  ).toHaveCount(0);
+});
+
+test("guided contract keeps problem and metric compatible and sends a custom loader", async ({
+  page,
+}) => {
+  const calls: { path: string; method: string; body: unknown }[] = [];
+  await mock(page, { calls });
+  await page.goto("/repair/new");
+  await page.getByRole("button", { name: "Continue to contract" }).click();
+  await page.getByRole("tab", { name: "Guided builder", exact: true }).click();
+  await page
+    .getByLabel("Prediction problem", { exact: true })
+    .selectOption("regression");
+  await expect(page.getByLabel("Quality metric", { exact: true })).toHaveValue(
+    "rmse",
+  );
+  await expect(
+    page.getByLabel("Quality metric", { exact: true }).locator("option"),
+  ).toHaveText(["rmse", "mae", "r2"]);
+  await page
+    .getByLabel("Custom model loader", { exact: true })
+    .fill("churn.io:load");
+  await page.getByRole("button", { name: "Validate and continue" }).click();
+  const body = calls.find(
+    (c) => c.method === "PUT" && c.path.endsWith("/contract"),
+  )?.body as { yaml: string };
+  expect(body.yaml).toContain("problem: regression");
+  expect(body.yaml).toContain("metric: rmse");
+  expect(body.yaml).toContain('load_model: "churn.io:load"');
+});

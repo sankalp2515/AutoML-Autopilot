@@ -91,6 +91,12 @@ class FileInfo:
     is_test: bool
 
 
+def pytest_file(path: str) -> bool:
+    """pytest's default `python_files` patterns: test_*.py and *_test.py."""
+    name = PurePosixPath(path.casefold()).name
+    return name.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py"))
+
+
 def test_path(path: str) -> bool:
     pp = PurePosixPath(path.casefold())
     return bool({"test", "tests"}.intersection(pp.parts)) or (

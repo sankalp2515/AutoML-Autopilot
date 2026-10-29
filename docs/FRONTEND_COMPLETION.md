@@ -1,3 +1,5 @@
+Latest API integration and tests: [CODEX_API_HANDOFF_VALIDATION.md](CODEX_API_HANDOFF_VALIDATION.md). This supersedes the earlier account/team limitations below.
+
 # AutoML Autopilot v5 — frontend delivery and review
 
 The v5 repair experience was delivered in `v5/frontend` and is now integrated into
@@ -45,7 +47,7 @@ It does not mean those external operations were performed during this task.
 | FE-17 | Reusable accessible diff, new/deleted files, syntax/within-line highlights, split/unified and copy                                                                        | Text diff viewer; no binary preview                                                                                                                                                          |
 | FE-18 | Light/dark, 1280 desktop / 375 mobile, focus, keyboard tabs/dialogs, screen-reader labels, reduced motion and bounded code/table scrolling                                | Automated WCAG checks and browser AX inspection are not a substitute for a full assistive-technology user study                                                                              |
 | FE-19 | v5 Playwright contracts, genuine replays, axe, legacy regression suite and opt-in actual-stack smoke                                                                      | No inference in tests; paid model execution is outside this frontend validation                                                                                                              |
-| FE-20 | Existing optional Supabase sign-in/sign-out and honest workspace/account UI                                                                                               | Organization memberships, invitations, roles and team-scoped APIs do not exist in the backend inspected. Team controls remain unavailable; browser-session scoping is not team authorization |
+| FE-20 | GitHub callback, workspace headers/creation/switching, role-aware members and CI links | Connected to BE-23/24; seeded real-API checks. Actual external OAuth/App installation remains untested. |
 
 ## Design rationale
 

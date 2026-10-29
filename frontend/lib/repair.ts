@@ -25,7 +25,21 @@ export interface Receipt {
       baseline?: number;
       rows: number;
     };
-    delta?: { delta: number; ci_low: number; ci_high: number };
+    delta?: {
+      delta: number;
+      ci_low: number;
+      ci_high: number;
+      relative?: boolean;
+    };
+    segments?: {
+      column: string;
+      metric: string;
+      by_group: Record<
+        string,
+        { candidate: number; baseline: number; delta: number; rows: number }
+      >;
+      too_small: string[];
+    };
   };
   holdout_opened?: boolean;
 }
@@ -65,6 +79,8 @@ export interface Hypothesis {
   check: string;
   files: string[];
   proposed_by?: string;
+  status?: "untested" | "confirmed" | "refuted" | "unrunnable";
+  probe?: { path: string; pattern: string; expect: string } | null;
 }
 export interface RepairEvent {
   seq: number;
@@ -112,6 +128,18 @@ export interface Report {
   source_sha256?: string;
   sample?: string;
   target?: string;
+  image?: string | null;
+  data_profile?: {
+    columns: number | unknown[];
+    flagged: { column: string; psi?: number; missing_shift?: number }[];
+  };
+  pull_request?: {
+    url?: string;
+    number?: number;
+    branch?: string;
+    error?: string;
+  };
+  maintainability_notes?: string[];
 }
 export interface Task {
   id: string;
@@ -236,6 +264,12 @@ export async function api<T>(
   headers.set("X-Autopilot-Session", session());
   const token = await getAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  const repairToken = sessionStorage.getItem("repair-token");
+  if (repairToken) {
+    headers.set("X-Autopilot-Token", repairToken);
+    const workspace = localStorage.getItem("repair-workspace");
+    if (workspace) headers.set("X-Workspace", workspace);
+  }
   if (init.body && !(init.body instanceof FormData))
     headers.set("Content-Type", "application/json");
   const controller = new AbortController();
@@ -266,6 +300,16 @@ export async function api<T>(
                   .join("; ")
               : reason;
       } catch {}
+      if (res.status === 401 && repairToken) {
+        sessionStorage.removeItem("repair-token");
+        localStorage.removeItem("repair-workspace");
+        sessionStorage.setItem(
+          "repair-auth-error",
+          "Your sign-in expired. Sign in again from Workspace settings.",
+        );
+        window.dispatchEvent(new Event("repair-identity"));
+        reason = "Your sign-in expired. Sign in again from Workspace settings.";
+      }
       throw new ApiError(res.status, reason);
     }
     return (
@@ -286,13 +330,18 @@ export async function api<T>(
     clearTimeout(timeout);
   }
 }
-export function useResource<T>(path: string, poll = 0) {
+export function useResource<T>(path: string | null, poll = 0) {
   const [data, setData] = useState<T | null>(null),
     [error, setError] = useState<string | null>(null),
     [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
   const reload = useCallback(() => setRevision((v) => v + 1), []);
   useEffect(() => {
+    if (!path) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
     let alive = true,
       busy = false;
     const load = async () => {

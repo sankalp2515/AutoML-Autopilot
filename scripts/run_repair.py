@@ -19,7 +19,9 @@ def main():
     name = Path(args.fixture).name
     headers = {'X-Autopilot-Session': uuid.uuid4().hex}
     if token := os.environ.get('AUTOPILOT_CLI_TOKEN'):
-        headers['Authorization'] = f'Bearer {token}'
+        headers['X-Autopilot-Token'] = token
+        if workspace := os.environ.get('AUTOPILOT_CLI_WORKSPACE'):
+            headers['X-Workspace'] = workspace
     with httpx.Client(base_url=args.api.rstrip('/') + '/api/v1/v5/', headers=headers, timeout=60) as client:
         def request(method, path, **kwargs):
             response = client.request(method, path, **kwargs)

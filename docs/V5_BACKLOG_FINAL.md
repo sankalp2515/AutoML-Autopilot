@@ -1,6 +1,6 @@
 # AutoML Autopilot v5 — final backlog to a shippable product
 
-Updated 30 Oct 2026 (Codex audit). Scope: everything needed for a product **anyone** can use (not only judges), built to the v5 target design. Nebius Token Factory and Sandboxes are integrated last; everything else is in scope now. Owners are not assigned here.
+Updated 30 Oct 2026 (Codex API handoff integration). Scope: everything needed for a product **anyone** can use (not only judges), built to the v5 target design. Nebius Token Factory and Sandboxes are integrated last; everything else is in scope now. Owners are not assigned here.
 
 **Priority**
 - **P0:** required to ship and to demo.
@@ -13,6 +13,8 @@ Updated 30 Oct 2026 (Codex audit). Scope: everything needed for a product **anyo
 - **Open:** not started.
 - **✅ Branch:** implemented on `codex/fixtures-bug-hardening` (including `v5/frontend`), not merged.
 - **◐ Partial:** some work is complete; the acceptance criterion still has a stated dependency.
+
+Latest integration: [API handoff validation](CODEX_API_HANDOFF_VALIDATION.md).
 
 See [Codex completion audit](CODEX_V5_COMPLETION_AUDIT.md) for evidence and launch limits.
 
@@ -47,7 +49,7 @@ Test-only process execution remains for deterministic checker proofs.
 | BUG-11 | P1 | Repair tests take ~11 min (the model is retrained per environment) | Slow tests marked; shared trained-artifact cache; CI split into fast and slow jobs | ✅ Branch — slow markers/CI split; bounded opt-in test artifact cache; deterministic single-thread BLAS and no unrelated host pytest plugins. No live cache or measured speedup claim. |
 | BUG-12 | P1 | NVIDIA catalog: Super and Nano 3 return 404, so Ultra does the coding (about 3× cost); Nebius model ids unverified | Model ids confirmed per provider; tier mapping tested | ◐ Partial — official Nebius IDs checked; Super casing corrected; offline tier/404 tests. Account-level successful calls and NVIDIA cheaper-tier availability unverified. |
 | BUG-13 | P1 | The finish gate recognises tests only by a `test_` filename prefix | Uses pytest's own test discovery | ✅ Branch — finish uses pytest collection and custom patterns; JUnit respects collected file paths. |
-| BUG-14 | P2 | The agent's fixes can be correct but brittle (it reordered a hard-coded list) | Reviewer-facing "maintainability notes" in the receipt; prompt prefers a single source of truth | Open — reviewer maintainability notes remain future work. |
+| BUG-14 | P2 | The agent's fixes can be correct but brittle (it reordered a hard-coded list) | Reviewer-facing "maintainability notes" in the receipt; prompt prefers a single source of truth | ✅ Branch — report includes static reviewer notes for repeated literal lists and broad exceptions; shared-source prompt merged upstream. Notes are not a quality verdict. |
 
 ---
 
@@ -55,31 +57,31 @@ Test-only process execution remains for deterministic checker proofs.
 
 | ID | P | Component | Done when | Status |
 |---|---|---|---|---|
-| BE-01 | P0 | **Durable repair stages in the worker** | The agent runs as persisted stages (reproduce, hypotheses, candidates, screen, finalist, verdict). Events, candidates and receipts are written as they happen. Cancel works. A crashed run ends FAILED and is never half-verified. | Open (C4 stub exists) |
-| BE-02 | P0 | **Task API v5** (create, get, list, cancel, events, candidates, diff, receipt) | Tenant-scoped; idempotent create; resumable event stream; fencing on writes | ◐ C4 merged in v5/main (Codex); tenant/fencing/event endpoints implemented; full POST-idempotency acceptance still to verify |
-| BE-03 | P0 | **Repository intake API** | Public GitHub/GitLab HTTPS URL + branch or SHA, or a zip upload. Size and file-count limits. Clone into a snapshot with a digest. | Open (intake library done) |
-| BE-04 | P0 | **Test discovery** | `pytest --collect-only` in the sandbox; returns test ids and the currently failing tests, so users pick the failing test instead of typing ids | Open |
-| BE-05 | P0 | **Contract detection and builder API** | Reads `autopilot.yaml` if present. Otherwise proposes one (commands, data paths, entrypoints, edit roots) from the repo layout. The validate endpoint returns readable errors. | Open |
-| BE-06 | P0 | **User evaluation pack** (what makes it usable by anyone) | The user uploads holdout labels (and optional segment column) separately from the repo. Labels stay on the verifier side. Without labels, only label-free ML checks run (parity, availability), and the verdict says so. | Open |
-| BE-07 | P0 | **sandbox-runner service** | The only component that starts candidate containers. No provider keys, no labels. The worker and verifier call it over the internal network. Docker-socket risk documented (prefer rootless Docker or gVisor). | Open |
-| BE-08 | P0 | **Verifier service v5** | Hosts the code and ML checkers, sealed bundles, user evaluation packs and the holdout ledger; calls sandbox-runner (fixes BUG-05/06) | Open |
-| BE-09 | P0 | **Holdout ledger and admission records in Postgres** | One holdout opening per task, durable and transactional; stored contract digest checked at grading (W04/W05) | Open (file ledger exists) |
-| BE-10 | P0 | **Delivery** | `.patch` download; GitHub draft PR from the user's token or a GitHub App, with the receipt in the PR body; never merges | Open |
-| BE-11 | P0 | **Replay recorder and player API** | Every genuine run can be published as a read-only replay (events and artifacts); public demos stream replays at zero cost | Open |
-| BE-12 | P0 | **Live-run access control and spend caps** | Invite codes or sign-in for live runs; daily token and dollar caps with atomic reservations; a kill switch; anonymous users get replays and sample-repo runs within caps | Open |
-| BE-13 | P1 | **Tavily inside the loop** | When a traceback names a library or packages changed, search official docs and give the agent cited excerpts as data. Shown in the UI with provenance. Tested on B01 with a Tavily-off comparison. | Open (v4 research module reusable) |
-| BE-14 | P1 | **Parallel candidates** | Candidates run concurrently, each with its own budget; total wall time drops | Open |
-| BE-15 | P1 | **Ranked probes** (or BUG-10 wording) | Hypotheses carry predicted outcomes; the information-gain scorer picks the next probe; results update beliefs | Open |
-| BE-16 | P1 | **Fold the v4 data investigator in** | For "metric dropped" tasks without a failing test, the agent first runs the v4 investigation on data windows | Open |
-| BE-17 | P1 | **Dependency install policy** | Installs happen only in `prepare`, from pinned requirements, through an allow-listed package index; image digest recorded in the contract | Open |
-| BE-18 | P1 | **Provider status v5** | Shows configured, last successful call, model per tier and fallback, never "live" just because a key is present | Open |
-| BE-19 | P1 | **Database migrations** for v5 tables (Alembic) | Upgrade from the v4 schema tested | Open |
-| BE-20 | P1 | **Cleanup and retention** | Time-to-live for clones, environments, images, uploads and evaluation packs; owner delete; disk quotas | Open |
-| BE-21 | P1 | **Security pass** | Secret redaction in prompts and logs; prompt-injection exercise (B14); path-escape tests; SSRF guard on repo URLs; outbound allow-list | Open |
-| BE-22 | P1 | **Observability** | Structured logs per task; metrics (queue age, run time, tokens, cost); readiness that checks worker, verifier and sandbox-runner | Open |
-| BE-23 | P2 | Accounts and teams (GitHub sign-in, workspaces, roles) | Open |
-| BE-24 | P2 | GitHub App with webhook ("CI failed → open a repair task") | Open |
-| BE-25 | P2 | Multiclass, regression and non-sklearn frameworks in the ML checker | Open |
+| BE-01 | P0 | **Durable repair stages in the worker** | The agent runs as persisted stages (reproduce, hypotheses, candidates, screen, finalist, verdict). Events, candidates and receipts are written as they happen. Cancel works. A crashed run ends FAILED and is never half-verified. | Partial: Implemented and merged; candidate steps/diffs/usage still persisted at completion rather than continuously. |
+| BE-02 | P0 | **Task API v5** (create, get, list, cancel, events, candidates, diff, receipt) | Tenant-scoped; idempotent create; resumable event stream; fencing on writes | Partial: Merged API; POST create idempotency acceptance remains unverified. |
+| BE-03 | P0 | **Repository intake API** | Public GitHub/GitLab HTTPS URL + branch or SHA, or a zip upload. Size and file-count limits. Clone into a snapshot with a digest. | Done: URL+ref or zip; size/file limits; snapshot digest (merged; Claude implementation, integration audited here). |
+| BE-04 | P0 | **Test discovery** | `pytest --collect-only` in the sandbox; returns test ids and the currently failing tests, so users pick the failing test instead of typing ids | Done (merged; Claude implementation, integration audited here). |
+| BE-05 | P0 | **Contract detection and builder API** | Reads `autopilot.yaml` if present. Otherwise proposes one (commands, data paths, entrypoints, edit roots) from the repo layout. The validate endpoint returns readable errors. | Done (merged; Claude implementation, integration audited here). |
+| BE-06 | P0 | **User evaluation pack** (what makes it usable by anyone) | The user uploads holdout labels (and optional segment column) separately from the repo. Labels stay on the verifier side. Without labels, only label-free ML checks run (parity, availability), and the verdict says so. | Done: label packs; LIMITED_NO_LABELS verdict without them (merged; Claude implementation, integration audited here). |
+| BE-07 | P0 | **sandbox-runner service** | The only component that starts candidate containers. No provider keys, no labels. The worker and verifier call it over the internal network. Docker-socket risk documented (prefer rootless Docker or gVisor). | Done (Docker socket risk noted in DEPLOYMENT) (merged; Claude implementation, integration audited here). |
+| BE-08 | P0 | **Verifier service v5** | Hosts the code and ML checkers, sealed bundles, user evaluation packs and the holdout ledger; calls sandbox-runner (fixes BUG-05/06) | Done (merged; Claude implementation, integration audited here). |
+| BE-09 | P0 | **Holdout ledger and admission records in Postgres** | One holdout opening per task, durable and transactional; stored contract digest checked at grading (W04/W05) | Partial: Implemented as verifier-volume O_EXCL file permits, not the specified Postgres ledger; multi-host transactional acceptance remains open. |
+| BE-10 | P0 | **Delivery** | `.patch` download; GitHub draft PR from the user's token or a GitHub App, with the receipt in the PR body; never merges | Done (merged; Claude implementation, integration audited here). |
+| BE-11 | P0 | **Replay recorder and player API** | Every genuine run can be published as a read-only replay (events and artifacts); public demos stream replays at zero cost | Done (merged; Claude implementation, integration audited here). |
+| BE-12 | P0 | **Live-run access control and spend caps** | Invite codes or sign-in for live runs; daily token and dollar caps with atomic reservations; a kill switch; anonymous users get replays and sample-repo runs within caps | Partial: Admission caps implemented; atomic concurrent global spend reservation is not established by this audit. |
+| BE-13 | P1 | **Tavily inside the loop** | When a traceback names a library or packages changed, search official docs and give the agent cited excerpts as data. Shown in the UI with provenance. Tested on B01 with a Tavily-off comparison. | Partial: Research integrated; matched Tavily-off evaluation remains EV-03. |
+| BE-14 | P1 | **Parallel candidates** | Candidates run concurrently, each with its own budget; total wall time drops | Done (merged; Claude implementation, integration audited here). |
+| BE-15 | P1 | **Ranked probes** (or BUG-10 wording) | Hypotheses carry predicted outcomes; the information-gain scorer picks the next probe; results update beliefs | Partial: Literal probes rank confirmed/refuted evidence; no information-gain scorer is used (BUG-10 wording alternative). |
+| BE-16 | P1 | **Fold the v4 data investigator in** | For "metric dropped" tasks without a failing test, the agent first runs the v4 investigation on data windows | Done: the v4 drift profiler (PSI, missing-rate shift) feeds the planner when there is no failing test (merged; Claude implementation, integration audited here). |
+| BE-17 | P1 | **Dependency install policy** | Installs happen only in `prepare`, from pinned requirements, through an allow-listed package index; image digest recorded in the contract | Partial: Preparation-only pip installs and optional index, unpinned requirements flagged, image digest in report; mandatory pinned/index policy and contract digest binding are not fully established. |
+| BE-18 | P1 | **Provider status v5** | Shows configured, last successful call, model per tier and fallback, never "live" just because a key is present | Done (merged; Claude implementation, integration audited here). |
+| BE-19 | P1 | **Database migrations** for v5 tables (Alembic) | Upgrade from the v4 schema tested | Done: Alembic `0003_repair_v5`; upgrade from v4 and downgrade tested (merged; Claude implementation, integration audited here). |
+| BE-20 | P1 | **Cleanup and retention** | Time-to-live for clones, environments, images, uploads and evaluation packs; owner delete; disk quotas | Done (merged; Claude implementation, integration audited here). |
+| BE-21 | P1 | **Security pass** | Secret redaction in prompts and logs; prompt-injection exercise (B14); path-escape tests; SSRF guard on repo URLs; outbound allow-list | Done (merged; Claude implementation, integration audited here). |
+| BE-22 | P1 | **Observability** | Structured logs per task; metrics (queue age, run time, tokens, cost); readiness that checks worker, verifier and sandbox-runner | Done: JSON log line per task, `/metrics` (JSON or Prometheus), `/ready` (merged; Claude implementation, integration audited here). |
+| BE-23 | P2 | Accounts and teams | GitHub sign-in, workspaces and roles | ✅ Backend merged in v5/main (be1979c); frontend connected on this branch. External OAuth remains untested. |
+| BE-24 | P2 | GitHub App with webhook | Failed CI creates a repair; verified repair may open a draft PR | ✅ Backend merged in v5/main (be1979c); links/status/recent outcomes connected. App registration and real delivery remain external checks. |
+| BE-25 | P2 | Multiclass, regression, custom model loaders | Compatible metrics, prediction schemas and parity | ✅ Backend merged in v5/main (be1979c); guided problem/metric/loader fields and relative-error display connected. Arbitrary-framework compatibility is not established. |
 
 ---
 
@@ -108,7 +110,7 @@ The v5 frontend is implemented on a branch. Its information architecture is: **H
 | FE-17 | P1 | **Diff viewer component** | Reusable, accessible, handles new/deleted files, word-level highlights, copy | ✅ Branch — accessible split/unified text diff/copy/highlights. |
 | FE-18 | P1 | **Accessibility and responsive pass** | Keyboard and screen reader on all v5 screens; workspace usable at 1280 px and readable on mobile (read-only on phone is acceptable); both themes | ✅ Branch — light/dark desktop/mobile/keyboard/axe; no full assistive-tech user study. |
 | FE-19 | P1 | **Frontend tests** | Playwright on recorded runs for every P0 screen; axe checks; one live-stack smoke test | ✅ Branch — 23 browser cases, 38 v5 axe audits and two actual API smoke paths; CI includes v5. |
-| FE-20 | P2 | Sign-in, workspaces, team runs | | ◐ Partial — existing optional sign-in; membership/invites/team APIs unavailable. |
+| FE-20 | P2 | Sign-in, workspaces, team runs | | ✅ Branch — GitHub callback, account/workspace headers, workspace creation/switching, member roles and CI links wired. Seeded real-API tests; external OAuth/App installation not exercised. |
 
 ---
 

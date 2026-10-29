@@ -94,3 +94,31 @@ tests but break model behavior.” Follow immediately with the measured green-bu
 example, then a verified patch, its source diff and its receipt. Explain which data
 were checked and what remains unproven. The strongest story earns trust through a
 specific observed result rather than a claim that the agent never hallucinates.
+
+## Eligibility and the requested 90% confidence
+
+The 1–5% planning range above already assumes eligibility. Adding a key cannot
+convert it to 100% winning probability. A key is configuration; an observed eligible
+NVIDIA-model execution on Nebius demonstrates the execution requirement, and other
+submission/rules requirements still apply. See the [official requirements and criteria](https://nebiusglobalaihackathon.devpost.com/).
+
+I can aim for 90% confidence that the submission is a strong, reviewable contender.
+I cannot justify a 90% chance of the single grand prize without knowing the field.
+Internal evidence gates that would support the former (these are not official rules):
+
+1. A predeclared, independently structured task set across multiple fault families,
+   with repeated seeds and matched model/cost budgets. Retain failures. Compare
+   full, generic, no-ML and no-research arms with uncertainty and false acceptance.
+2. Repairs on real repositories beyond the shared synthetic scaffold; an independent
+   engineer can reproduce the rejection and verified outcome from the pinned source.
+3. Observed user sessions: engineers understand the contract/receipt without coaching,
+   and measured review time or defect discovery demonstrates practical value.
+4. Adversarial and failure-mode acceptance of the supported verification protocol,
+   clear unsupported cases, role/isolation/cancellation/restart checks, and repeatable
+   clean-environment operation. No blanket “hallucination-proof” claim.
+5. A coherent judge walkthrough: quickly show green-but-wrong rejection, a successful
+   repair, its diff and measured receipt. Every claim matches the implementation.
+
+Accounts, CI links and additional model types improve completeness; they do not
+replace that evidence. The latest integration is documented separately in
+[CODEX_API_HANDOFF_VALIDATION.md](CODEX_API_HANDOFF_VALIDATION.md).

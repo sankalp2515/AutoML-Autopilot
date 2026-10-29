@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useIdentity } from "@/lib/repair-identity";
 import { Status, useResource } from "@/lib/repair";
 import { Button, Icon, Mark, Modal } from "./ui";
 
@@ -19,6 +20,7 @@ export default function RepairShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const identity = useIdentity();
   const [dark, setDark] = useState(false),
     [menu, setMenu] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -155,7 +157,11 @@ export default function RepairShell({
             onClick={() => setMenu(true)}
           />
           <div className="r-breadcrumb">
-            <span>Workspace</span>
+            <span>
+              {identity.data?.workspaces.find(
+                (w) => w.id === identity.data?.current_workspace,
+              )?.name || "Workspace"}
+            </span>
             <span aria-hidden="true">/</span>
             <strong>{title}</strong>
           </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useIdentity } from "@/lib/repair-identity";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -90,6 +91,7 @@ export default function Workspace({
   replayId?: string;
   taskId?: string;
 }) {
+  const identity = useIdentity();
   const recorded = !!replayId;
   const [report, setReport] = useState<Report | null>(
       replayId && REPLAYS[replayId] ? REPLAYS[replayId] : null,
@@ -207,7 +209,7 @@ export default function Workspace({
           }) as Frame,
       );
   const seenEvents = visible.flatMap((f) => (f.event ? [f.event] : []));
-  const hypotheses: Hypothesis[] = recorded
+  const proposedHypotheses: Hypothesis[] = recorded
     ? (report?.hypotheses || []).filter((h) =>
         seenEvents.some(
           (e) =>
@@ -228,6 +230,28 @@ export default function Workspace({
             files: [],
           };
         });
+  const hypotheses = proposedHypotheses.map((h) => ({
+    ...h,
+    status: recorded && !atEnd ? undefined : h.status,
+  }));
+  for (const event of seenEvents) {
+    const d = details(event);
+    if (event.type === "diagnostic.executed" && d.kind === "probe") {
+      const h = hypotheses.find((h) => h.id === d.hypothesis_id);
+      if (h) h.status = String(d.outcome) as Hypothesis["status"];
+    }
+    if (event.type === "hypothesis.revised" && Array.isArray(d.order)) {
+      const order = d.order as string[];
+      hypotheses.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    }
+  }
+  const driftEvent = [...seenEvents]
+    .reverse()
+    .find(
+      (e) =>
+        e.type === "diagnostic.executed" && details(e).kind === "data_drift",
+    );
+  const drift = !recorded || atEnd ? report?.data_profile : null;
   const candidates: Candidate[] = recorded
     ? (report?.candidates || [])
         .filter((c) =>
@@ -362,11 +386,13 @@ export default function Workspace({
               <Badge value={task?.status} />
             )}
             <Action href="/repair/runs">All runs</Action>
-            {!recorded && !terminal(task?.status || "") && (
-              <Button kind="danger" onClick={() => setCancel(true)}>
-                Cancel repair
-              </Button>
-            )}
+            {!recorded &&
+              identity.canWrite &&
+              !terminal(task?.status || "") && (
+                <Button kind="danger" onClick={() => setCancel(true)}>
+                  Cancel repair
+                </Button>
+              )}
           </>
         }
       />
@@ -649,7 +675,17 @@ export default function Workspace({
                     <div className="r-hypothesis" key={h.id}>
                       <div>
                         <strong>{h.id}</strong>
-                        <Badge>Inferred</Badge>
+                        <Badge
+                          value={
+                            h.status === "confirmed"
+                              ? "PASS"
+                              : h.status === "refuted"
+                                ? "FAIL"
+                                : undefined
+                          }
+                        >
+                          {h.status ? `Probe ${h.status}` : "Inferred"}
+                        </Badge>
                       </div>
                       <p>{h.cause}</p>
                       {h.evidence && (
@@ -668,6 +704,25 @@ export default function Workspace({
                   <p>The investigator has not published a hypothesis yet.</p>
                 )}
               </Panel>
+              {(drift?.flagged?.length || driftEvent) && (
+                <Panel title="Data drift findings">
+                  <p>
+                    Distribution changes guide investigation; they do not
+                    establish the cause.
+                  </p>
+                  {drift?.flagged?.length ? (
+                    drift.flagged.map((f) => (
+                      <p key={f.column}>
+                        <strong>{f.column}</strong> · PSI{" "}
+                        {f.psi?.toFixed(3) ?? "not reported"} · missing-value
+                        shift {f.missing_shift?.toFixed(3) ?? "not reported"}
+                      </p>
+                    ))
+                  ) : (
+                    <p>{JSON.stringify(details(driftEvent!).flagged)}</p>
+                  )}
+                </Panel>
+              )}
               <Budget report={atEnd ? report : null} />
             </div>
           </div>

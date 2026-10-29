@@ -10,6 +10,16 @@ import {
   Panel,
 } from "@/components/repair/ui";
 export default function How() {
+  const metrics = useResource<{
+    tasks: number;
+    queue_depth: number;
+    finished: number;
+    run_seconds_p50: number | null;
+    run_seconds_p95: number | null;
+    model_tokens: number;
+    cost_usd: number;
+    window_hours: number;
+  }>("/metrics", 30000);
   const status = useResource<Status>("/status", 30000),
     ready = useResource<Record<string, string | boolean>>("/ready", 30000);
   return (
@@ -111,6 +121,7 @@ export default function How() {
               onClick={() => {
                 status.reload();
                 ready.reload();
+                metrics.reload();
               }}
             >
               Refresh status
@@ -184,6 +195,42 @@ export default function How() {
                 ? "Readiness checks are unavailable."
                 : "Checking service readiness…"}
             </p>
+          )}
+        </Panel>
+      </section>
+      <section className="r-section">
+        <Panel
+          title="Service activity"
+          subtitle="Deployment totals, not a comparison benchmark. Refreshes every 30 seconds."
+        >
+          {metrics.error ? (
+            <Notice title="Activity unavailable" tone="warning">
+              {metrics.error}
+            </Notice>
+          ) : metrics.data ? (
+            <dl className="r-detail-list">
+              {Object.entries(metrics.data)
+                .filter(([key]) =>
+                  [
+                    "window_hours",
+                    "tasks",
+                    "queue_depth",
+                    "finished",
+                    "run_seconds_p50",
+                    "run_seconds_p95",
+                    "model_tokens",
+                    "cost_usd",
+                  ].includes(key),
+                )
+                .map(([key, value]) => (
+                  <div key={key}>
+                    <dt>{key.replaceAll("_", " ")}</dt>
+                    <dd>{value == null ? "Not measured" : String(value)}</dd>
+                  </div>
+                ))}
+            </dl>
+          ) : (
+            <p>Loading measured activity...</p>
           )}
         </Panel>
       </section>

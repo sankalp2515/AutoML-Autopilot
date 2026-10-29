@@ -173,6 +173,16 @@ class Settings(BaseSettings):
     REPAIR_VERIFIER_STATE_DIR: str = ""      # verifier-only writable state (ledger, admissions, caches)
     REPAIR_PACKS_DIR: str = ""               # holdout label packs: api writes, verifier reads, worker never mounts
     REPAIR_REPLAYS_DIR: str = ""             # bundled recorded runs (docs/benchmarks/repair)
+    # BE-23 accounts: GitHub sign-in (OAuth app) and signed session tokens. Empty = anonymous only.
+    REPAIR_SESSION_SECRET: str = ""
+    REPAIR_SESSION_HOURS: int = 168
+    GITHUB_OAUTH_CLIENT_ID: str = ""
+    GITHUB_OAUTH_CLIENT_SECRET: str = ""
+    GITHUB_OAUTH_REDIRECT_URL: str = ""      # the web app's callback page
+    # BE-24 GitHub App: webhook secret (api) and app id + private key (repair-worker, opens draft PRs).
+    GITHUB_WEBHOOK_SECRET: str = ""
+    GITHUB_APP_ID: str = ""
+    GITHUB_APP_PRIVATE_KEY: str = ""         # PEM; escaped newlines are accepted
     # Tavily runtime research. Empty key = research state UNAVAILABLE.
     TAVILY_API_KEY: str = ""
     TAVILY_BASE_URL: str = "https://api.tavily.com"

@@ -3,14 +3,14 @@
   "kind": "checker-proof",
   "runner": "process-unisolated",
   "autonomous_agent": false,
-  "base_commit_sha": "5686b78d8d4d13e17e78b05244fdbac1140e2ffc",
+  "base_commit_sha": "67f0596d39e9b18af95e3d82a5a81d9477ca6f54",
   "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
   "receipts": {
     "wrong_fix": {
       "code": {
         "task_id": "proof-loan-scorer",
         "candidate_id": "wrong_fix",
-        "contract_digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
         "diff_digest": "sha256:6bff9c6ffb1d442a4e1cb1002e04c2792fb8adce54bb20a1d8de86341de034a7",
         "checks": [
           {
@@ -18,7 +18,7 @@
             "status": "PASS",
             "detail": "contract digest verified",
             "evidence": {
-              "digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856"
+              "digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa"
             }
           },
           {
@@ -63,14 +63,14 @@
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:47:43.856+00:00",
-        "receipt_digest": "sha256:11efd57cfd4d4cc6702b3220d59cb001609764841a56f43587ffbaf14c5afb65",
+        "created_at": "2026-10-29T22:38:01.999+00:00",
+        "receipt_digest": "sha256:ed02b8890863550073ce2f35d34117c76f6f37de1c3643fb213dfa20eaf58a29",
         "kind": "code"
       },
       "ml": {
         "task_id": "proof-loan-scorer",
         "candidate_id": "wrong_fix",
-        "contract_digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
         "diff_digest": "sha256:6bff9c6ffb1d442a4e1cb1002e04c2792fb8adce54bb20a1d8de86341de034a7",
         "checks": [
           {
@@ -100,8 +100,8 @@
           "E_TRAIN_SERVE_PARITY"
         ],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:48:06.218+00:00",
-        "receipt_digest": "sha256:313786d3bf52fef633f41b14e546996cc1768a539fa0170909cc6fd44b2e760c",
+        "created_at": "2026-10-29T22:38:18.160+00:00",
+        "receipt_digest": "sha256:7ad4eedac25646eb8b5f86c0bcf078b4551491197eada34d851402cb499c5a59",
         "kind": "ml",
         "metrics": {},
         "holdout_opened": false
@@ -111,7 +111,7 @@
       "code": {
         "task_id": "proof-loan-scorer",
         "candidate_id": "reference_fix",
-        "contract_digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
         "diff_digest": "sha256:c95cc26a2ee051f9762ccc33aee67a5c34fe6b1e5fa3cba5ab1a614dd7680c00",
         "checks": [
           {
@@ -119,7 +119,7 @@
             "status": "PASS",
             "detail": "contract digest verified",
             "evidence": {
-              "digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856"
+              "digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa"
             }
           },
           {
@@ -166,14 +166,14 @@
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:48:12.750+00:00",
-        "receipt_digest": "sha256:7cfee3d9dfdeb2d26e76c9dee6256b0c3952674acc2ffa77e147459fb48244c9",
+        "created_at": "2026-10-29T22:38:26.059+00:00",
+        "receipt_digest": "sha256:b8e4c7136847b1aa73c50e2a9608467d6c84c221e8a4e9a53778ad3e04587e47",
         "kind": "code"
       },
       "ml": {
         "task_id": "proof-loan-scorer",
         "candidate_id": "reference_fix",
-        "contract_digest": "sha256:af0fa608167b0dfebf3ef73e7215a7d541cfcd0f701bc05d73c30880df642856",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
         "diff_digest": "sha256:c95cc26a2ee051f9762ccc33aee67a5c34fe6b1e5fa3cba5ab1a614dd7680c00",
         "checks": [
           {
@@ -219,8 +219,8 @@
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:48:30.348+00:00",
-        "receipt_digest": "sha256:8646c1d41ac85f459f419c28ffb05a26306c3fc86b9fe77b5c5b55bfda0511fd",
+        "created_at": "2026-10-29T22:38:43.497+00:00",
+        "receipt_digest": "sha256:3ea2a4542ff8dec80bb32dd97714d8d335846a1884af63c27e7f00bb0640e811",
         "kind": "ml",
         "metrics": {
           "holdout": {

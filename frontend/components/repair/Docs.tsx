@@ -18,6 +18,7 @@ data:
   holdout_features: data/holdout_features.csv
   id_column: customer_id
   target: churned
+  problem: binary
   positive_label: 1
 task:
   type: restore
@@ -170,8 +171,8 @@ export default function Docs() {
               </p>
               <ul>
                 <li>
-                  Use a public GitHub or GitLab HTTPS URL, a branch / exact
-                  commit, or a repository ZIP.
+                  Use a public GitHub, GitLab or Bitbucket HTTPS URL, a branch /
+                  exact commit, or a repository ZIP.
                 </li>
                 <li>
                   This client prechecks ZIPs at 20 MB. The server may apply
@@ -186,9 +187,11 @@ export default function Docs() {
                   protected configuration edits are refused.
                 </li>
                 <li>
-                  The current ML evaluation focuses on binary prediction tasks.
-                  Check your server before assuming multiclass, regression, GPU
-                  or another framework is supported.
+                  The ML checker supports binary, multiclass and regression
+                  contracts. Declare data.problem and a compatible task.metric.
+                  A custom entrypoints.load_model loader can load other
+                  frameworks; dependencies and compute support still need
+                  validation.
                 </li>
               </ul>
               <Notice title="Packaging needs review" tone="warning">
@@ -358,7 +361,7 @@ export default function Docs() {
                 ],
                 [
                   "Where are teams and organization roles?",
-                  "The current browser workspace and existing sign-in integration are available where configured. Team membership and roles need server support; the UI does not pretend they are enabled.",
+                  "Open Workspace settings to sign in with GitHub, select a workspace, and manage members or CI repository links. Viewers read, members run repairs, admins manage access and links, and owners manage ownership. Teammates must sign in once before they can be added.",
                 ],
               ].map(([q, a]) => (
                 <details key={q}>

@@ -24,6 +24,20 @@ import {
   Panel,
 } from "./ui";
 
+import { useIdentity } from "@/lib/repair-identity";
+
+const metrics: Record<string, string[]> = {
+  binary: [
+    "roc_auc",
+    "f1",
+    "recall",
+    "precision",
+    "balanced_accuracy",
+    "accuracy",
+  ],
+  multiclass: ["accuracy", "macro_f1", "balanced_accuracy"],
+  regression: ["rmse", "mae", "r2"],
+};
 const invariants = [
   ["train_serve_parity", "Online and batch predictions match"],
   ["holdout_non_inferior", "Quality is preserved on held-out labels"],
@@ -38,6 +52,9 @@ type Builder = {
   train: string;
   predict: string;
   serve: string;
+  loader: string;
+  problem: string;
+  metric: string;
   trainData: string;
   features: string;
   id: string;
@@ -48,6 +65,9 @@ type Builder = {
 };
 const initial: Builder = {
   name: "my-ml-service",
+  loader: "",
+  problem: "binary",
+  metric: "roc_auc",
   python: "3.12",
   test: "pytest -q tests",
   train:
@@ -65,7 +85,7 @@ const initial: Builder = {
 };
 const quote = (s: string) => JSON.stringify(s);
 function yaml(b: Builder) {
-  return `version: 1\nname: ${quote(b.name)}\npython: ${quote(b.python)}\ninstall: "pip install -r requirements.txt"\ncommands:\n  test: ${quote(b.test)}\n${b.train ? `  train: ${quote(b.train)}\n` : ""}${b.predict ? `  predict: ${quote(b.predict)}\n` : ""}${b.serve ? `entrypoints:\n  serve: ${quote(b.serve)}\n` : ""}${b.checks.length ? `data:\n  train: ${quote(b.trainData)}\n  holdout_features: ${quote(b.features)}\n  id_column: ${quote(b.id)}\n  target: ${quote(b.target)}\n  positive_label: 1\n` : ""}task:\n  type: ${b.mode}\n  metric: roc_auc\n  fail_to_pass: []\n  ml_invariants: ${JSON.stringify(b.checks)}\npolicy:\n  allowed_edit_roots: ${JSON.stringify(
+  return `version: 1\nname: ${quote(b.name)}\npython: ${quote(b.python)}\ninstall: "pip install -r requirements.txt"\ncommands:\n  test: ${quote(b.test)}\n${b.train ? `  train: ${quote(b.train)}\n` : ""}${b.predict ? `  predict: ${quote(b.predict)}\n` : ""}${b.serve || b.loader ? `entrypoints:\n${b.serve ? `  serve: ${quote(b.serve)}\n` : ""}${b.loader ? `  load_model: ${quote(b.loader)}\n` : ""}` : ""}${b.checks.length ? `data:\n  problem: ${b.problem}\n  train: ${quote(b.trainData)}\n  holdout_features: ${quote(b.features)}\n  id_column: ${quote(b.id)}\n  target: ${quote(b.target)}\n  positive_label: 1\n` : ""}task:\n  type: ${b.mode}\n  metric: ${b.metric}\n  fail_to_pass: []\n  ml_invariants: ${JSON.stringify(b.checks)}\npolicy:\n  allowed_edit_roots: ${JSON.stringify(
     b.roots
       .split(",")
       .map((v) => v.trim())
@@ -76,6 +96,7 @@ const validPath = (p: string) =>
   !!p && !p.startsWith("/") && !/[\\:]/.test(p) && !p.split("/").includes("..");
 
 export default function NewRepair() {
+  const identity = useIdentity();
   const search = useSearchParams(),
     router = useRouter();
   const [step, setStep] = useState(0),
@@ -148,12 +169,14 @@ export default function NewRepair() {
           value.protocol !== "https:" ||
           value.username ||
           value.password ||
-          !["github.com", "gitlab.com"].includes(value.hostname)
+          !["github.com", "gitlab.com", "bitbucket.org"].includes(
+            value.hostname,
+          )
         )
           throw Error();
       } catch {
         setError(
-          "Use a public GitHub or GitLab HTTPS URL without credentials.",
+          "Use a public GitHub, GitLab or Bitbucket HTTPS URL without credentials.",
         );
         return;
       }
@@ -298,6 +321,13 @@ export default function NewRepair() {
       />
     </Field>
   );
+  if (!identity.canWrite)
+    return (
+      <Notice title="Read-only workspace">
+        A member role is required to stage a repository or start a repair. Ask a
+        workspace admin to update your access.
+      </Notice>
+    );
   return (
     <>
       <PageHead
@@ -523,6 +553,39 @@ export default function NewRepair() {
                       "Serving entrypoint",
                       "Example: churn.serve:score_request",
                     )}
+                    {bf(
+                      "loader",
+                      "Custom model loader",
+                      "Optional module:function that loads your model artifact.",
+                    )}
+                    <Field label="Prediction problem">
+                      <select
+                        value={builder.problem}
+                        onChange={(e) =>
+                          setBuilder({
+                            ...builder,
+                            problem: e.target.value,
+                            metric: metrics[e.target.value][0],
+                          })
+                        }
+                      >
+                        {Object.keys(metrics).map((p) => (
+                          <option key={p}>{p}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Quality metric">
+                      <select
+                        value={builder.metric}
+                        onChange={(e) =>
+                          setBuilder({ ...builder, metric: e.target.value })
+                        }
+                      >
+                        {metrics[builder.problem].map((m) => (
+                          <option key={m}>{m}</option>
+                        ))}
+                      </select>
+                    </Field>
                     {bf("trainData", "Training CSV")}
                     {bf(
                       "features",

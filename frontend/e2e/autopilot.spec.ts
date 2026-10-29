@@ -114,6 +114,8 @@ for (const theme of ['light', 'dark']) {
     await expect(page.getByRole('heading', { name: 'Correction verified', exact: true })).toBeVisible();
     for (const section of ['Summary','Evidence','Audit trail']) {
       await page.getByRole('button', { name: section, exact: true }).click();
+      // Measure the settled surface, not the intermediate opacity of a tab entrance.
+      await page.evaluate(async () => { await Promise.all(document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).map(a => a.finished.catch(() => {}))); });
       expect((await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
     }
   });

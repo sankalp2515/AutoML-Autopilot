@@ -13,6 +13,7 @@ from sqlalchemy import engine_from_config, pool
 from app.config import settings
 from app.database import Base
 import app.models.run  # noqa: F401  — registers all ORM tables on Base.metadata
+import app.repair.models  # noqa: F401  — v5 repair, accounts and GitHub App tables
 
 config = context.config
 # Inject the sync URL from settings (honours .env); never hardcode in alembic.ini.

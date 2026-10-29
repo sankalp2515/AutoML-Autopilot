@@ -96,7 +96,7 @@ def prepare(body: Prepare) -> dict:
                     raise HTTPException(422, f"unsafe archive member {m.name!r}")
             tar.extractall(tmp, filter="data")
         env_id = _err(lambda: runner().prepare(tmp, python=body.python, install=body.install, timeout_s=body.timeout_s))
-    return {"env_id": env_id, "runner": runner().name}
+    return {"env_id": env_id, "runner": runner().name, "image": getattr(runner(), "image", None)}
 
 
 @app.post("/fork", dependencies=[Depends(auth)])

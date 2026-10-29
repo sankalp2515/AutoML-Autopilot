@@ -33,7 +33,9 @@ def _agent(tmp_path, llm, contract, ecc):
 
 FIX = Path(__file__).resolve().parents[3] / "fixtures" / "repos" / "churn-service"
 REPO, SEALED = FIX / "repo", FIX / "sealed"
-pytestmark = pytest.mark.skipif(not REPO.is_dir(), reason="churn-service fixture not present")
+# slow: trains the fixture model per environment (BUG-11); CI runs these in their own job
+pytestmark = [pytest.mark.slow,
+              pytest.mark.skipif(not REPO.is_dir(), reason="churn-service fixture not present")]
 
 SERVE_OLD = '''from .features import build_features
 

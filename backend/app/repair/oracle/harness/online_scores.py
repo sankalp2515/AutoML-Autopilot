@@ -16,19 +16,26 @@ def main():
     for name in ("entrypoint", "model", "input", "out"):
         p.add_argument("--" + name, required=True)
     p.add_argument("--rows", type=int, required=True)
+    p.add_argument("--problem", choices=["binary", "multiclass", "regression"], default="binary")
+    p.add_argument("--loader", default="")
     a = p.parse_args()
     sys.path.insert(0, os.getcwd())
     result = {"scores": [], "errors": []}
     try:
-        import joblib
         import pandas as pd
         module, func = a.entrypoint.split(":")
         score = getattr(importlib.import_module(module), func)
-        model = joblib.load(a.model)
+        if a.loader:
+            mod, fn = a.loader.split(":")
+            model = getattr(importlib.import_module(mod), fn)(a.model)
+        else:
+            import joblib
+            model = joblib.load(a.model)
         for row in pd.read_csv(a.input).head(a.rows).to_dict("records"):
             try:
-                value = float(score(row, model))
-                if not math.isfinite(value) or not 0 <= value <= 1:
+                raw = score(row, model)
+                value = str(raw).strip() if a.problem == "multiclass" else float(raw)
+                if a.problem != "multiclass" and (not math.isfinite(value) or (a.problem == "binary" and not 0 <= value <= 1)):
                     raise ValueError("invalid probability")
                 result["scores"].append(value)
             except Exception as exc:

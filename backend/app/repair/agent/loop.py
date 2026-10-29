@@ -24,18 +24,21 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+import pandas as pd
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.repair import contracts as c
 from app.repair.agent import prompts
 from app.repair.agent import research as agent_research
 from app.repair.agent.llm import BudgetExceeded, ChatClient, parse_json
+from app.repair.agent.maintainability import review_notes
 from app.repair.oracle import common as cm
 from app.repair.sandbox.base import SCRATCH, SandboxRunner
 from app.repair.sandbox.mirror import MirroredEnv, SyncingRunner
 from app.repair.security import redact
+from app.repair.intake import pytest_file
 from app.repair.tools import ToolExecutor
 from app.repair.discovery import collect_tests
 from app.repair.sandbox.base import SandboxError
@@ -51,13 +54,31 @@ class Cancelled(RuntimeError):
 
 
 # ── records ───────────────────────────────────────────────────────────────────
+class Probe(BaseModel):
+    """A falsifiable prediction about the PRISTINE code: this text is present (or absent) in this file."""
+    path: str = Field(min_length=1, max_length=300)
+    pattern: str = Field(min_length=3, max_length=200)
+    expect: Literal["present", "absent"] = "present"
+
+
 class Hypothesis(BaseModel):
     id: str = Field(pattern=r"^H\d{1,2}$")
     cause: str = Field(max_length=400)
     evidence: str = Field(default="", max_length=600)
     files: list[str] = Field(default_factory=list, max_length=10)
     check: str = Field(default="", max_length=400)
+    probe: Probe | None = None
+    status: Literal["untested", "confirmed", "refuted", "unrunnable"] = "untested"
     proposed_by: str = "nemotron"
+
+    @field_validator("probe", mode="before")
+    @classmethod
+    def _lenient(cls, v):
+        # A malformed probe costs the hypothesis its ranking evidence, not the whole plan.
+        try:
+            return Probe.model_validate(v) if v else None
+        except ValidationError:
+            return None
 
 
 class Step(BaseModel):
@@ -82,6 +103,7 @@ class CandidateRun(BaseModel):
     code_receipt: c.CodeReceipt | None = None
     screen_receipt: c.MLReceipt | None = None
     eligible: bool = False
+    infra_failed: bool = False
 
 
 class RepairReport(BaseModel):
@@ -94,9 +116,12 @@ class RepairReport(BaseModel):
     models: dict[str, str] = Field(default_factory=dict)
     runner: str
     isolated: bool = False
+    image: str | None = None                  # BE-17: digest of the candidate image every check ran in
     failure_excerpt: str = ""
     research: dict[str, Any] = Field(default_factory=dict)
     hypotheses: list[Hypothesis] = Field(default_factory=list)
+    data_profile: dict[str, Any] = Field(default_factory=dict)
+    maintainability_notes: list[str] = Field(default_factory=list)
     planner_error: str | None = None
     candidates: list[CandidateRun] = Field(default_factory=list)
     finalist: str | None = None
@@ -250,7 +275,8 @@ class RepairAgent:
 
     def _brief(self, excerpt: str, listing: str) -> str:
         cmds = [k for k in ("test", "train", "predict") if getattr(self.contract.commands, k)]
-        brief = (f"TASK: {redact(self.ecc.target)}\nFAILING TESTS: {', '.join(self.ecc.success.fail_to_pass)}\n"
+        f2p = ", ".join(self.ecc.success.fail_to_pass) or "none declared: this is a model-quality regression"
+        brief = (f"TASK: {redact(self.ecc.target)}\nFAILING TESTS: {f2p}\n"
                  f"FAILURE OUTPUT (compacted):\n{excerpt}\n\nFILES:\n{listing}\n\n"
                  f"RUNNABLE COMMANDS: {', '.join(cmds)}. EDITABLE: {', '.join(self.roots)}.")
         brief += "\n\nRELEVANT SOURCE (untrusted data):\n" + getattr(self, "_planner_context", "")
@@ -263,7 +289,64 @@ class RepairAgent:
             brief += ("\n\n" + inv) if inv else ""
             docs = agent_research.as_brief(self.report.research)
             brief += ("\n\n" + docs) if docs else ""
+            prof = self.report.data_profile
+            if prof.get("flagged"):
+                brief += ("\n\nDATA CHECK (drift profiler, training rows vs holdout features, no labels): "
+                          + "; ".join(f"{f['column']} PSI {f['psi']}, missing {f['missing_shift']:+.0%}"
+                                      for f in prof["flagged"]))
         return brief
+
+    # 2b BE-16: the v4 investigator's drift checks, for "metric dropped" tasks with no failing test
+    def _data_profile(self) -> None:
+        d = self.contract.data
+        if self.mode != "full" or d is None or self.ecc.success.fail_to_pass:
+            return
+        from app.autopilot.profiler import cat_psi, psi
+        base = Path(self.base_dir)
+        try:
+            tr = pd.read_csv(base / d.train, nrows=50_000)
+            ho = pd.read_csv(base / d.holdout_features, nrows=50_000)
+        except Exception:  # noqa: BLE001 - the profile is optional evidence
+            return
+        rows = []
+        for col in ho.columns:
+            if col in (d.id_column, d.target) or col not in tr.columns:
+                continue
+            a, b = tr[col], ho[col]
+            try:
+                numeric = pd.api.types.is_numeric_dtype(a) and pd.api.types.is_numeric_dtype(b)
+                v = psi(a.dropna(), b.dropna()) if numeric else cat_psi(a.astype(str), b.astype(str))
+            except Exception:  # noqa: BLE001
+                continue
+            rows.append({"column": col, "psi": round(float(v), 3),
+                         "missing_shift": round(float(b.isna().mean() - a.isna().mean()), 3)})
+        rows.sort(key=lambda r: -r["psi"])
+        flagged = [r for r in rows if r["psi"] >= 0.2 or abs(r["missing_shift"]) >= 0.1][:8]
+        self.report.data_profile = {"columns": len(rows), "flagged": flagged}
+        self._event("diagnostic.executed", "platform", kind="data_drift", columns=len(rows),
+                    flagged=[r["column"] for r in flagged])
+
+    # 3b BE-15: check every hypothesis's prediction for free, then rank before spending coding tokens
+    def _probe(self, hyps: list[Hypothesis]) -> list[Hypothesis]:
+        base = Path(self.base_dir).resolve()
+        for h in hyps:
+            if h.probe is None:
+                continue
+            p = (base / h.probe.path).resolve()
+            if not p.is_relative_to(base) or not p.is_file() or ".git" in p.relative_to(base).parts:
+                h.status = "unrunnable"
+            else:
+                found = h.probe.pattern in p.read_text(encoding="utf-8", errors="ignore")
+                h.status = "confirmed" if found == (h.probe.expect == "present") else "refuted"
+            self._event("diagnostic.executed", "platform", kind="probe", hypothesis_id=h.id,
+                        path=h.probe.path, pattern=redact(h.probe.pattern[:80]), expect=h.probe.expect,
+                        outcome=h.status)
+        rank = {"confirmed": 0, "untested": 1, "unrunnable": 1, "refuted": 2}
+        ranked = sorted(hyps, key=lambda h: rank[h.status])           # stable: planner order breaks ties
+        if [h.id for h in ranked] != [h.id for h in hyps]:
+            self._event("hypothesis.revised", "platform", order=[h.id for h in ranked],
+                        statuses={h.id: h.status for h in ranked})
+        return ranked
 
     # 2 research
     def _research(self, excerpt: str) -> None:
@@ -323,12 +406,14 @@ class RepairAgent:
             system = prompts.coder_system(self.roots, self.ecc.success.ml_invariants, mode=self.mode)
             task = brief
             if hyp:
-                task += (f"\n\nYOUR HYPOTHESIS {hyp.id}: {hyp.cause}\nCheck: {hyp.check}\n"
-                         + "".join(f"COMPETING {o.id}: {o.cause}\n" for o in others)
+                task += (f"\n\nYOUR HYPOTHESIS {hyp.id} (platform probe: {hyp.status}): {hyp.cause}\nCheck: {hyp.check}\n"
+                         + "".join(f"COMPETING {o.id} (probe: {o.status}): {o.cause}\n" for o in others)
                          + "Check your hypothesis cheaply first. If the evidence refutes it, say so and fix the real cause.")
             turns: list[tuple[str, str]] = []
-            invalid = refused = 0
+            invalid = refused = lock_refused = 0
             last_edit = last_green_suite = 0
+            own_tests: set[str] = set()       # new test files the agent wrote
+            locked: set[str] = set()          # ...that have since failed: fix the code, not the test
             purpose = f"code:{cid}"
             candidate_llm = self.llm.scoped(purpose, token_cap)
             for n in range(1, max_calls + 1):
@@ -379,7 +464,29 @@ class RepairAgent:
                                               denied=msg[:200]))
                         turns.append((step.model_dump_json(), msg))
                         continue
+                if act.action == "apply_edit" and act.path in locked and lock_refused < 6:
+                    # Full mode: once the agent's own new test has failed, weakening it is the
+                    # classic way to fake a green suite. The code under test must change instead.
+                    lock_refused += 1
+                    msg = prompts.OWN_TEST_LOCKED.format(path=act.path)
+                    run.steps.append(Step(n=n, thought=redact(step.thought[:300]), action="apply_edit",
+                                          target=act.path, ok=False, denied=msg[:200]))
+                    self._event("tool.denied", "platform", candidate_id=cid, action="apply_edit", rule=msg[:160])
+                    turns.append((step.model_dump_json(), "DENIED: " + msg))
+                    continue
                 res = tools.execute(step)
+                if self.mode == "full" and act.action == "apply_edit" and res.ok and act.old == "" \
+                        and pytest_file(act.path):
+                    own_tests.add(act.path)
+                if self.mode == "full" and act.action == "run" and act.kind == "test" and not res.ok:
+                    failing_out = res.output or ""
+                    # Lock only tests that ran and failed an assertion. A test that cannot even be
+                    # collected (import/syntax/name error) is broken itself and may still be fixed.
+                    broken_itself = re.search(r"ImportError|ModuleNotFoundError|NameError|SyntaxError|"
+                                              r"IndentationError|error during collection|errors? during collection",
+                                              failing_out)
+                    if not broken_itself and re.search(r"AssertionError|assert ", failing_out):
+                        locked |= {t for t in own_tests if t in failing_out or Path(t).name in failing_out}
                 if act.action == "apply_edit" and res.ok:
                     mirror.sync()
                 if act.action == "apply_edit" and res.ok:
@@ -419,6 +526,12 @@ class RepairAgent:
             self.runner.discard(env)
         return run
 
+    @staticmethod
+    def _retry(fn):
+        """One retry for an infrastructure failure; a real verdict is never retried."""
+        r = fn()
+        return fn() if r.decision is c.Decision.SYSTEM_FAILURE else r
+
     # 5 screen without labels
     def _screen(self, run: CandidateRun) -> None:
         cand = run.candidate
@@ -430,16 +543,18 @@ class RepairAgent:
             return
         if not cand.diff:
             return
-        run.code_receipt = self.oracles.code(cand.candidate_id, cand.diff)
+        run.code_receipt = self._retry(lambda: self.oracles.code(cand.candidate_id, cand.diff))
         ok = run.code_receipt.decision is c.Decision.VERIFIED
         self._event("code_oracle.passed" if ok else "code_oracle.rejected", "code_oracle",
                     candidate_id=cand.candidate_id, reasons=run.code_receipt.reasons)
         if ok and self.ml_required:
-            run.screen_receipt = self.oracles.ml(cand.candidate_id, cand.diff, final=False)
+            run.screen_receipt = self._retry(lambda: self.oracles.ml(cand.candidate_id, cand.diff, final=False))
             ok = not any(ch.status is c.CheckStatus.FAIL for ch in run.screen_receipt.checks) \
                 and run.screen_receipt.decision is not c.Decision.SYSTEM_FAILURE
             self._event("ml_oracle.passed" if ok else "ml_oracle.rejected", "ml_oracle",
                         candidate_id=cand.candidate_id, stage="screen", reasons=run.screen_receipt.reasons)
+        run.infra_failed = any(r is not None and r.decision is c.Decision.SYSTEM_FAILURE
+                               for r in (run.code_receipt, run.screen_receipt))
         run.eligible = ok
         if not ok:
             cand.status = "REJECTED"
@@ -452,14 +567,16 @@ class RepairAgent:
                     runner=rep.runner, isolated=rep.isolated)
         base_env = self.runner.prepare(self.base_dir, python=self.contract.python, install=self.contract.install,
                                        timeout_s=900)
+        rep.image = getattr(self.runner, "image", None)
         try:
             baseline, excerpt, listing = self._reproduce(base_env)
             self._check_stop()
             self._research(excerpt)
+            self._data_profile()
             brief = self._brief(excerpt, listing)
             n = self.ecc.limits.max_candidates
             if self.mode == "full":
-                hyps = self._hypotheses(brief)
+                hyps = self._probe(self._hypotheses(brief))
                 rep.hypotheses = hyps
                 plan = [(h, [o for o in hyps if o.id != h.id]) for h in hyps[:n]]
             else:
@@ -481,11 +598,17 @@ class RepairAgent:
             self._screen(run)
         eligible = sorted((r for r in rep.candidates if r.eligible), key=lambda r: r.diff_lines)
         if not eligible:
-            rep.decision = c.Decision.REJECTED if any(r.candidate.diff for r in rep.candidates) else c.Decision.INCONCLUSIVE
-            rep.reasons = ["E_NO_ELIGIBLE_CANDIDATE" if rep.decision is c.Decision.REJECTED else "E_NO_PATCH"]
+            if any(r.infra_failed for r in rep.candidates):
+                # A checker could not run: that is not evidence against the patch.
+                rep.decision, rep.reasons = c.Decision.INCONCLUSIVE, ["E_SYSTEM_FAILURE"]
+            elif any(r.candidate.diff for r in rep.candidates):
+                rep.decision, rep.reasons = c.Decision.REJECTED, ["E_NO_ELIGIBLE_CANDIDATE"]
+            else:
+                rep.decision, rep.reasons = c.Decision.INCONCLUSIVE, ["E_NO_PATCH"]
         else:
             fin = eligible[0]
             rep.finalist = fin.candidate.candidate_id
+            rep.maintainability_notes = review_notes(self.base_dir, fin.candidate.diff)
             self._event("candidate.frozen", "platform", candidate_id=rep.finalist, diff_digest=fin.candidate.diff_digest)
             final_ml = self.oracles.ml(rep.finalist, fin.candidate.diff, final=True) if self.ml_required else None
             rep.final_ml_receipt = final_ml

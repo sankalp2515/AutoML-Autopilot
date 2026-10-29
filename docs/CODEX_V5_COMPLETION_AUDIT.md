@@ -1,3 +1,5 @@
+Follow-up: [API handoff integration](CODEX_API_HANDOFF_VALIDATION.md) completes team UI wiring and BUG-14, integrates the newer backend, and records subsequent validation. Earlier results below remain historical.
+
 # Codex v5 completion audit — 30 October 2026
 
 Branch: `codex/fixtures-bug-hardening`, based on `v5/main` at `c61da72`, with

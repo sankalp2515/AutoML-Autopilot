@@ -264,6 +264,8 @@ class LocalContainerRunner:
                     if built.exit_code != 0:
                         raise SandboxError(f"dependency image preparation failed: {built.stderr[-2000:]}")
             environment.image = image
+            ident = self._command(["image", "inspect", image, "--format", "{{.Id}}"], timeout_s=15)
+            self.image = (ident.stdout or "").strip() or image     # content digest, recorded in the report
             with self._guard:
                 self._environments[env_id] = environment
             return env_id
@@ -299,7 +301,10 @@ class LocalContainerRunner:
                     for parent in target.parents:
                         if parent == environment.root / "work":
                             break
-                        parent.chmod(0o777)
+                        try:
+                            parent.chmod(0o777)
+                        except PermissionError:
+                            pass        # already writable or owned by the candidate user
                     target.write_bytes(content)
                     target.chmod(0o666)
 

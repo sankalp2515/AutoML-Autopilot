@@ -67,6 +67,57 @@ class RepairWorker(Base):
     info: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
+# ── BE-23 accounts and teams ──────────────────────────────────────────────────
+class Account(Base):
+    __tablename__ = "repair_accounts"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)            # "gh:<github user id>"
+    login: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    personal_workspace: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[float] = mapped_column(Float)
+
+
+class Workspace(Base):
+    __tablename__ = "repair_workspaces"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    created_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[float] = mapped_column(Float)
+
+
+class Membership(Base):
+    __tablename__ = "repair_memberships"
+    __table_args__ = (UniqueConstraint("workspace_id", "account_id", name="uq_repair_member"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("repair_workspaces.id", ondelete="CASCADE"), index=True)
+    account_id: Mapped[str] = mapped_column(ForeignKey("repair_accounts.id", ondelete="CASCADE"), index=True)
+    role: Mapped[str] = mapped_column(String(16))                            # owner | admin | member | viewer
+
+
+# ── BE-24 GitHub App ──────────────────────────────────────────────────────────
+class GitHubLink(Base):
+    """A repository whose failed CI runs open repair tasks in a workspace."""
+    __tablename__ = "repair_github_links"
+    repo: Mapped[str] = mapped_column(String(200), primary_key=True)        # "owner/name", lower-case
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("repair_workspaces.id", ondelete="CASCADE"), index=True)
+    installation_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    auto_pr: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[float] = mapped_column(Float)
+
+
+class WebhookDelivery(Base):
+    """One row per GitHub delivery id: makes redelivery idempotent and shows what happened."""
+    __tablename__ = "repair_webhook_deliveries"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    event: Mapped[str] = mapped_column(String(40))
+    repo: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
+    outcome: Mapped[str] = mapped_column(String(300))
+    task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    at: Mapped[float] = mapped_column(Float)
+
+
 def ensure_columns(sync_conn) -> None:
     """Add v5 columns to a repair_tasks table created before they existed (idempotent)."""
     from sqlalchemy import inspect, text

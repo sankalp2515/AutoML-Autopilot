@@ -3,14 +3,14 @@
   "kind": "checker-proof",
   "runner": "process-unisolated",
   "autonomous_agent": false,
-  "base_commit_sha": "3b5c01b80814851139037cd12cc550d82da668e2",
+  "base_commit_sha": "68be033671fe056bf1a9036df5ab6426dfc2148d",
   "snapshot_digest": "sha256:ed123745077d1af62e7410fa7a577277af4c571c5c44caae77426a833470b9db",
   "receipts": {
     "wrong_fix": {
       "code": {
         "task_id": "proof-refund-risk",
         "candidate_id": "wrong_fix",
-        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "contract_digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be",
         "diff_digest": "sha256:8cd4d75a8d2015a74c9dd697466ade9005afe2a5f2a7ebe35114c27ba1ee995a",
         "checks": [
           {
@@ -18,7 +18,7 @@
             "status": "PASS",
             "detail": "contract digest verified",
             "evidence": {
-              "digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b"
+              "digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be"
             }
           },
           {
@@ -63,14 +63,14 @@
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:48:56.551+00:00",
-        "receipt_digest": "sha256:4404370366f9b9104fe2abab2319263bdb710de4d02c64f78f00cae8ef3fefd5",
+        "created_at": "2026-10-29T22:39:27.021+00:00",
+        "receipt_digest": "sha256:5bb92f1021e3081efbcb7ee35dc62dc6fbbb55e2cfa623c646b05a09a16ba944",
         "kind": "code"
       },
       "ml": {
         "task_id": "proof-refund-risk",
         "candidate_id": "wrong_fix",
-        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "contract_digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be",
         "diff_digest": "sha256:8cd4d75a8d2015a74c9dd697466ade9005afe2a5f2a7ebe35114c27ba1ee995a",
         "checks": [
           {
@@ -96,8 +96,8 @@
           "E_NO_TARGET_LEAKAGE"
         ],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:49:09.110+00:00",
-        "receipt_digest": "sha256:04ae54ef7176b9339bbbff1325924594f6db600cb28db2047ac9ff080d02a045",
+        "created_at": "2026-10-29T22:39:58.672+00:00",
+        "receipt_digest": "sha256:7ee16087a4d2d7b43c1c4a2f3e0b98ffa69477bf1168d117e35b9350f3ad4b75",
         "kind": "ml",
         "metrics": {},
         "holdout_opened": false
@@ -107,7 +107,7 @@
       "code": {
         "task_id": "proof-refund-risk",
         "candidate_id": "reference_fix",
-        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "contract_digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be",
         "diff_digest": "sha256:36dc82841cfb0909b2d48a976b5f3a845e70578a868891543ba4b2871c9719be",
         "checks": [
           {
@@ -115,7 +115,7 @@
             "status": "PASS",
             "detail": "contract digest verified",
             "evidence": {
-              "digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b"
+              "digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be"
             }
           },
           {
@@ -162,14 +162,14 @@
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:49:15.655+00:00",
-        "receipt_digest": "sha256:b2bdb50d39f666c546598299222e1d152ec7739407a174da9a6a499635d2a884",
+        "created_at": "2026-10-29T22:40:06.175+00:00",
+        "receipt_digest": "sha256:adb758c59682c5c44a877fded3e52a47b2b7cff66e322b4a1b076260b702a0e1",
         "kind": "code"
       },
       "ml": {
         "task_id": "proof-refund-risk",
         "candidate_id": "reference_fix",
-        "contract_digest": "sha256:a5b1e7615a631ac289850c7df857eb96d30f4a979bd8bcc51a5965dfec7c6f9b",
+        "contract_digest": "sha256:a3c363d798b84bfbc7e4d5f5a7ea120b2427fb4c85d5751a6ff01e91c27154be",
         "diff_digest": "sha256:36dc82841cfb0909b2d48a976b5f3a845e70578a868891543ba4b2871c9719be",
         "checks": [
           {
@@ -206,15 +206,16 @@
               "delta": 0.3733,
               "ci_low": 0.3175,
               "ci_high": 0.4277,
-              "n_boot": 400
+              "n_boot": 400,
+              "relative": false
             }
           }
         ],
         "decision": "VERIFIED",
         "reasons": [],
         "runner": "process-unisolated",
-        "created_at": "2026-10-29T21:49:31.078+00:00",
-        "receipt_digest": "sha256:4bdd716cb4f350ff5d57d83940ac1d71a3a1bc4bd2060b695114ff0788de080f",
+        "created_at": "2026-10-29T22:40:26.135+00:00",
+        "receipt_digest": "sha256:b039a49fc7475d8ccaee068dcefd867901b04cafe40231a9e3586c07a3952c8f",
         "kind": "ml",
         "metrics": {
           "holdout": {
@@ -227,7 +228,8 @@
             "delta": 0.3733,
             "ci_low": 0.3175,
             "ci_high": 0.4277,
-            "n_boot": 400
+            "n_boot": 400,
+            "relative": false
           }
         },
         "holdout_opened": true

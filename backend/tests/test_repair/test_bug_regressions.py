@@ -236,7 +236,10 @@ def test_cli_submits_through_intake_and_handles_terminal_failure_without_fake_sh
     cli = importlib.util.module_from_spec(spec); spec.loader.exec_module(cli)
     calls = []
     class Client:
-        def __init__(self, **kwargs): pass
+        def __init__(self, **kwargs):
+            assert kwargs["headers"]["X-Autopilot-Token"] == "test-cli-token"
+            assert kwargs["headers"]["X-Workspace"] == "test-workspace"
+            assert "Authorization" not in kwargs["headers"]
         def __enter__(self): return self
         def __exit__(self, *args): pass
         def request(self, method, path, **kwargs):
@@ -249,6 +252,8 @@ def test_cli_submits_through_intake_and_handles_terminal_failure_without_fake_sh
         def get(self, path):
             return httpx.Response(409 if state == "FAILED" else 200, json={"decision": "VERIFIED"},
                                   request=httpx.Request("GET", "https://local.test/" + path))
+    monkeypatch.setenv("AUTOPILOT_CLI_TOKEN", "test-cli-token")
+    monkeypatch.setenv("AUTOPILOT_CLI_WORKSPACE", "test-workspace")
     monkeypatch.setattr(cli.httpx, "Client", Client)
     out = tmp_path / "result.json"
     monkeypatch.setattr(sys, "argv", ["run_repair.py", "fixtures/repos/refund-risk", "--out", str(out)])
@@ -257,3 +262,14 @@ def test_cli_submits_through_intake_and_handles_terminal_failure_without_fake_sh
     assert submitted["repo_id"] == "abcdef123456" and "base_commit_sha" not in submitted
     assert next(kwargs["json"] for method, path, kwargs in calls if path == "repos") == {"sample": "refund-risk"}
     assert json.loads(out.read_text())["decision"] == ("INCONCLUSIVE" if state == "FAILED" else "VERIFIED")
+
+
+def test_maintainability_notes_flag_repeated_lists_and_broad_exceptions(tmp_path):
+    import difflib
+    from app.repair.agent.maintainability import review_notes
+    source = "COLUMNS = ['a','b','c']\nOTHER = ['a','b','c']\ntry:\n    value = 1\nexcept Exception:\n    value = 0\n"
+    diff = "".join(difflib.unified_diff([],source.splitlines(keepends=True),"/dev/null","b/src.py"))
+    notes = review_notes(str(tmp_path), diff)
+    assert any("Repeated literal" in n for n in notes)
+    assert any("broad exception" in n for n in notes)
+    assert "production feature-building" in notes[0]
