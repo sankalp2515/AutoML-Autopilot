@@ -1,0 +1,125 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.prod
+#1 transferring dockerfile: 1.56kB 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 1.5s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 142B 0.0s done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [deps 1/4] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#5 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#5 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 44.70kB 0.2s done
+#4 DONE 0.3s
+
+#6 [deps 4/4] RUN npm ci --legacy-peer-deps --no-audit --no-fund
+#6 CACHED
+
+#7 [deps 2/4] WORKDIR /app
+#7 CACHED
+
+#8 [deps 3/4] COPY package.json package-lock.json ./
+#8 CACHED
+
+#9 [build 3/5] COPY --from=deps /app/node_modules ./node_modules
+#9 CACHED
+
+#10 [build 4/5] COPY . .
+#10 DONE 0.9s
+
+#11 [build 5/5] RUN npm run build
+#11 5.289 
+#11 5.289 > automl-frontend@1.0.0 build
+#11 5.289 > next build
+#11 5.289 
+#11 10.20   ▲ Next.js 14.2.18
+#11 10.20 
+#11 10.54    Creating an optimized production build ...
+#11 125.0  ✓ Compiled successfully
+#11 125.0    Linting and checking validity of types ...
+#11 183.1    Collecting page data ...
+#11 185.2  ⚠ Using edge runtime on a page currently disables static generation for that page
+#11 188.1    Generating static pages (0/20) ...
+#11 189.7    Generating static pages (5/20) 
+#11 190.1    Generating static pages (10/20) 
+#11 190.1    Generating static pages (15/20) 
+#11 190.3  ✓ Generating static pages (20/20)
+#11 191.6    Finalizing page optimization ...
+#11 191.6    Collecting build traces ...
+#11 248.2 
+#11 248.3 Route (app)                              Size     First Load JS
+#11 248.3 ┌ ○ /                                    189 B           204 kB
+#11 248.3 ├ ○ /_not-found                          162 B          87.4 kB
+#11 248.3 ├ ○ /auth/callback                       830 B           197 kB
+#11 248.3 ├ ○ /autopilot                           4.17 kB         166 kB
+#11 248.3 ├ ƒ /autopilot/[id]                      375 B           176 kB
+#11 248.3 ├ ○ /autopilot/benchmark                 3.03 kB         165 kB
+#11 248.3 ├ ○ /autopilot/example                   189 B           175 kB
+#11 248.3 ├ ○ /autopilot/new                       6.97 kB         169 kB
+#11 248.3 ├ ƒ /autopilot/opengraph-image           0 B                0 B
+#11 248.3 ├ ƒ /autopilot/share/[token]             385 B           176 kB
+#11 248.3 ├ ○ /login                               1.35 kB         150 kB
+#11 248.3 ├ ○ /registry                            5.29 kB         154 kB
+#11 248.3 ├ ○ /repair                              189 B           204 kB
+#11 248.3 ├ ○ /repair/benchmark                    6.36 kB         202 kB
+#11 248.3 ├ ○ /repair/docs                         7.24 kB         203 kB
+#11 248.3 ├ ○ /repair/how-it-works                 4.64 kB         200 kB
+#11 248.3 ├ ○ /repair/new                          10 kB           206 kB
+#11 248.3 ├ ƒ /repair/replay/[id]                  154 B           211 kB
+#11 248.3 ├ ○ /repair/runs                         3.94 kB         200 kB
+#11 248.3 ├ ○ /repair/settings                     5 kB            201 kB
+#11 248.3 ├ ƒ /repair/tasks/[id]                   154 B           211 kB
+#11 248.3 ├ ○ /runs                                3.96 kB         153 kB
+#11 248.3 ├ ƒ /runs/[run_id]                       37.4 kB         186 kB
+#11 248.3 └ ○ /settings                            4.96 kB         154 kB
+#11 248.3 + First Load JS shared by all            87.2 kB
+#11 248.3   ├ chunks/2117-353d1edd9d3a1da1.js      31.6 kB
+#11 248.3   ├ chunks/fd9d1056-2c99d0106c70b214.js  53.6 kB
+#11 248.3   └ other shared chunks (total)          1.96 kB
+#11 248.3 
+#11 248.3 
+#11 248.3 ○  (Static)   prerendered as static content
+#11 248.3 ƒ  (Dynamic)  server-rendered on demand
+#11 248.3 
+#11 248.7 npm notice
+#11 248.7 npm notice New major version of npm available! 10.8.2 -> 12.2.1
+#11 248.7 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#11 248.7 npm notice To update run: npm install -g npm@12.2.1
+#11 248.7 npm notice
+#11 DONE 249.4s
+
+#12 [runtime 3/6] RUN addgroup -g 10001 -S web && adduser -S -u 10001 -G web web
+#12 CACHED
+
+#13 [runtime 4/6] COPY --from=build --chown=web:web /app/.next/standalone ./
+#13 DONE 5.1s
+
+#14 [runtime 5/6] COPY --from=build --chown=web:web /app/.next/static ./.next/static
+#14 DONE 0.3s
+
+#15 [runtime 6/6] COPY --from=build --chown=web:web /app/public ./public
+#15 DONE 0.2s
+
+#16 exporting to image
+#16 exporting layers
+#16 exporting layers 3.1s done
+#16 exporting manifest sha256:625af32a3402bef7ff9122af3f2720a482ee5c253c0702149ded3d1efd8d22e5 0.0s done
+#16 exporting config sha256:491d8e7ea48082234b986deaa2dc9e5220f93e81da0b5b12d427c4aaf39d4634 0.0s done
+#16 exporting attestation manifest sha256:6a181cb8c9a5f963acbdeb1ce32407533c5269ffa5890d0bfba8c1cd62b43ce0 0.0s done
+#16 exporting manifest list sha256:b521cb43026143e499b0e5a46a333b611dba208548f97585a0eacff9cb2f7778 0.0s done
+#16 naming to docker.io/library/codex-v5-final-web:local done
+#16 unpacking to docker.io/library/codex-v5-final-web:local
+#16 unpacking to docker.io/library/codex-v5-final-web:local 1.9s done
+#16 DONE 5.2s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/ewpxxr50gewywx1zr9m8i7xsz

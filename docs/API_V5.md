@@ -184,3 +184,9 @@ agent reports remain supported. Final candidates/receipts stay immutable and sep
 - `ml_screen` and final `ml` are distinct persisted receipt entries. Final holdout permits and verifier admissions never expire. A worker token cannot register admissions or call the trusted evaluator.
 - Dependency preparation now requires exact top-level pins and an operator-approved HTTPS package index. URLs, version ranges, nested requirement includes, local/source installations and arbitrary pip flags are refused. Readable infrastructure errors must not be presented as a code rejection.
 - `DELETE /repos/{repo_id}` and `DELETE /packs/{pack_id}` require the owning tenant and refuse active task references. TTL and hard-disk-quota limitations are described in [V5_OPERATIONS.md](V5_OPERATIONS.md).
+
+## Judge-only admission additions
+
+`GET /status` now includes `access_policy`: `{judge_only, daily_runs_per_workspace, cooldown_seconds, max_active_tasks, total_estimated_usd_cap, reason}`. Display the reason and configured values before starting a live run; zero cap is reported as null (disabled). In judge-only mode an invite is required even for signed-in users, and missing invite configuration denies live starts.
+
+New admission controls are `REPAIR_TOTAL_USD_CAP` (deployment lifetime, no daily reset), `REPAIR_CREATE_COOLDOWN_S` and `REPAIR_MAX_ACTIVE_TASKS` (global queued/running). Cooldown/capacity return HTTP 429 with `Retry-After` in seconds; show the readable detail and let users retry deliberately. Idempotent retries return the original task before reservation/cooldown checks. A lifetime budget refusal is 403; do not display a false reset countdown. Existing GETs/replays/diffs/receipts and cancellation are not throttled by these new limits. These are estimated commitments, not an authoritative Token Factory wallet balance. See [judge operations](JUDGE_DEPLOYMENT_AND_COSTS.md).

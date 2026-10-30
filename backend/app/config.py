@@ -168,6 +168,10 @@ class Settings(BaseSettings):
     REPAIR_LIVE_ENABLED: bool = False
     REPAIR_INVITE_CODES: str = ""            # comma-separated; empty = no code needed when live is enabled
     REPAIR_DAILY_USD_CAP: float = 5.0
+    REPAIR_JUDGE_ONLY: bool = False
+    REPAIR_TOTAL_USD_CAP: float = 0.0       # deployment lifetime; zero disables, never a daily reset
+    REPAIR_CREATE_COOLDOWN_S: int = 0
+    REPAIR_MAX_ACTIVE_TASKS: int = 0         # global queued/running ceiling; zero disables
     REPAIR_DAILY_TOKEN_CAP: int = 2_000_000
     REPAIR_LEDGER_DATABASE_URL: str = ""   # verifier-only PostgreSQL; never supplied to the worker
     REPAIR_ADMISSION_TOKEN: str = ""       # API -> verifier registration; worker cannot register contracts

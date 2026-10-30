@@ -52,13 +52,30 @@ class Stack:
             self.config["project"]=self.project
             path.write_text(json.dumps(self.config));path.chmod(0o600)
         if self.config["project"]!=self.project:raise ValueError("state belongs to another project")
+        # Judge access is a persistent project policy, not a flag a later restart can forget.
+        if args.judge_only and not self.config.get("judge_only"):
+            self.config["judge_only"]=True
+            path.write_text(json.dumps(self.config));path.chmod(0o600)
+        judge_only=bool(self.config.get("judge_only"))
         # New operator-only admin roles are additive; existing data is not rewritten.
         if "POSTGRES_ADMIN_PASSWORD" not in self.config or "REPAIR_LEDGER_ADMIN_PASSWORD" not in self.config:
             self.config.setdefault("POSTGRES_ADMIN_PASSWORD",secrets.token_hex(32))
             self.config.setdefault("REPAIR_LEDGER_ADMIN_PASSWORD",secrets.token_hex(32))
             path.write_text(json.dumps(self.config));path.chmod(0o600)
         empty=self.state/"empty-compose.env";empty.touch()
-        self.env={**os.environ,**{k:v for k,v in self.config.items() if k!="project"}}
+        self.env={**os.environ,**{k:v for k,v in self.config.items() if k not in {"project","judge_only"}}}
+        if judge_only:
+            self.env["REPAIR_JUDGE_ONLY"]="true"
+            for key,value in {"REPAIR_JUDGE_ONLY":"true","REPAIR_TOTAL_USD_CAP":"20",
+                "REPAIR_DAILY_USD_CAP":"5","REPAIR_TASK_USD_CEILING":"0.60",
+                "REPAIR_DAILY_TASKS_PER_TENANT":"12","REPAIR_CREATE_COOLDOWN_S":"30",
+                "REPAIR_MAX_ACTIVE_TASKS":"2"}.items():self.env.setdefault(key,value)
+            if float(self.env["REPAIR_TOTAL_USD_CAP"])<=0 or int(self.env["REPAIR_MAX_ACTIVE_TASKS"])<=0:
+                raise ValueError("judge mode requires positive lifetime allowance and active-task limits")
+            for key in ("NVIDIA_API_KEY","NVIDIA_API_KEY_2","NVIDIA_API_KEY_3","NVIDIA_API_KEY_4"):
+                self.env[key]=""  # Do not silently substitute NVIDIA evidence for Nebius judging calls.
+            if args.allow_live and (not self.env.get("NEBIUS_API_KEY") or not self.env.get("REPAIR_INVITE_CODES")):
+                raise ValueError("live judge mode requires a Token Factory key and private judge invite codes in the process environment")
         if not args.allow_live:
             for name in ("NEBIUS_API_KEY","NVIDIA_API_KEY","NVIDIA_API_KEY_2","NVIDIA_API_KEY_3","NVIDIA_API_KEY_4","TAVILY_API_KEY"):
                 self.env[name]=""
@@ -74,8 +91,10 @@ class Stack:
         location=json.loads(command(["docker","volume","inspect",volume]))[0]["Mountpoint"]
         self.env["REPAIR_ENV_HOST_DIR"]=location
         override=self.state/"runner-volume.json"
-        override.write_text(json.dumps({"services":{"sandbox-runner":{"volumes":[{"type":"volume","source":"runner-environments","target":location}]}},
-            "volumes":{"runner-environments":{"external":True,"name":volume}}}))
+        services={"sandbox-runner":{"volumes":[{"type":"volume","source":"runner-environments","target":location}]}}
+        if judge_only:
+            services["worker"]={"environment":{name:"" for name in ("NEBIUS_API_KEY","NVIDIA_API_KEY","TAVILY_API_KEY")}}
+        override.write_text(json.dumps({"services":services,"volumes":{"runner-environments":{"external":True,"name":volume}}}))
         self.prefix=["docker","compose","--env-file",str(empty),"-p",self.project,"-f",str(ROOT/"docker-compose.yml"),"-f",str(override)]
 
     def compose(self,*args,**kw):return command([*self.prefix,*args],env=self.env,**kw)
@@ -189,6 +208,7 @@ def main():
     p.add_argument("command",choices=["up","doctor","warm","backup","restore","seed-drill","down"])
     p.add_argument("--project",default="automl-v5-local");p.add_argument("--port",type=int,default=3133)
     p.add_argument("--state-dir");p.add_argument("--directory");p.add_argument("--allow-live",action="store_true")
+    p.add_argument("--judge-only",action="store_true",help="reserve finite inference credits for invited judges; no provider keys in the legacy worker")
     args=p.parse_args()
     if not re.fullmatch(r"[a-z][a-z0-9-]{2,50}",args.project):p.error("invalid project name")
     if args.command in {"backup","restore"} and not args.directory:p.error("--directory required")

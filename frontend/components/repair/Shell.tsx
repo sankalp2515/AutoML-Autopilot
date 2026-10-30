@@ -77,6 +77,70 @@ export default function RepairShell({
     setDark(next);
   }
   const connected = status.data;
+  if (pathname === "/" || pathname === "/repair")
+    return (
+      <div className="repair r-public" ref={root}>
+        <a href="#repair-content" className="r-skip">
+          Skip to main content
+        </a>
+        <header className="r-public-header">
+          <Link href="/repair" className="r-brand">
+            <Mark />
+            <span>
+              AutoML<span>Autopilot</span>
+            </span>
+          </Link>
+          <nav aria-label="Main navigation">
+            <a href="#evidence">Evidence</a>
+            <a href="#workflow">How it works</a>
+            <a href="#access">Access</a>
+            <Link href="/repair/docs">Docs</Link>
+          </nav>
+          <div className="r-public-header-actions">
+            <Button
+              kind="quiet"
+              icon={dark ? "sun" : "moon"}
+              aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
+              onClick={toggle}
+            />
+            <Link href="/repair/new" className="r-button r-button-primary">
+              Open workspace
+            </Link>
+          </div>
+        </header>
+        <main id="repair-content" tabIndex={-1}>
+          {children}
+        </main>
+        <footer className="r-public-footer">
+          <div>
+            <strong>AutoML Autopilot</strong>
+            <p>Code correctness. ML integrity. Evidence for both.</p>
+          </div>
+          <nav aria-label="Footer navigation">
+            <Link href="/repair/benchmark">Benchmark</Link>
+            <Link href="/repair/docs?section=privacy">Privacy & retention</Link>
+            <a href="https://github.com/sankalp2515/AutoML-Autopilot">
+              Source · GPL-3.0
+            </a>
+            <Link href="/autopilot">Data incident mode</Link>
+          </nav>
+          <Link href="/repair/how-it-works#runtime" className="r-runtime">
+            <span
+              className={`r-status-dot ${connected?.successful_calls_7d ? "r-dot-success" : ""}`}
+            />
+            {status.loading
+              ? "Checking runtime"
+              : status.error
+                ? "Service unavailable"
+                : connected?.live_runs
+                  ? connected.successful_calls_7d
+                    ? "Live calls recorded"
+                    : "Live access enabled"
+                  : "Replay mode"}
+          </Link>
+        </footer>
+      </div>
+    );
   return (
     <div
       className="repair"

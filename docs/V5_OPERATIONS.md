@@ -58,3 +58,7 @@ Rotate one service credential pair at a time during a maintenance window: API ad
 ## Frozen interface proposals
 
 `contracts.py` and `sandbox/base.py` were preserved. Current implementations use optional platform capabilities: `environment_image`, `prepare_pinned`, `trusted_run`, inventory and cleanup. A future protocol revision should explicitly version immutable-image preparation and trusted artifact evaluation, with separate authorization/capability interfaces. Legacy sealed pytest that imports candidate Python is refused in production; repository owners must supply the supported inert artifact-export protocol. These are deliberate compatibility boundaries, not arbitrary Python proof of correctness.
+
+## Judge-only, provider-neutral hosting
+
+See [JUDGE_DEPLOYMENT_AND_COSTS.md](JUDGE_DEPLOYMENT_AND_COSTS.md) for the owner's $29.50 Token Factory balance, Google Cloud hosting interpretation, per-component rates and lifetime admission protection. `v5_stack.py --judge-only` enables the documented preset and removes provider keys from the legacy worker; the choice persists in private operator state so later starts retain it even if the flag is omitted. It remains keyless unless `--allow-live` is explicitly supplied. This option does not implement Nebius Sandboxes: the current remote runner targets our internal Docker service. Hosting on Google Cloud and calling Token Factory satisfies the published platform condition, while genuine runtime and submission acceptance remain to be verified.

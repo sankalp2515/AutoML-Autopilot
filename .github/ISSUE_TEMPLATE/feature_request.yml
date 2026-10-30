@@ -1,0 +1,21 @@
+name: Feature request
+description: Explain the ML engineering problem and the outcome you need
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Who has this problem, and when?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome and acceptance evidence
+      description: Include an example and how the result could be verified.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround or alternatives

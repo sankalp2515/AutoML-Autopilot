@@ -1,0 +1,8 @@
+{
+  "keyless_judge_profile": true,
+  "lifetime_cap": 20,
+  "legacy_worker_keys_cleared": true,
+  "nvidia_fallback_cleared": true,
+  "live_without_credentials_refused": true,
+  "docker_commands_intercepted": true
+}

@@ -1,0 +1,22 @@
+[WebServer] (node:53436) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:54592) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer]  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+Running 6 tests using 1 worker
+
+(node:39408) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39408) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › landing.spec.ts:33:5 › landing explains evidence, switches checks, discloses access and opens the actual replay (5.0s)
+  ok 2 [chromium] › landing.spec.ts:76:9 › landing layout, keyboard and axe: light 1440 (5.4s)
+  ok 3 [chromium] › landing.spec.ts:76:9 › landing layout, keyboard and axe: light 375 (4.3s)
+  ok 4 [chromium] › landing.spec.ts:76:9 › landing layout, keyboard and axe: dark 1440 (5.7s)
+  ok 5 [chromium] › landing.spec.ts:76:9 › landing layout, keyboard and axe: dark 375 (3.9s)
+  ok 6 [chromium] › repair.spec.ts:851:5 › judge limits explain the allowance and a manual 429 retry preserves intent (1.6s)
+
+  Slow test file: [chromium] › landing.spec.ts (24.3s)
+  Consider splitting slow test files to speed up parallel execution
+  6 passed (33.9s)

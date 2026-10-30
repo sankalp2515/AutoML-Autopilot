@@ -45,6 +45,8 @@ async def call(awaitable):
         raise HTTPException(404, str(exc)) from exc
     except service.Conflict as exc:
         raise HTTPException(409, str(exc)) from exc
+    except admission.AdmissionLimited as exc:
+        raise HTTPException(429,str(exc),headers={"Retry-After":str(exc.retry_after)}) from exc
     except admission.AdmissionDenied as exc:
         raise HTTPException(403,str(exc)) from exc
 

@@ -207,7 +207,7 @@ test("home tells the evidence story, exposes all entries, and distinguishes conf
   await mock(page);
   await page.goto("/repair");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Green tests.Proven repairs.",
+    "The ML coding agent that checks beyond green tests.",
   );
   await expect(
     page
@@ -845,4 +845,31 @@ test("benchmark exposes checker and public-subset evidence without agent claims"
       exact: true,
     }),
   ).toBeVisible();
+});
+
+
+test("judge limits explain the allowance and a manual 429 retry preserves intent", async ({page}) => {
+  await mock(page);
+  await page.route("**/api/v1/v5/status", route=>route.fulfill({json:{configured:false,successful_calls_7d:0,runner:"docker",isolated:true,live_runs:true,invite_required:true,access_policy:{judge_only:true,daily_runs_per_workspace:12,cooldown_seconds:30,max_active_tasks:2,total_estimated_usd_cap:20,reason:"Finite hackathon credit preserves judge access; recordings remain available."}}}));
+  const keys:string[]=[];
+  await page.route("**/api/v1/v5/tasks",async route=>{
+    if(route.request().method()!=="POST")return route.fallback();
+    keys.push(route.request().headers()["idempotency-key"]);
+    expect(route.request().postDataJSON().invite_code).toBe("judge-test");
+    if(keys.length===1)return route.fulfill({status:429,headers:{"Retry-After":"30"},json:{detail:"The live repair slots are busy. Let an existing repair finish, then retry."}});
+    return route.fulfill({status:201,json:task});
+  });
+  await page.goto("/repair/new");
+  await page.getByRole("button",{name:"Continue to contract"}).click();
+  await page.getByRole("button",{name:"Validate and continue"}).click();
+  await expect(page.getByText("Live evaluation for judges",{exact:true})).toBeVisible();
+  await expect(page.getByText(/12 new runs per workspace/)).toBeVisible();
+  await page.getByRole("button",{name:"Discover tests"}).click();
+  await page.getByLabel("Live-run invite code (if required)").fill("judge-test");
+  await page.getByRole("button",{name:"Start repair",exact:true}).click();
+  await expect(page.getByText(/live repair slots are busy/)).toBeVisible();
+  await expect(page.getByLabel("Live-run invite code (if required)")).toHaveValue("judge-test");
+  await page.getByRole("button",{name:"Start repair",exact:true}).click();
+  await expect(page).toHaveURL(/tasks\/task-browser$/);
+  expect(keys.length).toBe(2);expect(keys[0]).toBeTruthy();expect(keys[0]).toBe(keys[1]);
 });

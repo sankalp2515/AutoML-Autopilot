@@ -173,6 +173,7 @@ export interface Status {
   worker_seen_s_ago?: number | null;
   verifier?: string;
   daily_cap_usd?: number;
+  access_policy?: {judge_only: boolean; daily_runs_per_workspace: number; cooldown_seconds: number; max_active_tasks: number; total_estimated_usd_cap: number | null; reason: string};
   capabilities?: { task_limits?: boolean; teams?: boolean };
 }
 export interface Sample {

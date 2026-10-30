@@ -9,12 +9,18 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from app.repair import models as m
 
 
 class AdmissionDenied(PermissionError):
     pass
+
+
+class AdmissionLimited(AdmissionDenied):
+    def __init__(self,message,retry_after=60):
+        super().__init__(message)
+        self.retry_after=max(1,int(retry_after))
 
 
 async def lock(db):
@@ -78,6 +84,23 @@ async def reserve(db, *, task_id, tenant, now, policy):
     if maintenance is not None and maintenance.version:
         raise AdmissionDenied("Live-run admission is paused for maintenance. Existing evidence remains available.")
     rows=(await db.execute(select(m.Reservation).where(m.Reservation.created_at>=now-86400))).scalars().all()
+    cap=policy.get("total_cap_usd",0)
+    if cap:
+        total=(await db.execute(select(func.coalesce(func.sum(m.Reservation.dollars),0)))).scalar_one()
+        if total+policy["reserve_usd"]>cap+1e-9:
+            raise AdmissionDenied("The reserved hackathon inference allowance is committed. Recorded runs and their receipts remain available. Contact the project owner through the submission testing instructions for live access.")
+    recent=[r.created_at for r in rows if r.tenant_id==tenant]
+    cooldown=policy.get("cooldown_s",0)
+    if cooldown and recent and now-max(recent)<cooldown:
+        wait=cooldown-(now-max(recent))
+        raise AdmissionLimited(f"Please wait {int(wait)+1} seconds before starting another repair. This protects judge access; your existing run and evidence remain available.",int(wait)+1)
+    maximum=policy.get("max_active",0)
+    if maximum:
+        from app.repair.contracts import TERMINAL_TASK
+        active=(await db.execute(select(func.count()).select_from(m.Task).where(
+            m.Task.id!=task_id,m.Task.status.notin_([state.value for state in TERMINAL_TASK])))).scalar_one()
+        if active>=maximum:
+            raise AdmissionLimited("The live repair slots are busy. Let an existing repair finish, then retry. Recorded evidence remains available.",30)
     if sum(r.tenant_id==tenant for r in rows)>=policy["tenant_tasks"]:
         raise AdmissionDenied("Daily live-run task limit reached.")
     if sum(r.dollars for r in rows)+policy["reserve_usd"]>policy["cap_usd"]+1e-9:

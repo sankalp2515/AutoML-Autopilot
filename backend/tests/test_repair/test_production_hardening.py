@@ -70,6 +70,68 @@ async def test_parallel_global_reservation_cannot_oversubscribe(store):
     assert sum(isinstance(r,AdmissionDenied) for r in rows)==6
 
 
+async def test_lifetime_credit_cap_survives_daily_window_and_restart(store):
+    from app.repair.service import RepairService
+    svc,clock=store
+    options=policy(cap_usd=10,cap_tokens=1000,total_cap_usd=1)
+    first=await svc.create("one",**request(),admission_policy=options,idempotency_key="same")
+    clock[0]+=90000
+    restarted=RepairService(svc.sessions,clock=lambda:clock[0])
+    assert (await restarted.create("one",**request(),admission_policy=options,idempotency_key="same"))["id"]==first["id"]
+    await restarted.create("two",**request(),admission_policy=options)
+    with pytest.raises(AdmissionDenied,match="hackathon inference allowance"):
+        await restarted.create("three",**request(),admission_policy=options)
+
+
+async def test_parallel_lifetime_reservations_cannot_overspend(store):
+    svc,_=store
+    rows=await asyncio.gather(*(svc.create(f"judge-{n}",**request(),admission_policy=policy(
+        cap_usd=10,cap_tokens=1000,total_cap_usd=1)) for n in range(8)),return_exceptions=True)
+    assert sum(isinstance(row,dict) for row in rows)==2
+    assert sum(isinstance(row,AdmissionDenied) for row in rows)==6
+
+
+async def test_judge_cooldown_retries_and_shared_slots(store):
+    from app.repair.admission import AdmissionLimited
+    from app.repair import contracts as c
+    svc,clock=store
+    options=policy(cap_usd=10,cap_tokens=1000,cooldown_s=30,max_active=1)
+    task=await svc.create("judge",**request(),admission_policy=options,idempotency_key="repair")
+    assert (await svc.create("judge",**request(),admission_policy=options,idempotency_key="repair"))["id"]==task["id"]
+    with pytest.raises(AdmissionLimited,match="wait") as error:
+        await svc.create("judge",**request(),admission_policy=options)
+    assert error.value.retry_after==31
+    with pytest.raises(AdmissionLimited,match="slots"):
+        await svc.create("other",**request(),admission_policy=options)
+    await svc.cancel(task["id"],"judge")
+    clock[0]+=31
+    await svc.create("judge",**request(),admission_policy=options)
+
+
+async def test_judge_only_invite_cannot_be_bypassed_by_signin(monkeypatch):
+    from app.repair import ops
+    from app.config import settings
+    monkeypatch.setattr(settings,"REPAIR_LIVE_ENABLED",True)
+    monkeypatch.setattr(settings,"REPAIR_JUDGE_ONLY",True)
+    monkeypatch.setattr(settings,"REPAIR_INVITE_CODES","judge-code-for-test")
+    for trusted in (True,False):
+        with pytest.raises(ops.Denied,match="invited judges"):
+            await ops.admit_live_run(None,"judge",None,trusted=trusted,skip_capacity=True)
+        assert await ops.admit_live_run(None,"judge","judge-code-for-test",trusted=trusted,skip_capacity=True)
+    monkeypatch.setattr(settings,"REPAIR_INVITE_CODES","")
+    with pytest.raises(ops.Denied,match="invited judges"):
+        await ops.admit_live_run(None,"judge",None,trusted=True,skip_capacity=True)
+
+
+async def test_admission_429_includes_retry_after():
+    from app.repair.routes import call
+    from app.repair.admission import AdmissionLimited
+    from fastapi import HTTPException
+    async def limited():raise AdmissionLimited("wait",30)
+    with pytest.raises(HTTPException) as error:await call(limited())
+    assert error.value.status_code==429 and error.value.headers=={"Retry-After":"30"}
+
+
 async def test_concurrent_idempotency_is_scoped_and_payload_bound(store):
     svc,_=store
     rows=await asyncio.gather(*(svc.create("one",**request(),admission_policy=policy(tenant_tasks=1),idempotency_key="retry") for _ in range(6)))

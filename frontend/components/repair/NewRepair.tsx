@@ -354,12 +354,12 @@ export default function NewRepair() {
         method: "POST",body,
         headers:{"Idempotency-Key":creationKey.current.key},
       });
+      setInvite("");
       router.push(`/repair/tasks/${task.id}`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
-      setInvite("");
     }
   }
   const bf = (key: keyof Builder, text: string, hint?: string) => (
@@ -946,6 +946,10 @@ export default function NewRepair() {
                     </Button>
                   )
                 )}
+                {status.data?.access_policy?.judge_only && <Notice title="Live evaluation for judges">
+                  <p>{status.data.access_policy.reason}</p>
+                  <p>Up to {status.data.access_policy.daily_runs_per_workspace} new runs per workspace in 24 hours; {status.data.access_policy.max_active_tasks || "bounded"} live slots shared across the demo. Wait {status.data.access_policy.cooldown_seconds} seconds between new runs. Reopening a run does not start it again.</p>
+                </Notice>}
                 <Field label="Live-run invite code (if required)">
                   <input
                     type="password"

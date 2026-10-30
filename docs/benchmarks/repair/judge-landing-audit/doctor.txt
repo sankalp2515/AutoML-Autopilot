@@ -1,0 +1,49 @@
+{
+  "project": "codex-v5-final",
+  "url": "http://localhost:3135/repair",
+  "services": {
+    "api": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "postgres": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "repair-worker": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "sandbox-runner": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "verifier": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "verifier-postgres": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "web": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "worker": {
+      "state": "running",
+      "health": "healthy"
+    }
+  },
+  "readiness": {
+    "database": "ok",
+    "worker": "ok",
+    "verifier": "ok",
+    "sandbox": "ok",
+    "ready": true
+  },
+  "security": {
+    "queue_db_superuser": false,
+    "ledger_db_superuser": false
+  }
+}

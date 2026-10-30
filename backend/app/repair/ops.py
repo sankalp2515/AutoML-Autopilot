@@ -32,6 +32,9 @@ def reservation_policy(requested_budget=None):
     return {"tenant_tasks":settings.REPAIR_DAILY_TASKS_PER_TENANT,
             "cap_usd":settings.REPAIR_DAILY_USD_CAP,"cap_tokens":settings.REPAIR_DAILY_TOKEN_CAP,
             "reserve_usd":max(settings.REPAIR_TASK_USD_CEILING,e["estimated_inference_usd"]),
+            "total_cap_usd":settings.REPAIR_TOTAL_USD_CAP,
+            "cooldown_s":settings.REPAIR_CREATE_COOLDOWN_S,
+            "max_active":settings.REPAIR_MAX_ACTIVE_TASKS,
             "reserve_tokens":sum(e["limits"]["model_tokens"].values())}
 
 
@@ -40,12 +43,15 @@ async def admit_live_run(svc, tenant: str, invite_code: str | None, *, trusted: 
                          requested_budget=None, skip_capacity=False) -> dict[str, Any]:
     """Live runs spend real money once Nebius is on. Refuse unless enabled, invited and under caps.
     Spend = measured cost of today's finished runs + a worst-case reservation per unfinished run.
-    `trusted`: a signed-in workspace member or a linked GitHub repository needs no invite code;
+    `trusted`: outside judge-only mode, a signed-in member or linked repository needs no invite code;
     the daily task and dollar caps still apply."""
     if not settings.REPAIR_LIVE_ENABLED:
         raise Denied("Live runs are switched off on this server. Watch a recorded run instead.")
     codes = [x.strip() for x in settings.REPAIR_INVITE_CODES.split(",") if x.strip()]
-    if codes and not trusted and not any(hmac.compare_digest(invite_code or "", x) for x in codes):
+    invited=any(hmac.compare_digest(invite_code or "", x) for x in codes)
+    if settings.REPAIR_JUDGE_ONLY and (not codes or not invited):
+        raise Denied("Live evaluation is reserved for invited judges. Enter the judge access code supplied in the testing instructions. Recorded evidence remains available without a code.")
+    if codes and not trusted and not invited:
         raise Denied("A valid invite code is required for live runs.")
     policy=reservation_policy(requested_budget)
     if skip_capacity:
@@ -88,7 +94,13 @@ async def status(svc) -> dict[str, Any]:
             "last_successful_call_at":max((call["at"] for call in ok_calls if call.get("at")),default=None),
             "tavily": bool(w.get("tavily", settings.TAVILY_API_KEY)), "live_runs": settings.REPAIR_LIVE_ENABLED,
             "worker_seen_s_ago": round(time.time() - w["beat"]) if w else None,
-            "invite_required": bool(settings.REPAIR_INVITE_CODES.strip()),
+            "invite_required": settings.REPAIR_JUDGE_ONLY or bool(settings.REPAIR_INVITE_CODES.strip()),
+            "access_policy":{"judge_only":settings.REPAIR_JUDGE_ONLY,
+                "daily_runs_per_workspace":settings.REPAIR_DAILY_TASKS_PER_TENANT,
+                "cooldown_seconds":settings.REPAIR_CREATE_COOLDOWN_S,
+                "max_active_tasks":settings.REPAIR_MAX_ACTIVE_TASKS,
+                "total_estimated_usd_cap":settings.REPAIR_TOTAL_USD_CAP or None,
+                "reason":"Live inference is funded by a finite hackathon credit balance. Limits preserve access throughout judging; viewing recordings, receipts and diffs does not spend inference credits."},
             "runner": "sandbox-service" if settings.REPAIR_SANDBOX_URL else settings.REPAIR_RUNNER,
             "isolated": bool(settings.REPAIR_SANDBOX_URL) or settings.REPAIR_RUNNER != "process",
             "verifier": "service" if settings.REPAIR_VERIFIER_URL else "in-process",

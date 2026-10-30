@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-30",
+  "backend": {
+    "fast_passed": 348,
+    "fast_skipped": 1,
+    "operator_profile_passed": 4,
+    "focused_hardening_passed": 34,
+    "focused_overlaps_fast": true
+  },
+  "frontend": {
+    "initial_browser_passed": 26,
+    "final_targeted_browser_passed": 6,
+    "unique_mock_browser_cases": 27,
+    "real_stack_browser_passed": 2,
+    "optional_real_screenshot_skipped": 1,
+    "production_build": true,
+    "container_image_build": true,
+    "axe_light_dark_desktop_mobile": true
+  },
+  "runtime": {
+    "services_healthy": 8,
+    "live_inference_enabled": false,
+    "legacy_worker_provider_keys_absent": true,
+    "judge_invites_required": true,
+    "lifetime_estimated_allowance_usd": 20,
+    "daily_estimated_allowance_usd": 5,
+    "workspace_runs_24h": 12,
+    "start_cooldown_seconds": 30,
+    "shared_active_slots": 2
+  },
+  "docs": {
+    "completed": [
+      "DOC-01",
+      "DOC-02",
+      "DOC-06 (retain/document)",
+      "DOC-07",
+      "DOC-05 license portion"
+    ],
+    "remaining": [
+      "DOC-05 significant-update statement and genuine Nebius feedback",
+      "DOC-03 main merge",
+      "DOC-04 owner demo video"
+    ]
+  },
+  "limits": [
+    "Hosting not provisioned; cloud pricing is arithmetic under documented assumptions, not a future invoice.",
+    "Google Cloud trial balance/expiry and Token Factory promo expiry not verified in the owner account.",
+    "Nebius sandbox adapter and genuine Token Factory validation remain pending.",
+    "Host hard disk quotas remain pending.",
+    "Judge budget controls must be monitored; maintain a working free evaluation path throughout judging."
+  ],
+  "provider_calls_in_this_change": 0,
+  "cloud_resources_provisioned": 0,
+  "artifacts": {
+    "backend-fast.txt": "63fc79a0950fcc26fea7012ee862829db0a948510887260e84392a00e1c3e713",
+    "backend-policy.txt": "cdccdf1cedf875acbf0a2511b8987c0682d1f1351134338d2cbfbbba3f1a6bcc",
+    "profile-tests.txt": "4306e45b600c50b17ed68861d08740a8160c676c3c602b078219eb1b24209b76",
+    "browser.txt": "4c41c71e45d37c7a85375f374c9d311576db92f1a4b3d8c2b6756753193f5549",
+    "browser-final.txt": "19904b51438c996b9cef9138b683484a481706a492f6450b2d74a3343d8220a7",
+    "real-stack-browser.txt": "a3ff0279897d3049fa14a2ec6a35f034396debd7b90ca1dfa81f1e6c5bb69cf5",
+    "frontend-build.txt": "131d290cd4b44efa63cc462c81f61408372747639ab490a9d06f7b951836c22b",
+    "image-build.txt": "fc8d98d20ced065d6d0786384c165f2d200805ef80eb0ac6d27968aca81310dd",
+    "stack.txt": "60eb00b2f8649f5d33d3be875ecf84fcbf11617c2433052f77f9cb4bfaa3c376",
+    "doctor.txt": "60eb00b2f8649f5d33d3be875ecf84fcbf11617c2433052f77f9cb4bfaa3c376",
+    "runtime-policy.json": "4e57ef2f665991a4dd7255b1350ccf40a461f457b7b55f0066384dfd864b83b9",
+    "docs-validation.json": "0abce6f5e34683cab1e05667eaeb37bb31829ae2aa6945e4192e5fc69c609060"
+  }
+}

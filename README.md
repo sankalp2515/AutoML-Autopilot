@@ -1,306 +1,120 @@
-> **V5 repository repair:** open `/repair` for the coding-agent workspace. Samples include
-> churn serving parity, loan preprocessing, refund leakage, credit group recall,
-> fraud serialization and pricing input boundaries. Source is pinned through intake;
-> Docker and the separate verifier service are required for live worker execution.
-> V5 proposes hypothesis checks; it does **not** currently rank them by information gain.
-> The information-gain selector described below belongs to the earlier data-incident mode.
-> See [the v5 backlog](docs/V5_BACKLOG_FINAL.md) for exact completion status and limitations.
+# AutoML Autopilot
 
-### Start the v5 stack locally
+**The ML coding agent that checks beyond green tests.**
 
-With Python and Linux Docker running, execute from this directory:
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+[Product docs](docs/API_V5.md) · [Architecture](docs/V5_ARCHITECTURE.md) · [Evidence](docs/benchmarks/repair/LIVE_EVALUATION.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md)
+
+AutoML Autopilot repairs Python ML repositories and produces a patch with independent software and ML verification. It is for engineers debugging broken serving code, preprocessing changes, leakage, serialization failures and quality regressions. Passing a test suite is useful evidence; it is not enough to prove a model still behaves correctly.
+
+The agent investigates competing causes, writes source edits and regression tests in isolated candidate workspaces, and submits the result to a separate verifier. The reviewer sees the diff, checks, missing evidence and verdict before downloading a patch or requesting a draft PR. **Nothing merges automatically.**
+
+## See it in two minutes
+
+1. Start the local stack below and open `/repair`.
+2. Choose **Watch a verified repair**. This is a labelled genuine recording, not a new inference call. No account or model key is required to watch.
+3. Open the candidate diff, then **Verdict & receipt**. Inspect the code and ML checks, their recorded runtime and provenance.
+4. Return to the landing page and inspect the rejected churn example. Software checks passed while the online/batch comparison failed. That historical recording used an unisolated test runner and says so.
+
+The landing page also links authored leakage and protected-group checker proofs. These are reproducible validation cases, not customer testimonials or autonomous success-rate claims.
+
+## Local start
+
+Prerequisites: Python 3.12+, Docker CLI/Compose v2 and a running Linux Docker daemon. Internet is needed for first image/dependency downloads. Windows can use Docker Desktop with Linux containers.
 
 ```powershell
 python scripts/v5_stack.py up --project automl-v5-local --port 3133
+python scripts/v5_stack.py doctor --project automl-v5-local --port 3133
 ```
 
-Open [the repair workspace](http://localhost:3133/repair). Eight services start with
-sample sources and recorded runs; model calls are disabled by default and no `.env`
-is read or written. See [v5 operations](docs/V5_OPERATIONS.md) for optional image
-warm-up, credentials, health checks, backup/restore and production limitations.
-The product walkthrough below describes the earlier data-incident mode.
+Open **http://localhost:3133/repair**. This starts eight services, initializes/migrates PostgreSQL, prepares a source-only sample catalog and mounts recorded evidence. No user `.env` is read or written. Internal generated credentials live in a private operator directory outside the checkout. Model keys are cleared and live inference is disabled by default.
 
-<div align="center">
+Optional fixture warm-up and shutdown:
 
-# AutoML Autopilot
+```powershell
+python scripts/v5_stack.py warm --project automl-v5-local --port 3133
+python scripts/v5_stack.py down --project automl-v5-local --port 3133
+```
 
-**When a production model breaks, Autopilot runs the experiment that teaches you the most,
-then has an independent verifier prove the fix before anyone ships it.**
+Shutdown preserves data volumes. Do not use `down -v` on a retained installation. Fresh-host setup time depends on registry/network speed; no under-ten-minute guarantee is claimed. See [operations](docs/V5_OPERATIONS.md) for credentials, backup/restore, least-privilege roles and remaining host requirements.
 
-NVIDIA Nemotron on Nebius Token Factory · Tavily · FastAPI · Next.js · Postgres · Docker
+## Run a new repair
 
-![License](https://img.shields.io/badge/license-GPL--3.0-blue)
-![Tests](https://img.shields.io/badge/autopilot%20tests-offline%20%2B%20Postgres-brightgreen)
-![Services](https://img.shields.io/badge/docker-5%20services-2496ED)
+Live work is explicit, bounded and disabled unless enabled. An operator supplies provider credentials through a private process environment, configures invite access and starts with `--allow-live`. The [judge-only plan](docs/JUDGE_DEPLOYMENT_AND_COSTS.md) explains the $29.50 balance, lifetime allowance, cooldown, replay access and hosting choices. Do not paste credentials into issues, receipts or Git history.
 
-</div>
+In **New repair**, choose a sample, public repository URL or ZIP; review `autopilot.yaml`; select failing tests and ML requirements; optionally upload evaluation labels separately; then start. Six included repositories cover churn parity, loan preprocessing, refund leakage, credit group recall, fraud serialization and pricing numeric boundaries. Without labels, the product reports limited label-free evaluation rather than inventing predictive quality.
 
----
+### A minimal contract
 
-## Test it in 2 minutes
+```yaml
+version: 1
+name: python-service
+python: "3.12"
+install: pip install -r requirements.txt
+commands:
+  test: python -m pytest -q tests
+task:
+  type: restore
+  fail_to_pass:
+    - tests/test_service.py::test_service
+  ml_invariants: []
+policy:
+  allowed_edit_roots: [src/, tests/]
+  immutable_existing_tests: true
+```
 
-Open the app and choose **See a 60-second example** for an instant, explicitly recorded
-investigation with a five-stop evidence tour. Choose **Run a sample incident (~40 s)**
-for a new investigation. Read **Summary**, inspect **Evidence**, then open **Audit trail**
-for the selector, model calls and protocol. **Share read-only link** creates a 24-hour
-report link; approval records a named decision and never changes a live model.
+This software-only example does **not** establish model quality. ML tasks also declare train/predict commands, data paths, serving/load entrypoints and the desired invariants. See the [six sample contracts](fixtures/repos) and in-app contract documentation at `/repair/docs`. Installs require exact top-level dependency pins and wheels from the operator-approved HTTPS index. Existing tests and protected files remain immutable; added regression tests are allowed by policy.
 
-Try **Your data → Public data: UCI Adult adapter incident** for real census rows with
-a disclosed injected fault. Optional probability columns let threshold studies use
-your actual model scores. [Input and integration contracts](docs/PRODUCT_OPERATIONS.md).
+## What is running, and where
 
-The screenshots below were captured from a local run with real API/experiment/verifier
-execution and provider keys disabled. The guided example is a recorded rules-planner
-run, not evidence of a live Nemotron call.
+![As-built v5 architecture](docs/assets/v5-architecture.svg)
 
-| Start an investigation | Read the decision |
+- **Frontend and API:** Next.js workspace and FastAPI control plane; tenant-scoped tasks, contracts, packs, events and delivery.
+- **Repair worker:** Nemotron hypothesis/planning and candidate generation; bounded calls, tools, source edits and checkpoints.
+- **Execution boundary:** tested Docker CLI sandbox service; network disabled during runs, immutable prepared images and independent workspaces.
+- **Verifier:** separate authority for code/ML receipts, sealed data and a separate transactional PostgreSQL admission/holdout ledger.
+- **Storage:** application PostgreSQL plus artifact/pack/verifier volumes. Backups and replay receipt hashes were checked in an empty-target restore drill.
+
+**Nebius status:** the inference client is OpenAI-compatible with Token Factory. Current genuine evidence is from NVIDIA developer endpoints. A direct Nebius Sandboxes adapter is **not implemented**; it is the next runtime integration, not a key-only configuration change. No Nebius validation is claimed yet. [As-built versus target](docs/V5_ARCHITECTURE.md).
+
+## How Nemotron and Tavily are used
+
+Nemotron proposes explanations and edits; it cannot issue the final trusted verdict. The intended Token Factory mapping is Ultra for diagnosis, Super for patching and Nano/Lightning for fast work. The current client records actual provider/model/usage per call. Missing accounting stays unknown.
+
+Tavily is conditional: relevant library/API failures trigger official-documentation retrieval. Sources and excerpts remain attributed external data. One matched current-engine B01 pair with Tavily enabled/disabled independently verified both patches; the enabled arm actually retrieved official documentation. That one pair demonstrates integration, not a general benefit estimate.
+
+## Results and honest limits
+
+| Evidence | What it establishes |
 |---|---|
-| ![Home](docs/assets/autopilot-home.png) | ![Verified result](docs/assets/autopilot-verdict.png) |
-| Inspect measured evidence | Bring your own incident |
-| ![Evidence](docs/assets/autopilot-evidence.png) | ![Upload](docs/assets/autopilot-upload.png) |
+| Six fixture proof stories | Unpatched failure, an authored wrong-green rejection and reference acceptance under the declared protocol |
+| Genuine NVIDIA recordings | Specific model-generated repair outcomes with provider/runtime provenance |
+| Six planner measurements | Five precise leading mechanisms, one partial diagnosis; single seed, reference-aware manual review |
+| Partial historical four-arm study | Six pilots and 15/72 comparison slots; insufficient for a comparative marketing headline |
+| Local backend audit | 398 passing backend tests, two skips at commit 530fe9f; Docker boundary and restore evidence |
 
-## The problem
+[Evidence artifacts](docs/benchmarks/repair) · [Backend audit](docs/BACKEND_OPERATIONS_AUDIT.md) · [Current backlog](docs/V5_BACKLOG_FINAL.md)
 
-Models degrade in production: one study found temporal degradation in 91% of the
-model–dataset pairs it tested ([Vela et al., *Scientific Reports* 2022](https://doi.org/10.1038/s41598-022-15245-z)).
-When an alert fires, the usual response is to **retrain and hope**. That is expensive.
-It often fixes nothing, because a units bug in an upstream feed survives a retrain. And
-a bigger number on an unchecked split can ship a model that is worse for some customers.
+A VERIFIED receipt means the declared checks passed for the admitted snapshot, patch and evaluation data. It is not a guarantee over all future inputs. Legacy sealed tests importing candidate Python are unsupported in production; use the clean inert-artifact protocol. Arbitrary frameworks, multi-host sandbox routing, hard host disk quotas and public production deployment remain outside proven acceptance. Nebius beta forbids personal/sensitive data; use public code and synthetic inputs for that demonstration.
 
-"AI SRE" agents (Datadog Bits, Resolve AI, Traversal) now investigate *infrastructure*
-incidents by forming hypotheses and testing them against logs and traces. Model-quality
-incidents need something those tools don't do: **run model experiments, and prove a
-model fix is better on data it has never seen.** That is what Autopilot does.
+## Develop and verify
 
-**Who it is for:** the on-call ML engineer or ML platform team running tabular models in
-production (credit, fraud, pricing, churn), at the moment a quality alert fires or a
-nightly retrain fails.
-
-## How it works
-
-1. **Measure.** Splits are frozen and hashed before anything is fitted. The baseline is rebuilt
-   and findings are computed (metric drop, drift, missingness, pipeline errors, segment
-   spread). Each finding carries its method and sample count.
-2. **Hypothesise.** If and only if the measurements show an incident, **Nemotron 3 Ultra**
-   reads the measured values, the incident report and the team's notes (free text a rules
-   engine cannot use) and proposes 2–4 competing causes, citing real finding IDs.
-3. **Test cheaply.** Every approved test is scored by expected information gain ÷ cost. The
-   UI shows why the chosen test beats a retrain. Tests run in killable child processes.
-4. **Research when needed.** A library error with no local answer triggers a sanitised
-   **Tavily** search (official docs first) and extract. Only an official source can
-   justify a fix, and the installed library must confirm the parameter it names.
-5. **Fix narrowly.** Once one cause is supported, the smallest matching fix is built: an
-   input repair, a threshold, a sourced parameter rename. Retraining is never the default.
-6. **Verify.** A separate verifier service checks the artifact, protocol parity, leakage,
-   sample size and metric provenance, opens the final test set **once**, and requires a
-   paired-bootstrap confidence interval plus a critical-segment guardrail.
-7. **Decide.** The receipt shows the cause, the fix, the held-out result and the spend.
-   **Nemotron 3.5 Lightning** writes a summary for a manager; any number in it that is
-   not in the verified facts gets it discarded. Approval is recorded; no live model is changed.
-
-"Rejected" and "not enough evidence" count as correct answers.
-
-## Use it on your own model
-
-Open **Your data** (`/autopilot/new`) and upload two CSV windows of the same columns:
-
-- **Reference:** data from when the model was trained and healthy, with the outcome filled in (≥300 rows).
-- **Current:** recent production inputs, with outcomes where they have arrived (blank is fine).
-
-Then choose the outcome column and positive class, the metric that matters, the model family
-in production (logistic regression or gradient boosting), the serving threshold, and
-optionally a segment that must not get worse. Paste **what changed recently** (the on-call
-thread, release notes, ticket text) and, if relevant, an **error log**, **package versions
-before/after**, and up to three **public documentation URLs**. Three sample incidents
-(downloadable CSVs) let you try the flow in a minute.
-
-If both windows contain a `score` probability column (or you choose another score column),
-Autopilot uses those scores for measured quality, threshold study and threshold-only
-verification. Scores must be for the chosen positive class, finite and between 0 and 1.
-They are excluded from training. Without scores, Autopilot rebuilds your model family
-from the reference window to stand in for your model. Input repairs and retraining
-produce reconstructed candidates; the receipt identifies both prediction sources.
-It does not load model binaries: unpickling an uploaded model would let it run code on the
-server. Rows stay on the server; Nemotron receives column names, aggregates and the team
-notes you supply (do not paste secrets),
-and Tavily sees library names, versions and the URLs you list. Uploads are visible only to
-the browser session that made them unless you explicitly share a report. Uploads and
-derived investigations are eligible for deletion after 24 hours; active jobs are retained
-until they finish. Limits: 20 MB / 200,000 rows / 200 columns per file,
-binary classification.
-
-## How Tavily is used
-
-| When | What Tavily does | What it can and cannot change |
-|---|---|---|
-| A pipeline error names a library argument (yours or ours) | Search official docs first, then Extract; source gate for publisher, version and injection | The only path that can justify a fix, and only if the installed library confirms the parameter it names. On your data it becomes a cited recommendation for your code |
-| Package versions changed (scikit-learn, pandas, NumPy, SciPy, XGBoost, LightGBM, joblib) | Search that project's official docs for the target version's release notes and Extract them | Context for the planner: a reason to test, never proof |
-| You list documentation URLs (vendor changelog, data dictionary) | Extract the pages; excerpts centre on your feature names; injected instructions are quarantined | Context for the planner; never justifies a code change |
-
-Queries contain library names and versions only. Dataset column names and values are blocked
-by a privacy gate.
-
-## How NVIDIA Nemotron and Nebius Token Factory are used
-
-| Role | Model | Why this size | Guardrail |
-|---|---|---|---|
-| Plan competing causes | `nvidia/Nemotron-3-Ultra-550b-a55b` | Reasoning over measurements plus messy human context: your notes, error log and retrieved documentation, which the rules planner cannot read | Schema-checked JSON; every cited finding/source must exist; one corrective retry with the exact error; honest fallback to rules |
-| Manager summary | `nvidia/Nemotron-3_5-Lightning` | Short, cheap, fast | Every number must appear in the verified facts or the summary is discarded |
-
-- Each call is shown in the UI with model, provider, latency, tokens and estimated cost
-  at Nebius list prices. A typical investigation costs about **$0.003**.
-- The models never run code, choose tests or report metrics. The selector, policy gate,
-  runner and verifier are deterministic code.
-- A deterministic gate decides whether there is an incident at all. A model asked to
-  explain a healthy model will still name causes (we measured this), so it is not asked.
-
-## Results
-
-**Equal-budget benchmark** (offline, rules planner, held-out seeds 100–104,
-[report](docs/benchmarks/autopilot_benchmark.json)):
-
-| Approach | Correct decisions | False promotions | Cost units | Retrains |
-|---|---|---|---|---|
-| Retrain first (classic response) | 22/40 | 0 | 300 | 30 |
-| Fixed-order checklist | 35/40 | 0 | 143 | 0 |
-| Random eligible test | 36/40 | 0 | 171.5 | 0 |
-| **Autopilot** | **40/40** | **0** | **92.5** | **0** |
-
-Verifier must-fail controls (leaked feature, wrong split, segment regression): **15/15
-rejected**.
-
-**Live ablation** (real Nemotron and Tavily calls, same seeds and budget,
-[report](docs/benchmarks/autopilot_ablation_live.json)):
-
-| Planner | Correct | False promotions | Median model time | Est. model cost (40 runs) |
-|---|---|---|---|---|
-| Rules only | 40/40 | 0 | – | – |
-| Nemotron 3 Ultra (forced, no fallback) | 37/40 (37/39 excluding 1 provider outage) | 0 | 15 s | $0.10 |
-
-| Tavily, library-upgrade incident (T01) | Decision |
-|---|---|
-| On | 5/5 **verified sourced fix** |
-| Off | 5/5 diagnosis only: without a cited official source the policy refuses to guess a rename |
-
-What this says: on incidents whose detectors we wrote, the rules planner is as accurate or
-more. Nemotron's misses were a healthy model on one seed and a threshold incident on two.
-The verifier caught every one of them: there are **zero false promotions in either arm**.
-Nemotron earns its place by reading the free-text incident context and explaining the
-causes in plain language, and it is safe to use because a deterministic verifier decides.
-A rule anchor added a cause Nemotron left out in 8 of 40 runs, and the UI labels it.
-
-Two fixes came out of this ablation. The first live run scored Nemotron 31/40 and T01
-3/5: Nemotron invented causes for a healthy model, and the sourced fix also re-tuned the
-threshold. Now a deterministic gate decides whether there is an incident at all, and the
-fix changes only the renamed parameter.
-
-**Read these numbers honestly.** The incidents are synthetic and we wrote both the faults
-and the detectors. Only the seeds are held out. The benchmark shows the selection
-policy beats simple baselines on these fault classes under an equal budget. It does
-not show performance on real production incidents.
-
-## Run it
-
-```bash
-git clone https://github.com/sankalp2515/AutoML-Autopilot.git && cd AutoML-Autopilot
-cp .env.example .env     # set POSTGRES_PASSWORD, AUTOPILOT_VERIFIER_TOKEN, a Nemotron key, TAVILY_API_KEY
-docker compose up -d --build
+```powershell
+# Backend, from backend/
+python -m pip install -r requirements-runtime.txt pytest pytest-asyncio
+python -m pytest tests/test_autopilot tests/test_repair -q -m "not slow and not docker"
+python -m pytest tests/test_repair/test_sandbox_local.py -q
+python -m pytest tests/test_repair -q -m slow
+# Frontend, from frontend/
+npm ci --legacy-peer-deps
+npx tsc --noEmit
+npm run build
 ```
 
-Open <http://localhost:3000>. Pick a catalog incident or open **Your data** to upload your
-own, press **Start investigation**, and watch the stages. S02 (unit bug), T01 (library upgrade, live Tavily) and S10 (a challenger that
-hurts rural customers) are good first runs.
+PostgreSQL tests require disposable URLs through `REPAIR_TEST_POSTGRES_URL` and `REPAIR_TEST_LEDGER_URL`; their tables are recreated. Never point them at application data. Browser verification and required checks are described in [CONTRIBUTING.md](CONTRIBUTING.md). Model calls are not required for the deterministic test suite.
 
-## Architecture
+## Earlier modes and license
 
-Five containers on one private network; only `web` publishes a port
-([details](docs/DEPLOYMENT.md)).
+The earlier data-incident mode remains reachable at `/autopilot`. The original dataset-to-model orchestrator source is retained for reproducibility and future extraction; it is not the v5 repair engine or a supported dependency of the hackathon product. See [legacy scope and maintenance policy](docs/LEGACY_SCOPE.md) and the [historical v4 README](docs/LEGACY_V4_README.md).
 
-![Implemented architecture](docs/assets/autopilot-architecture.svg)
-
-```
- browser ──► web (Next.js) ──/api──► api (FastAPI control plane) ──┐
-                                                                    ├──► postgres (state, queue, leases)
-                worker (execution plane) ───────────────────────────┘
-                  │  ├──HTTP + token──► verifier (no internet, read-only artifacts, no LLM)
-                  │  └──► artifacts volume
-                  └──egress──► Nebius Token Factory · Tavily
-```
-
-| Plane | Service | May | May not |
-|---|---|---|---|
-| Experience | `web` | Show evidence, receipts, approvals | Hold any secret |
-| Control | `api` | Validate, scope per visitor, rate-limit, queue | Execute investigations, hold provider keys |
-| Execution | `worker` | Claim by lease, run vetted templates, call Nemotron/Tavily | Use final-test rows through diagnostic templates, change a live model |
-| Verification | `verifier` | Read the frozen split, issue verdicts | Reach the internet, write artifacts, call a model |
-| State | `postgres` | Store investigations, append-only events, leases | Be reached from outside |
-
-**Reliability, tested in containers:** killing the worker mid-investigation leaves the run
-`FAILED / E_INTERRUPTED` when its lease expires (about 60 s). It is never resumed half-way
-and never reported as a success in the tested crash path. Claims use compare-and-swap;
-stale-worker write fencing is a known open item.
-
-**Trust records:** every item is labelled *observed* (measured), *retrieved* (Tavily) or
-*inferred* (model or rule). Every experiment is admitted as an envelope (dataset, split and
-evaluation-protocol digests, template version, parameters, expected outcomes, cited
-sources, resource ceiling). The engine checks envelope self-consistency before requesting
-verification. This is a checksum, not a cryptographic signature. OS-enforced sole access
-to final labels and verifier-owned durable holdout consumption remain readiness items.
-
-## Tests
-
-```bash
-cd backend && pip install -r requirements-runtime.txt pytest pytest-asyncio
-python -m pytest tests/test_autopilot -q        # no provider keys needed
-```
-
-They cover every incident against the hidden oracle, the information-gain maths, the
-policy gate, runner timeouts, the verifier gates, Tavily contracts (injection, outdated
-and third-party sources, provider errors, privacy gate), Nemotron contracts (invalid
-citations, corrective retry, provider outages), summary grounding, worker leases and
-fail-safe recovery, per-visitor isolation and the verifier service's authentication.
-
-## Honest limits
-
-- Your model is represented by its family retrained on your reference window, not your exact
-  binary unless you supply probability scores. Threshold-only fixes can use those scores;
-  input repairs and retrains are evaluated as reconstructed candidates. A sourced library fix is a recommendation.
-- Belief weights are an uncalibrated heuristic. Information gain is exact only given them.
-- Experiments run as vetted templates in killable processes, not in a gVisor/microVM sandbox.
-- Tabular binary classification; logistic regression, histogram gradient boosting and
-  random forest, plus XGBoost/LightGBM when installed.
-- Approval records a decision; there is deliberately no path that changes a live model.
-
-## What was built during the hackathon
-
-AutoML Autopilot is built on our earlier **AutoML Orchestrator** codebase. From it we reuse
-the FastAPI app, auth and tenancy, the SQLAlchemy setup, logging and the frontend design
-system. The orchestrator's 10-agent training pipeline is still in `backend/app/agents`, but
-this deployment does not run it.
-
-Written during the submission period:
-- `backend/app/autopilot/`: engine, profiler, planners, selector, policy gate, runner,
-  verifier and verifier service, research, worker, guards, pricing, benchmark and ablation.
-- `backend/tests/test_autopilot/`, `frontend/app/autopilot/`,
-  `frontend/components/autopilot/`, `frontend/lib/autopilot.ts`.
-- The Docker deployment (`docker-compose.yml`, `backend/Dockerfile.autopilot`,
-  `frontend/Dockerfile.prod`).
-- The docs in `docs/`.
-
-**Repository map:** `backend/app/autopilot`, `frontend/app/autopilot`,
-`frontend/components/autopilot`, and `frontend/lib/autopilot.ts` are the submission's
-main implementation. `backend/app/agents`, legacy API routes, and frontend
-`runs/registry/settings/login` belong to the earlier orchestrator. Shared config,
-auth, database and logging remain dependencies. Commits `6f2f49a..5387bc6` on 28 Oct
-2026 document the prior Autopilot work; see the review for the current working-tree scope.
-
-## Docs
-
-- [Product and API guide](docs/AUTOPILOT.md)
-- [Deployment, trust boundaries and reliability](docs/DEPLOYMENT.md)
-- [Architecture decision v4.1](docs/ARCHITECTURE_DECISION_v4_1.md)
-- [Implementation plan](docs/AUTOPILOT_PLAN.md)
-
-## License
-
-GPL-3.0. See [LICENSE](LICENSE).
+Repository code is licensed under [GNU GPL version 3](LICENSE). Existing third-party code/data retains its own notices; the pinned public MLOps subset includes upstream licenses and provenance under [fixtures/external](fixtures/external). NVIDIA models, Nebius and Tavily are separate services with their own terms. Their use does not imply endorsement, partnership or a hackathon award.
