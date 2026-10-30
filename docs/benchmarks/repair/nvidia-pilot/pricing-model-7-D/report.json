@@ -1,0 +1,196 @@
+{
+  "task_id": "6486cf1a-82b3-4bc6-ab04-c9d217dd3b12",
+  "mode": "full",
+  "contract_digest": "sha256:bab1f1bb20f6802955df435898fbc5f15096126de7e338c25d7f5f66653c65b0",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:4d8e634e473eb9af2500a47b8ac618b7de0cc15c4a3622572a5ce59e77a1dfa7",
+  "failure_excerpt": ">       assert 0 <= score_request(dict(frame.iloc[0], list_price=0), model) <= 1\ntests/test_service.py:20:\npricing/serve.py:5: in score_request\npricing/model.py:9: in scores\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_logistic.py:1328: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:402: in _predict_proba_lr\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:363: in decision_function\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2902: in validate_data\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:1074: in check_array\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:133: in _assert_all_finite\n>           raise ValueError(msg_err)\nE           ValueError: Input X contains infinity or a value too large for dtype('float64').\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:182: ValueError\n  pricing/features.py:4: RuntimeWarning: divide by zero encountered in divide\nFAILED tests/test_service.py::test_service - ValueError: Input X contains inf...",
+  "research": {
+    "state": "NOT_NEEDED",
+    "evidence": [],
+    "calls": []
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "evidence": "fallback: hypothesis planner unavailable",
+      "files": [],
+      "check": "",
+      "probe": null,
+      "status": "untested",
+      "proposed_by": "platform"
+    }
+  ],
+  "data_profile": {},
+  "maintainability_notes": [],
+  "planner_error": "RuntimeError: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "6486cf1a-c1",
+        "task_id": "6486cf1a-82b3-4bc6-ab04-c9d217dd3b12",
+        "parent": null,
+        "hypothesis_id": "H1",
+        "diff": "",
+        "diff_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "files_changed": [],
+        "iterations": 0,
+        "status": "ABANDONED",
+        "summary": "",
+        "created_at": "2026-10-30T00:23:48.063+00:00"
+      },
+      "steps": [],
+      "stop_reason": "provider: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+      "diff_lines": 0,
+      "skipped_files": [],
+      "tokens": 0,
+      "code_receipt": null,
+      "screen_receipt": null,
+      "eligible": false,
+      "infra_failed": false
+    }
+  ],
+  "finalist": null,
+  "final_ml_receipt": null,
+  "verdict": null,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "usage": {
+    "ultra": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 12000
+    },
+    "super": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0
+  },
+  "calls": [
+    {
+      "correlation_id": "local-2cc6f76b9861",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 994,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-cd75c4daa1dd",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1136,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-1e46b269befb",
+      "tier": "super",
+      "purpose": "code:6486cf1a-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1158,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-f215a61df19b",
+      "tier": "super",
+      "purpose": "code:6486cf1a-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1089,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793319752.2795799,
+      "contract_digest": "sha256:bab1f1bb20f6802955df435898fbc5f15096126de7e338c25d7f5f66653c65b0",
+      "mode": "full",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793319823.917687,
+      "failing": [
+        "tests/test_service.py::test_service"
+      ],
+      "collected": 2
+    },
+    {
+      "seq": 3,
+      "type": "hypothesis.proposed",
+      "actor": "agent",
+      "at": 1793319828.0485399,
+      "provenance": "INFERRED",
+      "hypothesis_id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "check": ""
+    },
+    {
+      "seq": 4,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793319828.0638325,
+      "candidate_id": "6486cf1a-c1",
+      "hypothesis_id": "H1"
+    }
+  ],
+  "seconds": 80.9
+}

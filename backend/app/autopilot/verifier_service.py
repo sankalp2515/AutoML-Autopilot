@@ -57,3 +57,9 @@ def verify(req: VerifyRequest, x_verifier_token: str | None = Header(default=Non
     kwargs = dict(candidate=req.candidate, self_report=req.self_report, mode=req.mode,
                   expected_protocol_hash=req.expected_protocol_hash, declared_split=req.declared_split)
     return _verify_job(str(ws_root), kwargs, req.may_open)
+
+
+# v5 repair grading (BE-08)
+from app.repair.oracle.server import router as _v5_oracle  # noqa: E402
+
+app.include_router(_v5_oracle)

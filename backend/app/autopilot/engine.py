@@ -164,6 +164,7 @@ class Investigator:
                               "notes": pack.notes or scenarios.INCIDENT_NOTES.get(pack.scenario_id, ""),
                               "source": pack.source, "docs_urls": pack.docs_urls,
                               "primary_metric": pack.primary_metric,
+                              "prediction_source": "user_scores" if pack.score_column else "reconstructed_model",
                               "critical_segment": pack.critical_segment,
                               "rows": {"reference": len(pack.reference), "current": len(pack.current)}}
         self.s["protocol"] = proto["manifest"]

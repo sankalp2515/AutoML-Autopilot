@@ -1,0 +1,28 @@
+version: 1
+name: churn-service
+python: "3.12"
+install: "pip install -r requirements.txt"
+commands:
+  test: "pytest -q tests"
+  train: "python -m churn.train --data data/train.csv --out {artifacts}/model.joblib"
+  predict: "python -m churn.predict --model {artifacts}/model.joblib --input {holdout_features} --out {predictions}"
+entrypoints:
+  serve: "churn.serve:score_request"
+data:
+  train: data/train.csv
+  holdout_features: data/holdout_features.csv
+  id_column: customer_id
+  target: churned
+  positive_label: 1
+task:
+  type: restore
+  metric: roc_auc
+  fail_to_pass: ["tests/test_serve.py::test_score_request_returns_probability"]
+  ml_invariants: ["train_serve_parity", "holdout_non_inferior"]
+policy:
+  allowed_edit_roots: ["churn/", "tests/"]
+  immutable: ["autopilot.yaml", "data/", "requirements.txt"]
+  immutable_existing_tests: true
+limits:
+  test_seconds: 120
+  train_seconds: 120

@@ -1,0 +1,10 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/2/adult.zip",
+  "citation": "Becker, B. & Kohavi, R. (1996). Adult. UCI Machine Learning Repository. https://doi.org/10.24432/C5XW20",
+  "license": "CC BY 4.0",
+  "archive_sha256": "7537312dd56c2b98035880805ce99e68183a30ee468aa5329d6df0fbb3cc21bb",
+  "sample_sha256": "0273c76101f2ef29151bd46e22e72d630712f10fa0d0377248a6efbf44b1220d",
+  "rows": 8000,
+  "sampling_seed": 2026,
+  "transformation": "8,000 sampled rows; target encoded as above_50k; hyphens in names replaced by underscores"
+}

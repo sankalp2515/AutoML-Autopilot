@@ -1,0 +1,6 @@
+{
+  "fault": "B06",
+  "rejection_check": "segment_guardrail",
+  "story": "Improve F1 while preserving recall for every region.",
+  "synthetic": true
+}

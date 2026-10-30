@@ -1,0 +1,12 @@
+{
+  "provider": "nvidia_api",
+  "purpose": "BUG-09 availability probe",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "http_status": 200,
+  "usage": {
+    "prompt_tokens": 18,
+    "completion_tokens": 2,
+    "total_tokens": 20
+  },
+  "seconds": 8.53
+}

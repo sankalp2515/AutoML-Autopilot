@@ -1,0 +1,18 @@
+{
+  "fixture": "churn-service",
+  "arm": "D",
+  "mode": "full",
+  "task_id": "9af647bd-fb41-4b63-b585-098e675c5318",
+  "status": "INCONCLUSIVE",
+  "decision": "SYSTEM_FAILURE",
+  "reasons": [
+    "E_SANDBOX"
+  ],
+  "finalist": "9af647bd-c2",
+  "cost_usd": null,
+  "seconds": 421.3,
+  "wall_seconds": 1508.2,
+  "holdout": null,
+  "ml_checks_failed": [],
+  "timed_out_waiting": false
+}

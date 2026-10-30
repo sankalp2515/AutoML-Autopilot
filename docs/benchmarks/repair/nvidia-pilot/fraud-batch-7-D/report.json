@@ -1,0 +1,196 @@
+{
+  "task_id": "a39e158b-0010-475f-ba50-d855f94f089b",
+  "mode": "full",
+  "contract_digest": "sha256:a579f827b5e7668dbdfa2af0fcc016daa98ea3f53d8b7103389cdd6a442ee9af",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:9a3080ebb7c44173874c2496c515f3b17c63d75fd203b795ba6493e081002b13",
+  "failure_excerpt": ">       assert b.returncode == 0, b.stderr.decode()\nE       AssertionError: Traceback (most recent call last):\nE           File \"<frozen runpy>\", line 198, in _run_module_as_main\nE           File \"<frozen runpy>\", line 88, in _run_code\nE           File \"fraud/predict.py\", line 22, in <module>\nE             main()\nE           File \"fraud/predict.py\", line 15, in main\nE             model = joblib.load(a.model)\nE                     ^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/site-packages/joblib/numpy_pickle.py\", line 749, in load\nE             obj = _unpickle(\nE                   ^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/site-packages/joblib/numpy_pickle.py\", line 626, in _unpickle\nE             obj = unpickler.load()\nE                   ^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1256, in load\nE             dispatch[key[0]](self)\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1581, in load_stack_global\nE             self.append(self.find_class(module, name))\nE                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1624, in find_class\nE             return _getattribute(sys.modules[module], name)[0]\nE                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 326, in _getattribute\nE             raise AttributeError(\"Can't get attribute {!r} on {!r}\"\nE         AttributeError: Can't get attribute 'ClipOutliers' on <module 'fraud.predict' from 'fraud/predict.py'>\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'fraud.predict', '--model', '/tmp/pytest-of-unknown/pytest-0/tes...AttributeError: Can/'t get attribute /'ClipOutliers/' on <module /'fraud.predict/' from /'fraud/predict.py/'>/n').returncode\ntests/test_service.py:27: AssertionError\nFAILED tests/test_service.py::test_artifact_roundtrip - AssertionError: Trace...",
+  "research": {
+    "state": "NOT_NEEDED",
+    "evidence": [],
+    "calls": []
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "evidence": "fallback: hypothesis planner unavailable",
+      "files": [],
+      "check": "",
+      "probe": null,
+      "status": "untested",
+      "proposed_by": "platform"
+    }
+  ],
+  "data_profile": {},
+  "maintainability_notes": [],
+  "planner_error": "RuntimeError: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "a39e158b-c1",
+        "task_id": "a39e158b-0010-475f-ba50-d855f94f089b",
+        "parent": null,
+        "hypothesis_id": "H1",
+        "diff": "",
+        "diff_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "files_changed": [],
+        "iterations": 0,
+        "status": "ABANDONED",
+        "summary": "",
+        "created_at": "2026-10-30T00:22:21.290+00:00"
+      },
+      "steps": [],
+      "stop_reason": "provider: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+      "diff_lines": 0,
+      "skipped_files": [],
+      "tokens": 0,
+      "code_receipt": null,
+      "screen_receipt": null,
+      "eligible": false,
+      "infra_failed": false
+    }
+  ],
+  "finalist": null,
+  "final_ml_receipt": null,
+  "verdict": null,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "usage": {
+    "ultra": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 12000
+    },
+    "super": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0
+  },
+  "calls": [
+    {
+      "correlation_id": "local-b3e7541440fb",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": null,
+      "finish_reason": null,
+      "latency_ms": 120626,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "ReadTimeout"
+    },
+    {
+      "correlation_id": "local-6b095d75183b",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 865,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-3ece8d5b45aa",
+      "tier": "super",
+      "purpose": "code:a39e158b-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1052,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-0b0de7589f0c",
+      "tier": "super",
+      "purpose": "code:a39e158b-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 3424,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793319515.9048727,
+      "contract_digest": "sha256:a579f827b5e7668dbdfa2af0fcc016daa98ea3f53d8b7103389cdd6a442ee9af",
+      "mode": "full",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793319617.7966855,
+      "failing": [
+        "tests/test_service.py::test_artifact_roundtrip"
+      ],
+      "collected": 3
+    },
+    {
+      "seq": 3,
+      "type": "hypothesis.proposed",
+      "actor": "agent",
+      "at": 1793319741.288849,
+      "provenance": "INFERRED",
+      "hypothesis_id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "check": ""
+    },
+    {
+      "seq": 4,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793319741.290384,
+      "candidate_id": "a39e158b-c1",
+      "hypothesis_id": "H1"
+    }
+  ],
+  "seconds": 232.5
+}

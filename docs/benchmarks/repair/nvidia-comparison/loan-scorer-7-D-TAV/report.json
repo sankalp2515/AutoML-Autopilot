@@ -1,0 +1,198 @@
+{
+  "task_id": "e3137080-15d9-4997-a7e2-08556505e3c4",
+  "mode": "full",
+  "contract_digest": "sha256:3ff05c12b24ca844dd0bd4b839e0f8b77b3fa608d62ffd5e690c856b1edac84e",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:f8743160a9bafbf8989d58c1646fb75153b8a0cf500c49f4ea12e50c2f84f65c",
+  "failure_excerpt": ">       model = fit(frame)\ntests/test_service.py:19:\nscorer/model.py:6: in fit\n>           (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\nE       TypeError: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'\nscorer/features.py:6: TypeError\nFAILED tests/test_service.py::test_service - TypeError: OneHotEncoder.__init_...",
+  "research": {},
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "evidence": "fallback: hypothesis planner unavailable",
+      "files": [],
+      "check": "",
+      "probe": null,
+      "status": "untested",
+      "proposed_by": "platform"
+    }
+  ],
+  "data_profile": {},
+  "maintainability_notes": [],
+  "planner_error": "RuntimeError: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: ReadTimeout",
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "e3137080-c1",
+        "task_id": "e3137080-15d9-4997-a7e2-08556505e3c4",
+        "parent": null,
+        "hypothesis_id": "H1",
+        "diff": "",
+        "diff_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "files_changed": [],
+        "iterations": 0,
+        "status": "ABANDONED",
+        "summary": "",
+        "created_at": "2026-10-30T00:10:41.260+00:00"
+      },
+      "steps": [],
+      "stop_reason": "provider: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: ReadTimeout",
+      "diff_lines": 0,
+      "skipped_files": [],
+      "tokens": 0,
+      "code_receipt": null,
+      "screen_receipt": null,
+      "eligible": false,
+      "infra_failed": false
+    }
+  ],
+  "finalist": null,
+  "final_ml_receipt": null,
+  "verdict": null,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "usage": {
+    "ultra": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 12000
+    },
+    "super": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0
+  },
+  "calls": [
+    {
+      "correlation_id": "local-c821db46a3e0",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": null,
+      "finish_reason": null,
+      "latency_ms": 120655,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "ReadTimeout"
+    },
+    {
+      "correlation_id": "local-435469ac4016",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": null,
+      "finish_reason": null,
+      "latency_ms": 120864,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "ReadTimeout"
+    },
+    {
+      "correlation_id": "local-4b585cffdb44",
+      "tier": "super",
+      "purpose": "code:e3137080-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": null,
+      "finish_reason": null,
+      "latency_ms": 120809,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "ReadTimeout"
+    },
+    {
+      "correlation_id": "local-8ad300786036",
+      "tier": "super",
+      "purpose": "code:e3137080-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": null,
+      "finish_reason": null,
+      "latency_ms": 120386,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "ReadTimeout"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793318723.0996952,
+      "contract_digest": "sha256:3ff05c12b24ca844dd0bd4b839e0f8b77b3fa608d62ffd5e690c856b1edac84e",
+      "mode": "full",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793318797.738215,
+      "failing": [
+        "tests/test_service.py::test_service"
+      ],
+      "collected": 2
+    },
+    {
+      "seq": 3,
+      "type": "hypothesis.proposed",
+      "actor": "agent",
+      "at": 1793319041.2586315,
+      "provenance": "INFERRED",
+      "hypothesis_id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "check": ""
+    },
+    {
+      "seq": 4,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793319041.2602625,
+      "candidate_id": "e3137080-c1",
+      "hypothesis_id": "H1"
+    }
+  ],
+  "seconds": 561.8,
+  "evaluation": {
+    "arm": "D-TAV",
+    "arm_accepted": false,
+    "external_decision": "INCONCLUSIVE",
+    "external_ml_receipt": null
+  }
+}

@@ -1,0 +1,24 @@
+--- a/scorer/features.py
++++ b/scorer/features.py
+@@ -1,6 +1,17 @@
+-from sklearn.compose import ColumnTransformer
+-from sklearn.preprocessing import OneHotEncoder, StandardScaler
++import numpy as np
++import pandas as pd
++from sklearn.base import BaseEstimator, TransformerMixin
++
++class Dummies(BaseEstimator, TransformerMixin):
++    def fit(self, frame, y=None):
++        self.width_ = pd.get_dummies(frame[["signal", "aux", "employment_type"]]).shape[1]
++        return self
++    def transform(self, frame):
++        values = pd.get_dummies(frame[["signal", "aux", "employment_type"]], dtype=float).to_numpy()
++        out = np.zeros((len(frame), self.width_))
++        n = min(self.width_, values.shape[1])
++        out[:, :n] = values[:, :n]
++        return out
+ 
+ def build_preprocessor():
+-    return ColumnTransformer([("numeric", StandardScaler(), ["signal", "aux"]),
+-        ("category", OneHotEncoder(sparse=False, handle_unknown="ignore"), ["employment_type"])])
++    return Dummies()

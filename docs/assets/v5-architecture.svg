@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1190" viewBox="0 0 1800 1190" role="img" aria-labelledby="title desc">
+<title id="title">AutoML Autopilot v5 as-built architecture</title><desc id="desc">Three trust zones show untrusted inputs, repair control and independent verification. Teal means implemented and tested; amber means integration pending; violet means roadmap. Hosting remains provider-neutral, with Google Cloud deployed for judge hosting.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#617785"/></marker></defs>
+<rect width="1800" height="1190" fill="#f4f7fa"/>
+<text x="30" y="43" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#183042">AutoML Autopilot | Coding &amp; Agentic Engineering</text>
+<text x="30" y="70" font-family="Arial,sans-serif" font-size="16" font-weight="400" fill="#586c7b">As built locally · repository-native repair · independent code + ML receipts · 2026-10-30</text>
+<rect x="30" y="95" width="1740" height="135" rx="14" fill="white" stroke="#dbe4ea"/>
+<text x="48" y="123" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Developer experience &amp; control</text>
+<rect x="50" y="145" width="405" height="65" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="173" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">ML engineer / judge</text>
+<text x="66" y="198" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Recorded evidence or invite-only live repair</text>
+<rect x="480" y="145" width="405" height="65" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="496" y="173" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Repair workspace</text>
+<text x="496" y="198" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Contract → hypotheses → candidate diff → receipt</text>
+<rect x="910" y="145" width="405" height="65" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="926" y="173" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Task gateway &amp; policy</text>
+<text x="926" y="198" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Tenant roles · idempotency · atomic allowance</text>
+<rect x="1340" y="145" width="405" height="65" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1356" y="173" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Human approval</text>
+<text x="1356" y="198" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Download patch · optional draft PR · never merge</text>
+<path d="M455 178L478 178" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M885 178L908 178" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M1315 178L1338 178" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="30" y="250" width="355" height="635" rx="14" fill="white" stroke="#dbe4ea"/>
+<text x="48" y="278" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Source inputs / untrusted</text>
+<rect x="50" y="300" width="315" height="105" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="328" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Repository intake</text>
+<text x="66" y="353" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Public HTTPS or ZIP · pinned snapshot</text>
+<text x="66" y="374" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Byte/file limits · snapshot digest</text>
+<rect x="50" y="425" width="315" height="105" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="453" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Contract &amp; task</text>
+<text x="66" y="478" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">autopilot.yaml · allowed edits</text>
+<text x="66" y="499" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Commands · tests · ML invariants</text>
+<rect x="50" y="550" width="315" height="120" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="578" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Evaluation pack</text>
+<text x="66" y="603" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">API writes labels to separate pack volume</text>
+<text x="66" y="624" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Verifier reads; worker has no mount</text>
+<text x="66" y="645" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Public/synthetic data for beta validation</text>
+<rect x="50" y="690" width="315" height="135" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="718" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">External documentation</text>
+<text x="66" y="743" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Tavily official-doc excerpts when relevant</text>
+<text x="66" y="764" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Cited external evidence, never instructions</text>
+<text x="66" y="785" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">One matched B01 pair measured</text>
+<rect x="405" y="250" width="850" height="635" rx="14" fill="white" stroke="#dbe4ea"/>
+<text x="423" y="278" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Autonomous ML engineering control &amp; execution</text>
+<rect x="425" y="300" width="250" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="441" y="328" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Snapshot &amp; map</text>
+<text x="441" y="353" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Tracked files · commands</text>
+<text x="441" y="374" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Test failures · train/predict source</text>
+<rect x="700" y="300" width="250" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="716" y="328" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Nemotron investigation</text>
+<text x="716" y="353" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Hypotheses · bounded literal probes</text>
+<text x="716" y="374" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Diagnosis context, not causal proof</text>
+<rect x="975" y="300" width="260" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="991" y="328" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Candidate generation</text>
+<text x="991" y="353" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Actual source edits + regression tests</text>
+<text x="991" y="374" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Independent candidate branches</text>
+<path d="M675 354L697 354" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M950 354L972 354" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="425" y="445" width="390" height="115" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="441" y="473" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Durable repair worker</text>
+<text x="441" y="498" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Fenced leases · staged events · cancellation</text>
+<text x="441" y="519" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Incremental candidates + immutable receipts</text>
+<text x="441" y="540" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Token accounting; unknown usage stays unknown</text>
+<rect x="840" y="445" width="395" height="115" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="856" y="473" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Docker sandbox service</text>
+<text x="856" y="498" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Sole Docker-socket owner · pinned images</text>
+<text x="856" y="519" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">UID 10001 · read-only base · network none</text>
+<text x="856" y="540" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">CPU/RAM/PID/time/output limits</text>
+<path d="M815 502L837 502" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="425" y="595" width="390" height="100" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="441" y="623" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Transactional admission</text>
+<text x="441" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Application PostgreSQL · tenant idempotency</text>
+<text x="441" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Lifetime/daily allowance · cooldown · live slots</text>
+<rect x="840" y="595" width="395" height="100" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="856" y="623" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Nebius Sandboxes adapter</text>
+<text x="856" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Immutable UUID checkpoints; no guest credentials</text>
+<text x="856" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Real boundary probes and hosted UI repairs</text>
+<rect x="425" y="730" width="390" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="441" y="758" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Recorded evidence &amp; artifacts</text>
+<text x="441" y="783" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Read-only playback without model calls</text>
+<text x="441" y="804" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Diffs · logs · hashes · explicit publication</text>
+<text x="441" y="825" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">TTL cleanup; aggregate 20-GiB data filesystem</text>
+<rect x="840" y="730" width="395" height="110" rx="8" fill="#f1edff" stroke="#69509a"/>
+<text x="856" y="758" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Distributed runtime / registry</text>
+<text x="856" y="783" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Multi-host sandbox routing · hosted metrics</text>
+<text x="856" y="804" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Artifact registry / serving are future scope</text>
+<rect x="1275" y="250" width="495" height="635" rx="14" fill="white" stroke="#dbe4ea"/>
+<text x="1293" y="278" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Independent verification &amp; delivery</text>
+<rect x="1295" y="300" width="455" height="115" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1311" y="328" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Verifier service</text>
+<text x="1311" y="353" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Code tests + independent ML comparison</text>
+<text x="1311" y="374" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Clean artifact-only sealed test execution</text>
+<text x="1311" y="395" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Legacy candidate-import tests fail closed</text>
+<rect x="1295" y="445" width="455" height="115" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1311" y="473" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Verifier-only PostgreSQL</text>
+<text x="1311" y="498" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Separate network and non-superuser role</text>
+<text x="1311" y="519" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Trusted admission binds snapshot/image/sealed hash</text>
+<text x="1311" y="540" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">One diff-bound finalist holdout permit per task</text>
+<rect x="1295" y="595" width="455" height="100" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1311" y="623" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Verified change receipts</text>
+<text x="1311" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Software + ML + combined outcome</text>
+<text x="1311" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Missing data/checks remain disclosed</text>
+<rect x="1295" y="730" width="455" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1311" y="758" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Review &amp; recover</text>
+<text x="1311" y="783" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Patch download · explicit draft PR · replay</text>
+<text x="1311" y="804" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Backup/empty-target restore tested locally</text>
+<text x="1311" y="825" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Real GitHub/OAuth and hosted delivery unverified</text>
+<path d="M1237 502L1292 355" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M1522 415L1522 442" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M1522 560L1522 592" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M1522 695L1522 727" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="30" y="905" width="1740" height="150" rx="14" fill="white" stroke="#dbe4ea"/>
+<text x="48" y="933" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Services &amp; deployment target</text>
+<rect x="50" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="66" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Token Factory inference</text>
+<text x="66" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Super + Nano called; genuine repair receipts</text>
+<rect x="480" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="496" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Tavily</text>
+<text x="496" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Conditional official docs; provenance in receipts</text>
+<rect x="910" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="926" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Google Cloud judge deployment</text>
+<text x="926" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">HTTPS CPU VM; separate DBs; daily snapshots</text>
+<rect x="1340" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="1356" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Evidence storage &amp; backup</text>
+<text x="1356" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Postgres + volumes · hashes verified on restore</text>
+<text x="35" y="1095" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#183042">Legend:</text>
+<circle cx="120" cy="1090" r="6" fill="#066e77"/>
+<text x="135" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#066e77">Implemented / tested</text>
+<circle cx="380" cy="1090" r="6" fill="#906016"/>
+<text x="395" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#906016">Integration / external check pending</text>
+<circle cx="770" cy="1090" r="6" fill="#69509a"/>
+<text x="785" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#69509a">Roadmap</text>
+<text x="35" y="1130" font-family="Arial,sans-serif" font-size="15" font-weight="400" fill="#425969">Cross-cutting: redaction · tenant scoping · immutable provenance · measured budgets · bounded retries · replay access</text>
+<text x="35" y="1160" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#586c7b">Scope: a verified patch proposal, not automatic production model deployment. Google Cloud + Nebius validated; remote CI acceptance remains separate.</text>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "fault": "B09",
+  "rejection_check": "train_serve_parity",
+  "story": "Restore fresh-process loading of the trained artifact.",
+  "synthetic": true
+}

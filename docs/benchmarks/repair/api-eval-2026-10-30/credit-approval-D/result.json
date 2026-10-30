@@ -1,0 +1,18 @@
+{
+  "fixture": "credit-approval",
+  "arm": "D",
+  "mode": "full",
+  "task_id": "63f06603-09db-4ae2-a86e-7bbe20006cba",
+  "status": "REJECTED",
+  "decision": "REJECTED",
+  "reasons": [
+    "E_NO_ELIGIBLE_CANDIDATE"
+  ],
+  "finalist": null,
+  "cost_usd": null,
+  "seconds": 213.5,
+  "wall_seconds": 224.5,
+  "holdout": null,
+  "ml_checks_failed": [],
+  "timed_out_waiting": false
+}

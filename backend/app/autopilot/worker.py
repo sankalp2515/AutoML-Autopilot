@@ -172,6 +172,7 @@ async def run_forever(poll_s: float = 1.0, once: bool = False) -> None:
         if loop.time() - last_beat > 10:
             await heartbeat(len(running))
             await fail_abandoned()
+            await service.cleanup_uploads()
             last_beat = loop.time()
         while len(running) < settings.AUTOPILOT_WORKER_CONCURRENCY:
             job = await claim()

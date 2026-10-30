@@ -1,0 +1,18 @@
+--- a/refunds/policy.py
++++ b/refunds/policy.py
+@@ -1,4 +1,4 @@
+-THRESHOLD = 0.95
++THRESHOLD = 0.5
+ 
+ def decisions(frame, scores):
+     return (scores >= THRESHOLD).astype(int)
+--- a/refunds/features.py
++++ b/refunds/features.py
+@@ -1,6 +1,6 @@
+ import numpy as np
+ 
+-FEATURES = ["signal", "aux"]
++FEATURES = ["signal", "aux", "support_contact_after_delivery"]
+ 
+ def matrix(frame):
+     return frame[FEATURES].fillna(0).to_numpy(dtype=float)

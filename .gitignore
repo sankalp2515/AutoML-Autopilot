@@ -35,6 +35,7 @@ test_data/bank_full_semicolon.csv
 
 # Playwright E2E artifacts
 frontend/test-results/
+frontend/test-results-*/
 frontend/playwright-report/
 frontend/blob-report/
 frontend/.playwright/
@@ -42,3 +43,10 @@ frontend/.playwright/
 # AutoML Autopilot local dev
 backend/.autopilot_data/
 backend/autopilot_dev.db
+backend/product_review.db
+output/
+.playwright-cli/
+frontend/.playwright-cli/
+/runs/
+/.local/
+/fixtures/sources/

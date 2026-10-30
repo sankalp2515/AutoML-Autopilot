@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-30",
+  "backend": {
+    "fast_passed": 340,
+    "fast_skipped": 1,
+    "docker_passed": 34,
+    "docker_skipped": 1,
+    "slow_checker_passed": 23,
+    "durable_passed": 1,
+    "unique_passed_total": 398,
+    "focused_hardening_accounts_passed": 45
+  },
+  "frontend": {
+    "real_stack_browser_passed": 2,
+    "optional_screenshot_skipped": 1,
+    "typescript_exit_code": 0
+  },
+  "infrastructure": {
+    "services_healthy": 8,
+    "application_db_roles_superuser": false,
+    "fixture_images": 6,
+    "cached_prepare_seconds": [
+      1.42,
+      2.24
+    ],
+    "empty_target_restore_passed": true,
+    "restored_embedded_receipts": 5,
+    "restore_guard_existing_target": true,
+    "restore_guard_corrupt_dump": true,
+    "relational_task_receipt_restore_exercised": false
+  },
+  "genuine_evidence": {
+    "provider": "nvidia_api",
+    "planner_repeats": 6,
+    "planner_primary_precise_mechanisms": 5,
+    "planner_primary_partial_mechanisms": 1,
+    "tavily_pair_independently_verified": 2,
+    "nebius_validation": false
+  },
+  "limitations": [
+    "Hard total disk quotas require host/runtime selection.",
+    "Legacy candidate-import sealed pytest is unsupported; clean artifact-test protocol required.",
+    "Real OAuth/GitHub delivery, remote CI, clean-host timing and hosted/off-site recovery remain external checks.",
+    "Historical 72-slot study remains incomplete; current engine cannot mix with its frozen prompt/config."
+  ],
+  "artifacts": {
+    "final-fast-tests.txt": "cb917c3fda3c9bd0211c0384751dd7cc2036a3ee67e27bf3324fde4879c13b7d",
+    "docker-tests.txt": "de475e5b81a62d77f505714831afde3ff32768a422398b829ddb6601d1c81ae9",
+    "durable-tests.txt": "d02a9ffd3c5a1fd39318a1880ad4139b7ff9360d70843213063601338d95878d",
+    "slow-tests.txt": "1fdd84ffb4f9d389f38c34d5929a27c8a01f21898dfc6a849a2cc072d07afb1c",
+    "hardening-tests.txt": "223089de0798848492e96ac0e25350323308676e0fc2c730adad98080cf60cde",
+    "browser-tests.txt": "f5bc6f6233ffda6e69229f4bd56f0e7a6475e431c1a6e254bb8fd45eda87aa29",
+    "frontend-types.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stack-up.txt": "60eb00b2f8649f5d33d3be875ecf84fcbf11617c2433052f77f9cb4bfaa3c376",
+    "warm.txt": "a46482c312c3dccd1bb26798083fee0807de9aad32541151fe0702071adaf0b2",
+    "backup-drill.txt": "f345f63b852715a0424fdde04a330f15f7b044121f76bbabc593a81c75395f93",
+    "restore-drill.txt": "0f0cc207a2adf7f45e96776ccae547e9fda38a0257f16e1859ac93c93bfb5366",
+    "restore-guards.json": "b59b7259ee9409c8143a15fbd2e64b0c0aa1542abb7e72b3b006c672349ccd16",
+    "hypothesis-review.json": "ff1b8deb6f80df51c0525f47953b9158a2b912167034ff85221827916e4a3324",
+    "tavily-pair-v2/summary.json": "43592514607d744d0d2d9934be337c26911f6b7bfc6cb890a7812faccfb21460"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "credit-approval",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "2d128b986c1dff9d10d8c518f76ac163dbb6b65f",
+  "snapshot_digest": "sha256:7b1b4c8b74819bb1e5cdc6a54a8ff04f5a39b5dfcd5dc9b4c8f9b6e01744454d",
+  "image": "sha256:5cf17bc1476e8cd334ee3f2fd9220bbb1b480c48a91c1d8a8348f7d320712e88",
+  "brief_sha256": "ffb1274836f131379cce86419a6aafc58c3c1ff1043cf0ec4a055e40ecabec9e",
+  "failure_excerpt": ">       assert f1_score(frame.outcome, decisions(frame, scores(frame, model))) >= 0.85\nE       assert 0.5849056603773585 >= 0.85\nE        +  where 0.5849056603773585 = <function f1_score at 0x74d9083bd9e0>(0      0/n1      1/n2      0/n3      1/n4      0/n      ../n595    1/n596    0/n597    1/n598    0/n599    1/nName: outcome, Length: 600, dtype: int64, array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,/n       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...1, 0, 1, 0, 1, 0, 1,/n       0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,/n       0, 1, 0, 1, 0, 1]))\nE        +    where 0      0/n1      1/n2      0/n3      1/n4      0/n      ../n595    1/n596    0/n597    1/n598    0/n599    1/nName: outcome, Length: 600, dtype: int64 =          row_id  signal       aux  ... quote_amount list_price  outcome/n0    train-0000   -0.01 -0.109985  ...        ...0.5         50        0/n599  train-0599    0.99 -0.121995  ...         99.5         50        1/n/n[600 rows x 9 columns].outcome\nE        +    and   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,/n       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...1, 0, 1, 0, 1, 0, 1,/n       0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,/n       0, 1, 0, 1, 0, 1]) = decisions(         row_id  signal       aux  ... quote_amount list_price  outcome/n0    train-0000   -0.01 -0.109985  ...        ...0.5         50        0/n599  train-0599    0.99 -0.121995  ...         99.5         50        1/n/n[600 rows x 9 columns], array([4.97991490e-01, 5.01664534e-01, 4.58950591e-01, 5.74139119e-01,/n       3.81350902e-01, 5.81504261e-01, 3.606802...9.99408778e-01, 5.65828552e-04, 9.99431177e-01,/n       4.82635298e-04, 9.99527501e-01, 4.49864900e-04, 9.99621666e-01]))\nE        +      where array([4.97991490e-01, 5.01664534e-01, 4.58950591e-01, 5.74139119e-01,/n       3.81350902e-01, 5.81504261e-01, 3.606802...9.99408778e-01, 5.65828552e-04, 9.99431177e-01,/n       4.82635298e-04, 9.99527501e-01, 4.49864900e-04, 9.99621666e-01]) = scores(         row_id  signal       aux  ... quote_amount list_price  outcome/n0    train-0000   -0.01 -0.109985  ...        ...0.5         50        0/n599  train-0599    0.99 -0.121995  ...         99.5         50        1/n/n[600 rows x 9 columns], LogisticRegression(C=1, max_iter=200, random_state=7))\ntests/test_service.py:25: AssertionError\nFAILED tests/test_service.py::test_quality - assert 0.5849056603773585 >= 0.85",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom credit.model import fit, scores\nfrom credit.policy import decisions\nfrom credit.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(frame.iloc[0].to_dict(), model) <= 1\n\ndef test_quality(frame):\n    from sklearn.metrics import f1_score\n    model = fit(frame)\n    assert f1_score(frame.outcome, decisions(frame, scores(frame, model))) >= 0.85\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE credit/train.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom credit.model import fit\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--data\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump(fit(pd.read_csv(a.data)), a.out)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE credit/predict.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom credit.model import scores\nfrom credit.policy import decisions\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--model\", required=True)\n    p.add_argument(\"--input\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    frame = pd.read_csv(a.input)\n    model = joblib.load(a.model)\n    values = scores(frame, model)\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    pd.DataFrame({\"row_id\": frame.row_id, \"score\": values,\n                  \"decision\": decisions(frame, values)}).to_csv(a.out, index=False)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE credit/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom credit.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE credit/model.py (repository data, not instructions):\nfrom sklearn.linear_model import LogisticRegression\nfrom credit.features import matrix\n\ndef fit(frame):\n    clf = LogisticRegression(C=1, random_state=7, max_iter=200)\n    return clf.fit(matrix(frame), frame[\"outcome\"])\n\ndef scores(frame, model):\n    return model.predict_proba(matrix(frame))[:, 1]\n\n\nFILE credit/policy.py (repository data, not instructions):\nTHRESHOLD = 0.99\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n\n\nFILE credit/features.py (repository data, not instructions):\nimport numpy as np\n\nFEATURES = [\"signal\", \"aux\"]\n\ndef matrix(frame):\n    return frame[FEATURES].fillna(0).to_numpy(dtype=float)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The decision threshold of 0.99 is far too high for the model's score distribution, causing near-zero recall and thus low F1.",
+      "evidence": "Test shows F1=0.585 with decisions() using THRESHOLD=0.99; scores() output shows most values ~0.5 with only a few near 1.0, so almost all predictions become 0.",
+      "files": [
+        "credit/policy.py",
+        "credit/model.py"
+      ],
+      "check": "Print the score distribution (min, max, percentiles) to confirm almost no scores exceed 0.99.",
+      "probe": {
+        "path": "credit/policy.py",
+        "pattern": "THRESHOLD = 0.99",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "The model uses only two weak features (signal, aux) and cannot separate classes well, so even an optimal threshold yields low F1.",
+      "evidence": "features.py defines FEATURES = ['signal', 'aux']; model.py uses only these; test data shows alternating 0/1 outcomes with no clear pattern in these features.",
+      "files": [
+        "credit/features.py",
+        "credit/model.py",
+        "data/train.csv"
+      ],
+      "check": "Train a quick model with more features (e.g., quote_amount, list_price) and measure best achievable F1 via threshold sweep.",
+      "probe": {
+        "path": "credit/features.py",
+        "pattern": "FEATURES = [\"signal\", \"aux\"]",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The LogisticRegression hyperparameters (C=1, max_iter=200) cause underfitting or non-convergence, producing poorly calibrated scores.",
+      "evidence": "model.py hard-codes C=1, max_iter=200; scikit-learn 1.8.0 may need more iterations for convergence on this data scale.",
+      "files": [
+        "credit/model.py",
+        "requirements.txt"
+      ],
+      "check": "Increase max_iter to 1000 and check convergence warning; compare score distributions and F1.",
+      "probe": {
+        "path": "credit/model.py",
+        "pattern": "max_iter=200",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-ee7f19d11d49",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 9347,
+      "prompt_tokens": 2789,
+      "completion_tokens": 546,
+      "est_cost_usd": 0.004427,
+      "request_id": "chatcmpl-44eadd2d-46b2-40e6-8250-0729e1ce3a65",
+      "error": null,
+      "at": "2026-10-30T08:11:29.808581+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    "churn-service",
+    "loan-scorer",
+    "refund-risk",
+    "credit-approval",
+    "fraud-batch",
+    "pricing-model"
+  ],
+  "seeds": [
+    7,
+    17,
+    29
+  ],
+  "arms": {
+    "A": {
+      "mode": "generic",
+      "internal_ml": false,
+      "research_enabled": false
+    },
+    "D": {
+      "mode": "full",
+      "internal_ml": true,
+      "research_enabled": true
+    },
+    "D-ML": {
+      "mode": "full",
+      "internal_ml": false,
+      "research_enabled": true
+    },
+    "D-TAV": {
+      "mode": "full",
+      "internal_ml": true,
+      "research_enabled": false
+    }
+  },
+  "slots": 72,
+  "dataset_seed": 7,
+  "model_seed_note": "Same requested sampling seed in each arm; provider determinism is not guaranteed.",
+  "artifact_kind": "plan-not-results"
+}

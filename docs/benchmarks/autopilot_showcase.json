@@ -1,0 +1,873 @@
+{
+  "run_id": "7224638b-ed34-4f46-b544-949ddfe728db",
+  "status": "REVIEW_READY",
+  "config": {
+    "scenario_id": "S02",
+    "seed": 7,
+    "planner": "deterministic",
+    "research": "off",
+    "auto_run": true,
+    "max_experiments": 4,
+    "max_cost_units": 24.0
+  },
+  "created_at": "2026-10-28T19:38:36.659+00:00",
+  "scenario": {
+    "scenario_id": "S02",
+    "kind": "degradation",
+    "title": "Loan-default F1 fell after a data platform release",
+    "symptom": "F1 on last week's labelled loans dropped sharply; approvals team reports many false alarms.",
+    "notes": "#ml-oncall (Wed): approvals team reports a spike in false alarms since Tuesday. Data platform shipped ingestion v2.3 on Tuesday; their changelog says 'standardised monetary fields across sources'. No model or threshold change on our side.",
+    "source": "catalog",
+    "docs_urls": [],
+    "primary_metric": "f1",
+    "prediction_source": "reconstructed_model",
+    "critical_segment": {
+      "column": "region",
+      "value": "rural",
+      "metric": "f1",
+      "max_drop": 0.05
+    },
+    "rows": {
+      "reference": 6000,
+      "current": 4000
+    }
+  },
+  "protocol": {
+    "version": 1,
+    "seed": 7,
+    "metric": "f1",
+    "target": "defaulted",
+    "keying": "sha256(seed:row_index) mod 2 over labelled current rows",
+    "counts": {
+      "train": 4800,
+      "ref_validation": 1200,
+      "selection_validation": 1957,
+      "final_test": 2043
+    },
+    "protocol_hash": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311"
+  },
+  "inputs": {
+    "reference.csv": "99e45db2f3c3e8bf9f3e674e285fee693eb8ad3b1ff9ce91baee5700ec01f9fa",
+    "current.csv": "facbf856ed698a6b24095c1c6e8e46f920ba79c6f9f76454307a63274a2329b8",
+    "pack.json": "5f3013bfaa74753ca077660c385e7ec0f19eeccf449bae3eb3dd74a9f94db893",
+    "protocol.json": "06d375add9a9e34dd6327ce4ac6229c3fbd31e99594fe4f2f5d6bcb9a47f897f",
+    "incumbent.joblib": "54dbdf478ec9c09180949d2f567888372bf83a5d6a51401f1417e55847516323"
+  },
+  "inputs_digest": "ea1a13bf253faff416e7e81b",
+  "budget": {
+    "max_experiments": 4,
+    "max_cost_units": 24.0,
+    "experiments_used": 2,
+    "cost_units_used": 5.0,
+    "cpu_seconds": 0.467
+  },
+  "limits": {
+    "max_seconds": 120,
+    "runner": "inline"
+  },
+  "findings": [
+    {
+      "finding_id": "F01",
+      "kind": "schema",
+      "title": "Feature schema matches contract",
+      "value": {
+        "missing_columns": []
+      },
+      "method": "column-set comparison",
+      "sample_count": 4000,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.766+00:00"
+    },
+    {
+      "finding_id": "F02",
+      "kind": "labels",
+      "title": "4000 labelled rows in current window",
+      "value": {
+        "labelled": 4000,
+        "total": 4000
+      },
+      "method": "non-null target count",
+      "sample_count": 4000,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.766+00:00"
+    },
+    {
+      "finding_id": "F03",
+      "kind": "metric_drop",
+      "title": "Incumbent f1 0.533 \u2192 0.487",
+      "value": {
+        "reference": {
+          "f1": 0.5329,
+          "recall": 0.6227,
+          "precision": 0.4658,
+          "balanced_accuracy": 0.7062,
+          "roc_auc": 0.7852
+        },
+        "current": {
+          "f1": 0.487,
+          "recall": 0.8571,
+          "precision": 0.3401,
+          "balanced_accuracy": 0.6665,
+          "roc_auc": 0.781
+        },
+        "drop": 0.0459
+      },
+      "method": "incumbent on ref_validation @trained thr=0.3 vs selection_validation @serving thr=0.3",
+      "sample_count": 1957,
+      "severity": "warn",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.859+00:00"
+    },
+    {
+      "finding_id": "F04",
+      "kind": "prevalence",
+      "title": "Positive rate 22.8% \u2192 23.0%",
+      "value": {
+        "reference": 0.2278,
+        "current": 0.23,
+        "delta": 0.0022
+      },
+      "method": "label mean",
+      "sample_count": 4000,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.859+00:00"
+    },
+    {
+      "finding_id": "F05",
+      "kind": "feature_shift",
+      "title": "Largest PSI: income = 8.29",
+      "value": {
+        "psi": {
+          "income": 8.2895,
+          "credit_score": 0.006,
+          "loan_amount": 0.0045,
+          "employment_years": 0.0043,
+          "debt_to_income": 0.0037,
+          "age": 0.0033,
+          "channel": 0.0012,
+          "region": 0.0007
+        },
+        "reliable": true
+      },
+      "method": "population stability index, ref-quantile bins",
+      "sample_count": 4000,
+      "severity": "critical",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.881+00:00"
+    },
+    {
+      "finding_id": "F06",
+      "kind": "missingness",
+      "title": "Max missing-rate increase 0%",
+      "value": {
+        "increase": {
+          "income": 0.0,
+          "loan_amount": 0.0,
+          "credit_score": 0.0,
+          "debt_to_income": 0.0,
+          "employment_years": 0.0,
+          "age": 0.0,
+          "region": 0.0,
+          "channel": 0.0
+        }
+      },
+      "method": "null-rate difference",
+      "sample_count": 4000,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.882+00:00"
+    },
+    {
+      "finding_id": "F07",
+      "kind": "unseen_categories",
+      "title": "No unseen categories",
+      "value": {},
+      "method": "category set difference",
+      "sample_count": 4000,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.888+00:00"
+    },
+    {
+      "finding_id": "F08",
+      "kind": "segment_spread",
+      "title": "f1 by region: spread 0.16",
+      "value": {
+        "by_segment": {
+          "rural": 0.5879,
+          "suburban": 0.4883,
+          "urban": 0.4318
+        },
+        "spread": 0.1561
+      },
+      "method": "per-segment metric",
+      "sample_count": 1957,
+      "severity": "info",
+      "detail": {},
+      "created_at": "2026-10-28T19:38:39.940+00:00"
+    }
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "H1",
+      "cause": "FEATURE_SHIFT",
+      "statement": "Real-world inputs moved away from the training distribution and the model generalises poorly to them.",
+      "supporting_findings": [
+        "F03",
+        "F05"
+      ],
+      "counter_findings": [],
+      "source_refs": [],
+      "prediction_by_template": {
+        "CONTRACT_DIAGNOSTIC": "CONTRACT_OK",
+        "TRAIN_SERVE_PARITY": "SHAPE_SHIFT",
+        "SHIFT_AND_LABEL_CHECK": "COVARIATE_SHIFT",
+        "THRESHOLD_STUDY": "RANKING_DEGRADED",
+        "SEGMENT_FAILURE_AUDIT": "UNIFORM"
+      },
+      "belief_weight": 0.0882,
+      "calibration": "uncalibrated_heuristic",
+      "status": "UNRESOLVED",
+      "revision": 1,
+      "proposed_by": "deterministic",
+      "consistent_observations": 0
+    },
+    {
+      "hypothesis_id": "H2",
+      "cause": "PREPROCESSING_MISMATCH",
+      "statement": "Serving inputs no longer match the training-time contract (units/encoding), so the model sees wrong values.",
+      "supporting_findings": [
+        "F03",
+        "F05"
+      ],
+      "counter_findings": [],
+      "source_refs": [],
+      "prediction_by_template": {
+        "CONTRACT_DIAGNOSTIC": "CONTRACT_OK",
+        "TRAIN_SERVE_PARITY": "SCALE_MISMATCH",
+        "SHIFT_AND_LABEL_CHECK": "COVARIATE_SHIFT",
+        "SEGMENT_FAILURE_AUDIT": "UNIFORM"
+      },
+      "belief_weight": 0.8823,
+      "calibration": "uncalibrated_heuristic",
+      "status": "SUPPORTED",
+      "revision": 1,
+      "proposed_by": "deterministic",
+      "consistent_observations": 1
+    },
+    {
+      "hypothesis_id": "H3",
+      "cause": "THRESHOLD_MISCALIBRATION",
+      "statement": "The model still ranks risk correctly but the decision threshold no longer fits.",
+      "supporting_findings": [
+        "F03"
+      ],
+      "counter_findings": [],
+      "source_refs": [],
+      "prediction_by_template": {
+        "CONTRACT_DIAGNOSTIC": "CONTRACT_OK",
+        "TRAIN_SERVE_PARITY": "PARITY_OK",
+        "SHIFT_AND_LABEL_CHECK": "STABLE",
+        "THRESHOLD_STUDY": "RANKING_INTACT_THRESHOLD_OFF",
+        "SEGMENT_FAILURE_AUDIT": "UNIFORM"
+      },
+      "belief_weight": 0.0294,
+      "calibration": "uncalibrated_heuristic",
+      "status": "REFUTED",
+      "revision": 1,
+      "proposed_by": "deterministic",
+      "consistent_observations": 0
+    }
+  ],
+  "belief_history": [
+    {
+      "after": "planning",
+      "weights": {
+        "H1": 0.4286,
+        "H2": 0.4286,
+        "H3": 0.1429
+      }
+    },
+    {
+      "after": "E1-00ad94",
+      "template_id": "TRAIN_SERVE_PARITY",
+      "observed": "SCALE_MISMATCH",
+      "weights": {
+        "H1": 0.0882,
+        "H2": 0.8823,
+        "H3": 0.0294
+      }
+    }
+  ],
+  "rankings": [
+    {
+      "step": 1,
+      "candidates": [
+        {
+          "template_id": "TRAIN_SERVE_PARITY",
+          "kind": "diagnostic",
+          "eligible": true,
+          "reason": "eligible",
+          "expected_information_bits": 1.4489,
+          "estimated_cost_units": 2.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.644,
+          "predicted_buckets": {
+            "H1": "SHAPE_SHIFT",
+            "H2": "SCALE_MISMATCH",
+            "H3": "PARITY_OK"
+          }
+        },
+        {
+          "template_id": "SHIFT_AND_LABEL_CHECK",
+          "kind": "diagnostic",
+          "eligible": true,
+          "reason": "eligible",
+          "expected_information_bits": 0.5917,
+          "estimated_cost_units": 2.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.263,
+          "predicted_buckets": {
+            "H1": "COVARIATE_SHIFT",
+            "H2": "COVARIATE_SHIFT",
+            "H3": "STABLE"
+          }
+        },
+        {
+          "template_id": "THRESHOLD_STUDY",
+          "kind": "diagnostic",
+          "eligible": true,
+          "reason": "eligible",
+          "expected_information_bits": 0.5162,
+          "estimated_cost_units": 2.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.2294,
+          "predicted_buckets": {
+            "H1": "RANKING_DEGRADED",
+            "H3": "RANKING_INTACT_THRESHOLD_OFF"
+          }
+        },
+        {
+          "template_id": "DEPENDENCY_API_PROBE",
+          "kind": "diagnostic",
+          "eligible": false,
+          "reason": "no library error to probe",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 0.5,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        },
+        {
+          "template_id": "CONTRACT_DIAGNOSTIC",
+          "kind": "diagnostic",
+          "eligible": false,
+          "reason": "does not discriminate between live hypotheses",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 1.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {
+            "H1": "CONTRACT_OK",
+            "H2": "CONTRACT_OK",
+            "H3": "CONTRACT_OK"
+          }
+        },
+        {
+          "template_id": "SEGMENT_FAILURE_AUDIT",
+          "kind": "diagnostic",
+          "eligible": false,
+          "reason": "does not discriminate between live hypotheses",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 2.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {
+            "H1": "UNIFORM",
+            "H2": "UNIFORM",
+            "H3": "UNIFORM"
+          }
+        },
+        {
+          "template_id": "THRESHOLD_CANDIDATE",
+          "kind": "corrective",
+          "eligible": false,
+          "reason": "corrective: proposed only after a cause is supported",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 2.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        },
+        {
+          "template_id": "PREPROCESSING_ABLATION",
+          "kind": "corrective",
+          "eligible": false,
+          "reason": "corrective: proposed only after a cause is supported",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 3.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        },
+        {
+          "template_id": "CLASS_WEIGHT_CHALLENGER",
+          "kind": "corrective",
+          "eligible": false,
+          "reason": "corrective: proposed only after a cause is supported",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 6.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        },
+        {
+          "template_id": "DEPENDENCY_COMPAT_FIX",
+          "kind": "corrective",
+          "eligible": false,
+          "reason": "corrective: proposed only after a cause is supported",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 6.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        },
+        {
+          "template_id": "MODEL_FAMILY_CHALLENGER",
+          "kind": "corrective",
+          "eligible": false,
+          "reason": "corrective: proposed only after a cause is supported",
+          "expected_information_bits": 0.0,
+          "estimated_cost_units": 10.0,
+          "duplicate_penalty": 0.0,
+          "score": 0.0,
+          "predicted_buckets": {}
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "experiment_id": "E1-00ad94",
+      "template_id": "TRAIN_SERVE_PARITY",
+      "kind": "diagnostic",
+      "hypothesis_ids": [
+        "H1",
+        "H2",
+        "H3"
+      ],
+      "parameters": {},
+      "source_refs": [],
+      "expected_outcomes": {
+        "H1": "SHAPE_SHIFT",
+        "H2": "SCALE_MISMATCH",
+        "H3": "PARITY_OK"
+      },
+      "signature": "44eb2541f0c6da92980ecd29",
+      "protocol_ref": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311",
+      "estimated_cost_units": 2.0,
+      "limits": {
+        "max_seconds": 120,
+        "runner": "inline"
+      },
+      "policy": {
+        "decision": "ALLOW",
+        "checks": [
+          "template",
+          "params",
+          "refs",
+          "labels",
+          "budget",
+          "duplicate"
+        ]
+      },
+      "status": "DONE",
+      "observation": {
+        "bucket": "SCALE_MISMATCH",
+        "measurements": {
+          "numeric": {
+            "income": {
+              "median_ratio": 0.001,
+              "psi": 8.2895,
+              "rescale_factor": 1000.0,
+              "psi_after_rescale": 0.0024
+            },
+            "loan_amount": {
+              "median_ratio": 1.00885,
+              "psi": 0.0045
+            },
+            "credit_score": {
+              "median_ratio": 1.0,
+              "psi": 0.006
+            },
+            "debt_to_income": {
+              "median_ratio": 1.00625,
+              "psi": 0.0037
+            },
+            "employment_years": {
+              "median_ratio": 0.98214,
+              "psi": 0.0043
+            },
+            "age": {
+              "median_ratio": 1.0,
+              "psi": 0.0033
+            }
+          },
+          "categorical_psi": {
+            "region": 0.0007,
+            "channel": 0.0012
+          },
+          "max_psi_excluding_rescaled": 0.006,
+          "suggested_fix": {
+            "rescale": {
+              "income": 1000.0
+            }
+          }
+        }
+      },
+      "actual_seconds": 0.037,
+      "error": null,
+      "created_at": "2026-10-28T19:38:39.941+00:00",
+      "envelope": {
+        "schema_version": "autopilot-envelope/1",
+        "run_id": "7224638b-ed34-4f46-b544-949ddfe728db",
+        "experiment_id": "E1-00ad94",
+        "experiment_kind": "diagnostic",
+        "hypothesis_ids": [
+          "H1",
+          "H2",
+          "H3"
+        ],
+        "template_id": "TRAIN_SERVE_PARITY@autopilot-templates/1",
+        "typed_parameters": {},
+        "dataset_manifest_digest": "ea1a13bf253faff416e7e81b",
+        "split_protocol_digest": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311",
+        "eval_protocol_digest": "sha256:c1a40bf8de260a906131728d2fea0290b2bb6e589a02317344c1685b42041819",
+        "expected_observation_buckets": {
+          "H1": "SHAPE_SHIFT",
+          "H2": "SCALE_MISMATCH",
+          "H3": "PARITY_OK"
+        },
+        "external_evidence_refs": [],
+        "resource_ceiling": {
+          "wall_seconds": 120,
+          "cost_units": 2.0,
+          "attempts": 1
+        },
+        "authorized_by": "policy:allow-list/autopilot-templates/1",
+        "envelope_digest": "sha256:4ff2f6eb4add4c74e2fa8c6bd36caa00962cb12be9802f611d46f308b36724e1"
+      },
+      "runner_mode": "inline",
+      "output_sha256": "3d66df5cd4e3d422237c18383dece60b0425ecc141c534886b335c202f28af73",
+      "belief_update": [
+        {
+          "hypothesis_id": "H1",
+          "predicted": "SHAPE_SHIFT",
+          "observed": "SCALE_MISMATCH",
+          "verdict": "inconsistent",
+          "before": 0.4286,
+          "after": 0.0882,
+          "status": "UNRESOLVED"
+        },
+        {
+          "hypothesis_id": "H2",
+          "predicted": "SCALE_MISMATCH",
+          "observed": "SCALE_MISMATCH",
+          "verdict": "consistent",
+          "before": 0.4286,
+          "after": 0.8823,
+          "status": "SUPPORTED"
+        },
+        {
+          "hypothesis_id": "H3",
+          "predicted": "PARITY_OK",
+          "observed": "SCALE_MISMATCH",
+          "verdict": "inconsistent",
+          "before": 0.1429,
+          "after": 0.0294,
+          "status": "REFUTED"
+        }
+      ]
+    },
+    {
+      "experiment_id": "E2-d02a15",
+      "template_id": "PREPROCESSING_ABLATION",
+      "kind": "corrective",
+      "hypothesis_ids": [
+        "H2"
+      ],
+      "parameters": {
+        "rescale": {
+          "income": 1000.0
+        }
+      },
+      "source_refs": [],
+      "expected_outcomes": {},
+      "signature": "29917f01ba0ebfaaad4ae1dd",
+      "protocol_ref": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311",
+      "estimated_cost_units": 3.0,
+      "limits": {
+        "max_seconds": 120,
+        "runner": "inline"
+      },
+      "policy": {
+        "decision": "ALLOW",
+        "checks": [
+          "template",
+          "params",
+          "refs",
+          "labels",
+          "budget",
+          "duplicate"
+        ]
+      },
+      "status": "DONE",
+      "observation": {
+        "bucket": "CANDIDATE_BUILT",
+        "candidate": {
+          "threshold": 0.3,
+          "input_fix": {
+            "rescale": {
+              "income": 1000.0
+            }
+          },
+          "features": null,
+          "label": "incumbent + input rescale",
+          "score_column": null,
+          "artifact": "incumbent.joblib"
+        },
+        "measurements": {
+          "self_reported_validation": {
+            "f1": 0.5888,
+            "recall": 0.6503,
+            "precision": 0.5379,
+            "balanced_accuracy": 0.7371,
+            "roc_auc": 0.8118
+          },
+          "prediction_source": "reconstructed_model"
+        }
+      },
+      "actual_seconds": 0.033,
+      "error": null,
+      "created_at": "2026-10-28T19:38:39.983+00:00",
+      "envelope": {
+        "schema_version": "autopilot-envelope/1",
+        "run_id": "7224638b-ed34-4f46-b544-949ddfe728db",
+        "experiment_id": "E2-d02a15",
+        "experiment_kind": "corrective",
+        "hypothesis_ids": [
+          "H2"
+        ],
+        "template_id": "PREPROCESSING_ABLATION@autopilot-templates/1",
+        "typed_parameters": {
+          "rescale": {
+            "income": 1000.0
+          }
+        },
+        "dataset_manifest_digest": "ea1a13bf253faff416e7e81b",
+        "split_protocol_digest": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311",
+        "eval_protocol_digest": "sha256:c1a40bf8de260a906131728d2fea0290b2bb6e589a02317344c1685b42041819",
+        "expected_observation_buckets": {},
+        "external_evidence_refs": [],
+        "resource_ceiling": {
+          "wall_seconds": 120,
+          "cost_units": 3.0,
+          "attempts": 1
+        },
+        "authorized_by": "policy:allow-list/autopilot-templates/1",
+        "envelope_digest": "sha256:459d94634f6d2425b0818624e7da76779776dd7fbd8c143fcf171b2b1313b41c"
+      },
+      "runner_mode": "inline",
+      "output_sha256": "09268e5b3ad742aa273fd841535e7cafe9a50a1b1274b10b942b725aa74941f5"
+    }
+  ],
+  "denials": [],
+  "research": {
+    "state": "NOT_NEEDED",
+    "evidence": [],
+    "calls": [],
+    "query": null,
+    "mapping": null,
+    "reason_code": "not_needed"
+  },
+  "planner": {
+    "requested": "deterministic",
+    "used": "deterministic",
+    "calls": [],
+    "note": null
+  },
+  "correction": {
+    "template_id": "PREPROCESSING_ABLATION",
+    "for_hypothesis": "H2",
+    "cause": "PREPROCESSING_MISMATCH",
+    "mode": "improve"
+  },
+  "verification": {
+    "verifier_version": "autopilot-verifier/1",
+    "decision": "CORRECTION_VERIFIED",
+    "reason_codes": [],
+    "checks": [
+      {
+        "check": "envelope_integrity",
+        "status": "PASS",
+        "detail": "experiment envelope digest matches the record admitted by policy",
+        "evidence": {
+          "envelope_digest": "sha256:459d94634f6d2425b0818624e7da76779776dd7fbd8c143fcf171b2b1313b41c"
+        }
+      },
+      {
+        "check": "artifact_integrity",
+        "status": "PASS",
+        "detail": "candidate artifact loaded and hashed",
+        "evidence": {
+          "sha256": "54dbdf478ec9c09180949d2f567888372bf83a5d6a51401f1417e55847516323"
+        }
+      },
+      {
+        "check": "protocol_parity",
+        "status": "PASS",
+        "detail": "same frozen split and metric as the incumbent",
+        "evidence": {
+          "protocol_hash": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311"
+        }
+      },
+      {
+        "check": "leakage",
+        "status": "PASS",
+        "detail": "all features are within the declared contract",
+        "evidence": {}
+      },
+      {
+        "check": "sample_size",
+        "status": "PASS",
+        "detail": "enough labelled rows",
+        "evidence": {
+          "selection_rows": 1957,
+          "final_test_rows": 2043
+        }
+      },
+      {
+        "check": "metric_provenance",
+        "status": "PASS",
+        "detail": "validation metric reproduced from saved artifact",
+        "evidence": {
+          "recomputed": 0.5888
+        }
+      },
+      {
+        "check": "holdout_integrity",
+        "status": "PASS",
+        "detail": "final test opened exactly once, after candidate lock",
+        "evidence": {}
+      },
+      {
+        "check": "primary_objective",
+        "status": "PASS",
+        "detail": "f1 improves; 95% CI excludes zero",
+        "evidence": {
+          "delta": 0.0864,
+          "ci_low": 0.0529,
+          "ci_high": 0.1154,
+          "n_boot": 400
+        }
+      },
+      {
+        "check": "segment_guardrail",
+        "status": "PASS",
+        "detail": "f1 on region=rural must not drop more than 0.05 vs the incumbent on the same rows",
+        "evidence": {
+          "candidate": 0.6295,
+          "incumbent": 0.516,
+          "delta": 0.1135,
+          "healthy_reference": 0.64
+        }
+      }
+    ],
+    "metrics": {
+      "selection_validation": {
+        "candidate": {
+          "f1": 0.5888,
+          "recall": 0.6503,
+          "precision": 0.5379,
+          "balanced_accuracy": 0.7371,
+          "roc_auc": 0.8118
+        },
+        "incumbent": {
+          "f1": 0.487,
+          "recall": 0.8571,
+          "precision": 0.3401,
+          "balanced_accuracy": 0.6665,
+          "roc_auc": 0.781
+        }
+      },
+      "final_test": {
+        "candidate": {
+          "f1": 0.5697,
+          "recall": 0.6208,
+          "precision": 0.5263,
+          "balanced_accuracy": 0.7313,
+          "roc_auc": 0.8193
+        },
+        "incumbent": {
+          "f1": 0.4833,
+          "recall": 0.898,
+          "precision": 0.3306,
+          "balanced_accuracy": 0.6915,
+          "roc_auc": 0.7938
+        },
+        "rows": 2043
+      },
+      "delta": {
+        "delta": 0.0864,
+        "ci_low": 0.0529,
+        "ci_high": 0.1154,
+        "n_boot": 400
+      },
+      "critical_segment": {
+        "segment": "region=rural",
+        "metric": "f1",
+        "candidate": 0.6295,
+        "incumbent": 0.516,
+        "healthy_reference": 0.64,
+        "rows": 369
+      }
+    },
+    "candidate": "incumbent + input rescale",
+    "incumbent": "incumbent",
+    "metric": "f1",
+    "mode": "improve",
+    "protocol_hash": "c616e78cb8f6b3403c2982ece139e21a034c19fba522dd80a47f0a773c69f311",
+    "at": "2026-10-28T19:38:40.292+00:00",
+    "prediction_sources": {
+      "incumbent": "reconstructed_model",
+      "candidate": "reconstructed_model"
+    },
+    "process": {
+      "mode": "inline",
+      "seconds": 0.264,
+      "isolated": false
+    },
+    "experiment_id": "E2-d02a15"
+  },
+  "decision": {
+    "decision": "CORRECTION_VERIFIED",
+    "reason_codes": [],
+    "summary": "incumbent + input rescale verified on the frozen protocol; eligible for human review.",
+    "next_action": "A reviewer may approve. Approval records a decision only; it never swaps the live model.",
+    "incumbent_changed": false,
+    "at": "2026-10-28T19:38:40.292+00:00"
+  },
+  "final_test_accesses": [
+    {
+      "candidate": "incumbent + input rescale",
+      "at": "2026-10-28T19:38:40.292+00:00",
+      "by": "verifier process (inline)"
+    }
+  ],
+  "review": null,
+  "seq": 22,
+  "error": null
+}

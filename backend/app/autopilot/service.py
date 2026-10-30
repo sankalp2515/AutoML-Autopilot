@@ -13,7 +13,7 @@ import json
 from functools import lru_cache
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from app.autopilot import engine, guard, research, scenarios
@@ -75,7 +75,7 @@ async def expire_idle(tenant: str) -> int:
 
 LIMITATIONS = [
     "Belief weights are an uncalibrated heuristic; information gain is exact only given them.",
-    "Incidents are seeded synthetic loan-default data with a hidden fault oracle, not customer data.",
+    "Catalog incidents use synthetic loan data or a disclosed injected fault on UCI Adult, not customer outages.",
     "Approval records a reviewer decision only; Autopilot never changes a live model.",
     "Runner isolation is a killable child process running vetted templates; there is no generated code.",
 ]
@@ -179,6 +179,52 @@ async def get(run_id: str, tenant: str) -> dict | None:
         row = (await db.execute(select(AutopilotInvestigation).where(
             AutopilotInvestigation.id == run_id, AutopilotInvestigation.tenant_id == tenant))).scalar_one_or_none()
         return row.state if row else None
+
+
+async def shared_get(run_id: str) -> dict | None:
+    """Only called after a signed capability has been validated."""
+    async with AsyncSessionLocal() as db:
+        row = await db.get(AutopilotInvestigation, run_id)
+        return public(row.state) if row and Status(row.status) in TERMINAL else None
+
+
+async def delete_upload(tenant: str, upload_id: str) -> None:
+    """Delete raw files, investigation workspaces and derived records together.
+
+    Active runs are refused so a worker cannot recreate files after deletion.
+    """
+    import shutil
+    from pathlib import Path
+    from app.autopilot import uploads
+    uploads.get(tenant, upload_id)
+    async with AsyncSessionLocal() as db:
+        rows = (await db.execute(select(AutopilotInvestigation).where(
+            AutopilotInvestigation.tenant_id == tenant,
+            AutopilotInvestigation.scenario_id == f"upload:{upload_id}"))).scalars().all()
+        if any(Status(r.status) not in TERMINAL or r.lease_owner or r.id in _active for r in rows):
+            raise PermissionError("Finish or cancel investigations using this upload before deleting it")
+        for r in rows:
+            await db.execute(delete(AutopilotEvent).where(AutopilotEvent.investigation_id == r.id))
+            await db.delete(r)
+        await db.commit()
+        for r in rows:
+            root = (Path(settings.DATA_DIR) / "autopilot").resolve()
+            path = (root / r.id).resolve()
+            if path != root and path.is_relative_to(root):
+                shutil.rmtree(path, ignore_errors=True)
+    uploads.delete(tenant, upload_id)
+
+
+async def cleanup_uploads() -> int:
+    from app.autopilot import uploads
+    count = 0
+    for tenant, uid in uploads.expired():
+        try:
+            await delete_upload(tenant, uid)
+            count += 1
+        except (PermissionError, KeyError):
+            continue
+    return count
 
 
 async def list_(tenant: str, limit: int) -> list[dict]:

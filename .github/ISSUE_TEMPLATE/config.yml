@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup, supported workflows and limits
+    url: https://github.com/sankalp2515/AutoML-Autopilot/blob/v5/main/SUPPORT.md
+    about: Check support guidance; do not post secrets or judge access codes.

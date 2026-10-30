@@ -1,0 +1,22 @@
+{
+  "local_links_checked": 34,
+  "missing_links": [],
+  "issue_yaml_valid": true,
+  "architecture_svg_valid": true,
+  "readme_contract_valid": true,
+  "gcp_assumptions": {
+    "hours": 1320,
+    "vm_hourly": 0.13402284,
+    "disk_gib_hourly": 0.000136986,
+    "disk_gib": 50,
+    "ipv4_hourly": 0.005,
+    "vm": 176.9101488,
+    "disk": 9.041076,
+    "ipv4": 6.6000000000000005,
+    "fixed_total": 192.5512248
+  },
+  "inference_balance": 29.5,
+  "lifetime_estimate_cap": 20,
+  "unallocated_margin": 9.5,
+  "no_provider_calls_or_cloud_provisioning": true
+}

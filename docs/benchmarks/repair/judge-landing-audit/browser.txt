@@ -1,0 +1,43 @@
+[WebServer] (node:32868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:48756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer]  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+Running 26 tests using 1 worker
+
+(node:55124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › landing.spec.ts:10:5 › landing explains evidence, switches checks, discloses access and opens the actual replay (4.2s)
+  ok 2 [chromium] › landing.spec.ts:28:71 › landing layout, keyboard and axe: light 1440 (6.2s)
+  ok 3 [chromium] › landing.spec.ts:28:71 › landing layout, keyboard and axe: light 375 (4.9s)
+  ok 4 [chromium] › landing.spec.ts:28:71 › landing layout, keyboard and axe: dark 1440 (7.4s)
+  ok 5 [chromium] › landing.spec.ts:28:71 › landing layout, keyboard and axe: dark 375 (4.4s)
+  ok 6 [chromium] › repair.spec.ts:47:5 › unsupported changed files are visibly refused rather than shown as awaiting checks (5.8s)
+  ok 7 [chromium] › repair.spec.ts:204:5 › home tells the evidence story, exposes all entries, and distinguishes configured from successful calls (2.0s)
+  ok 8 [chromium] › repair.spec.ts:235:5 › source, contract, discovery, evaluation pack and task submission use the real API shapes (2.8s)
+  ok 9 [chromium] › repair.spec.ts:287:5 › invalid URL is rejected, source tabs work by keyboard, and ZIP intake can proceed (4.8s)
+  ok 10 [chromium] › repair.spec.ts:313:5 › recorded timeline does not leak future evidence; tour, scrubbing, comparison, diff and downloads work (3.3s)
+  ok 11 [chromium] › repair.spec.ts:355:5 › verified receipt preserves true metric and runner, supports split diff and patch download (2.7s)
+  ok 12 [chromium] › repair.spec.ts:375:5 › new genuine recordings retain isolated runner and real receipt evidence (4.6s)
+  ok 13 [chromium] › repair.spec.ts:389:5 › live workspace keeps evidence on connection failure and cancel requires explicit confirmation (5.9s)
+  ok 14 [chromium] › repair.spec.ts:429:5 › finished task sharing requires consent and PR credentials stay out of persistent storage (2.8s)
+  ok 15 [chromium] › repair.spec.ts:465:5 › runs filter, benchmark limitations, docs, runtime and missing-task recovery remain usable offline (5.2s)
+  ok 16 [chromium] › repair.spec.ts:503:9 › accessible pages and bounded layout: light 1280 (25.5s)
+  ok 17 [chromium] › repair.spec.ts:503:9 › accessible pages and bounded layout: light 375 (29.0s)
+  ok 18 [chromium] › repair.spec.ts:503:9 › accessible pages and bounded layout: dark 1280 (42.4s)
+  ok 19 [chromium] › repair.spec.ts:503:9 › accessible pages and bounded layout: dark 375 (30.9s)
+  ok 20 [chromium] › repair.spec.ts:553:5 › contract/task forms, active workspace, candidate comparison and mobile navigation are accessible (17.2s)
+  ok 21 [chromium] › repair.spec.ts:606:5 › handoff report renders probe evidence, drift, image and relative error improvement (11.8s)
+  ok 22 [chromium] › repair.spec.ts:682:5 › no-label verification prominently states its unmeasured quality limit (1.9s)
+  ok 23 [chromium] › repair.spec.ts:705:5 › guided contract keeps problem and metric compatible and sends a custom loader (1.5s)
+  ok 24 [chromium] › repair.spec.ts:734:5 › budget controls bind the request and show server estimate (2.0s)
+  ok 25 [chromium] › repair.spec.ts:758:5 › live progress shows source edits, steps and usage before final report (1.3s)
+  ok 26 [chromium] › repair.spec.ts:826:5 › benchmark exposes checker and public-subset evidence without agent claims (1.2s)
+
+  Slow test file: [chromium] › repair.spec.ts (3.4m)
+  Slow test file: [chromium] › landing.spec.ts (27.2s)
+  Consider splitting slow test files to speed up parallel execution
+  26 passed (4.2m)

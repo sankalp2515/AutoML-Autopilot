@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-30",
+  "public_url": "https://136-112-7-18.sslip.io/repair",
+  "protocol": "Genuine public browser flow; one candidate, 64000 coding-token ceiling, except initial churn metadata audit. No reference patches injected. Preserve non-successes.",
+  "runs": [
+    {
+      "fixture": "churn-service",
+      "task_id": "0cce5a6b-d222-40b0-a970-2e60d0c1782c",
+      "decision": "VERIFIED",
+      "runner": "tokenfactory-sandbox",
+      "provider": "nebius_token_factory",
+      "image": "nebius:52891079-4ec1-43e5-9366-f2bb57083824",
+      "estimated_inference_usd": 0.009751,
+      "report_sha256": "7d214f9fd263662708ecb48af93f389e9ccf2e4cf9ef18e916e6bdf7b5a936b7",
+      "report_file": "docs/benchmarks/repair/nebius-live/churn-service/report.json"
+    },
+    {
+      "fixture": "credit-approval",
+      "task_id": "da83a491-9a9c-489c-8b2d-f4afecbf97e6",
+      "decision": "INCONCLUSIVE",
+      "runner": "tokenfactory-sandbox",
+      "provider": "nebius_token_factory",
+      "image": "nebius:a4896c55-ef2f-494c-8d64-122c9926e77a",
+      "estimated_inference_usd": 0.0125,
+      "report_sha256": "2dce56f421654b05f770be1c0f64b01419493383970fc7030fa9b9fbdf74e452",
+      "report_file": "docs/benchmarks/repair/nebius-live/credit-approval/report.json"
+    },
+    {
+      "fixture": "fraud-batch",
+      "task_id": "52a50af1-33d9-430e-99d5-ee67bdc0b74b",
+      "decision": "VERIFIED",
+      "runner": "tokenfactory-sandbox",
+      "provider": "nebius_token_factory",
+      "image": "nebius:ea164222-a689-4fc9-b344-c82e6e343d9c",
+      "estimated_inference_usd": 0.021861,
+      "report_sha256": "0a05f31123479eb49e9dc94a5f33d39bc597fb7070208d70b609c67e521db7b5",
+      "report_file": "docs/benchmarks/repair/nebius-live/fraud-batch/report.json"
+    },
+    {
+      "fixture": "initial-churn-service",
+      "task_id": "2639354f-eaf7-45f5-bd66-0de4840266b1",
+      "decision": "VERIFIED",
+      "runner": "sandbox-service",
+      "provider": "nebius_token_factory",
+      "image": "nebius:52891079-4ec1-43e5-9366-f2bb57083824",
+      "estimated_inference_usd": 0.014244,
+      "report_sha256": "db51ec8a26106402708a480f475006182564eb5ac0209fad209668024df24579",
+      "report_file": "docs/benchmarks/repair/nebius-live/initial-churn-service/report.json"
+    },
+    {
+      "fixture": "loan-scorer",
+      "task_id": "eef0e1f5-c381-470d-8e06-1e0c55c55ca6",
+      "decision": "VERIFIED",
+      "runner": "tokenfactory-sandbox",
+      "provider": "nebius_token_factory",
+      "image": "nebius:e75e1fac-6805-4c0a-a75a-06c7df4fe6c8",
+      "estimated_inference_usd": 0.006627,
+      "report_sha256": "59e1b1e385c9d037997395284281684bc46bf9c8f5bee074ec0f425a335e419c",
+      "report_file": "docs/benchmarks/repair/nebius-live/loan-scorer/report.json"
+    },
+    {
+      "fixture": "refund-risk",
+      "task_id": "936aa843-c59a-4f6b-8fe5-05a44eb8d76e",
+      "decision": "REJECTED",
+      "runner": "tokenfactory-sandbox",
+      "provider": "nebius_token_factory",
+      "image": "nebius:4696f09f-4f8f-48c1-8d31-c123f8df558f",
+      "estimated_inference_usd": 0.015822,
+      "report_sha256": "ea9d2268f2ea18024346ec1da6651c0d15495e9faf8cba7f59e6d340f799df44",
+      "report_file": "docs/benchmarks/repair/nebius-live/refund-risk/report.json"
+    }
+  ],
+  "total_estimated_inference_usd": 0.080805,
+  "successful_terminal_verdict_fixtures": [
+    "churn-service",
+    "loan-scorer",
+    "refund-risk",
+    "fraud-batch"
+  ],
+  "known_failed_expected_verdict_test": "credit-approval: INCONCLUSIVE E_NO_PATCH after repeated invalid tool replies",
+  "comparative_success_rate_claim": false,
+  "final_public_browser_checks": {
+    "passed": 10,
+    "skipped": 1,
+    "skip_reason": "Optional screenshot artifact capture not enabled",
+    "checks": [
+      "sample intake and contract validation",
+      "real sandbox test discovery",
+      "one-tab genuine Nebius cached replay and diff/receipt",
+      "playback control alignment at 623/920px",
+      "landing replay navigation",
+      "axe/layout/keyboard light and dark at 1440/375px",
+      "six real API samples and status"
+    ]
+  },
+  "backend_adapter_tests": {
+    "passed": 14
+  },
+  "backend_fast_suite": {
+    "passed": 216,
+    "skipped": 29,
+    "deselected": 59,
+    "selection": "not slow and not docker",
+    "limitation": "No disposable PostgreSQL test URLs configured for this local invocation; actual cloud PostgreSQL repair/restore evidence is separate."
+  },
+  "frontend_typecheck": "passed",
+  "cloud_frontend_build": "passed",
+  "cloud_ready": "all execution dependencies ok",
+  "source_publication": "This ledger records pre-publication validation. See Git history and the README CI badge for the current integration and publication state."
+}

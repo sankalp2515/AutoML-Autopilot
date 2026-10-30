@@ -13,6 +13,7 @@ BASE = "/api/v1/autopilot"
 
 @pytest.fixture(autouse=True)
 def _inline(monkeypatch, tmp_path):
+    monkeypatch.setattr(settings, "AUTOPILOT_EXECUTION", "inline")
     monkeypatch.setattr(settings, "AUTOPILOT_RUNNER", "inline")
     monkeypatch.setattr(settings, "DATA_DIR", str(tmp_path))
     monkeypatch.setattr(settings, "TAVILY_API_KEY", "")

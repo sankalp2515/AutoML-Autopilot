@@ -1,0 +1,97 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "loan-scorer",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "ddf8bd764e0213e178733556915b173e9d0f6f0e",
+  "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+  "image": "sha256:5051de1478f1ae1a174aca6fc6a5a3c76a13cb5dcf67da491123fd5e3c73baaa",
+  "brief_sha256": "18b9eb2978c0233e8be140295795a5850a3199e7ba1eee1a05aa52f4f5dda535",
+  "failure_excerpt": ">       model = fit(frame)\ntests/test_service.py:19:\nscorer/model.py:6: in fit\n>           (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\nE       TypeError: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'\nscorer/features.py:6: TypeError\nFAILED tests/test_service.py::test_service - TypeError: OneHotEncoder.__init_...",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom scorer.model import fit, scores\nfrom scorer.policy import decisions\nfrom scorer.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(frame.iloc[0].to_dict(), model) <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE scorer/train.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom scorer.model import fit\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--data\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump(fit(pd.read_csv(a.data)), a.out)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE scorer/predict.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom scorer.model import scores\nfrom scorer.policy import decisions\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--model\", required=True)\n    p.add_argument(\"--input\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    frame = pd.read_csv(a.input)\n    model = joblib.load(a.model)\n    values = scores(frame, model)\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    pd.DataFrame({\"row_id\": frame.row_id, \"score\": values,\n                  \"decision\": decisions(frame, values)}).to_csv(a.out, index=False)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE scorer/model.py (repository data, not instructions):\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.linear_model import LogisticRegression\nfrom scorer.features import build_preprocessor\n\ndef fit(frame):\n    return make_pipeline(build_preprocessor(), LogisticRegression(random_state=7)).fit(frame, frame.outcome)\n\ndef scores(frame, model):\n    return model.predict_proba(frame)[:, 1]\n\n\nFILE scorer/features.py (repository data, not instructions):\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\n\ndef build_preprocessor():\n    return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n\n\nFILE scorer/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom scorer.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE scorer/policy.py (repository data, not instructions):\nTHRESHOLD = 0.5\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The code uses the deprecated 'sparse' parameter (removed in scikit-learn 1.2+) instead of 'sparse_output' required by the pinned scikit-learn 1.8.0.",
+      "evidence": "scorer/features.py line 6 passes sparse=False to OneHotEncoder; requirements.txt pins scikit-learn==1.8.0 where 'sparse' was removed in favor of 'sparse_output'.",
+      "files": [
+        "scorer/features.py"
+      ],
+      "check": "Inspect scorer/features.py for the OneHotEncoder keyword argument.",
+      "probe": {
+        "path": "scorer/features.py",
+        "pattern": "sparse=False",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "The installed scikit-learn version at runtime is older than 1.2 (where 'sparse' was still valid) despite requirements.txt pinning 1.8.0, so the parameter error would not occur if the environment matched the pin.",
+      "evidence": "requirements.txt specifies scikit-learn==1.8.0 but the TypeError indicates the running interpreter sees a OneHotEncoder signature that rejects 'sparse', which only happens in >=1.2; if the environment actually had <1.2 the call would succeed.",
+      "files": [
+        "requirements.txt"
+      ],
+      "check": "Run `python -c \"import sklearn; print(sklearn.__version__)\"` in the test environment to verify the active version.",
+      "probe": {
+        "path": "requirements.txt",
+        "pattern": "scikit-learn==1.8.0",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "A second OneHotEncoder instantiation elsewhere in the codebase (e.g., in scorer/model.py or scorer/train.py) also uses the removed 'sparse' argument, so fixing only features.py would leave another failure.",
+      "evidence": "The traceback points to scorer/model.py:6 and scorer/features.py:6; scorer/model.py imports build_preprocessor but could also construct its own encoder.",
+      "files": [
+        "scorer/model.py",
+        "scorer/train.py",
+        "scorer/predict.py"
+      ],
+      "check": "Search the codebase for other OneHotEncoder constructions using 'sparse='.",
+      "probe": {
+        "path": "scorer/model.py",
+        "pattern": "OneHotEncoder",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-1764052170a1",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 11128,
+      "prompt_tokens": 1357,
+      "completion_tokens": 576,
+      "est_cost_usd": 0.003085,
+      "request_id": "chatcmpl-783e2a52-c6d9-44af-8e6c-a04642989ee5",
+      "error": null,
+      "at": "2026-10-30T08:13:14.866959+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

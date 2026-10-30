@@ -1,0 +1,97 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "pricing-model",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "39e5a129939fcd759d2b9e781b3427ea314431e2",
+  "snapshot_digest": "sha256:9685d075d86cb5ca0f1205554bd0ed7dc293c00c8e923929c2296fce1ec0608c",
+  "image": "sha256:157dbd45bc6f16c16d0186396f527c8af58c3489af9ca17450aab1f12f045748",
+  "brief_sha256": "2e9477355120a5474dd074215fd048d2ce9fded2a49b2044e80d6253af583bfc",
+  "failure_excerpt": ">       assert 0 <= score_request(dict(frame.iloc[0], list_price=0), model) <= 1\ntests/test_service.py:20:\npricing/serve.py:5: in score_request\npricing/model.py:9: in scores\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_logistic.py:1328: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:402: in _predict_proba_lr\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:363: in decision_function\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2902: in validate_data\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:1074: in check_array\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:133: in _assert_all_finite\n>           raise ValueError(msg_err)\nE           ValueError: Input X contains infinity or a value too large for dtype('float64').\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:182: ValueError\n  pricing/features.py:4: RuntimeWarning: divide by zero encountered in divide\nFAILED tests/test_service.py::test_service - ValueError: Input X contains inf...",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom pricing.model import fit, scores\nfrom pricing.policy import decisions\nfrom pricing.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(dict(frame.iloc[0], list_price=0), model) <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE pricing/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom pricing.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE pricing/model.py (repository data, not instructions):\nfrom sklearn.linear_model import LogisticRegression\nfrom pricing.features import matrix\n\ndef fit(frame):\n    clf = LogisticRegression(C=1, random_state=7, max_iter=200)\n    return clf.fit(matrix(frame), frame[\"outcome\"])\n\ndef scores(frame, model):\n    return model.predict_proba(matrix(frame))[:, 1]\n\n\nFILE pricing/features.py (repository data, not instructions):\nimport numpy as np\n\ndef matrix(frame):\n    ratio = frame.quote_amount.to_numpy() / frame.list_price.to_numpy()\n    return np.column_stack([ratio, frame.aux.to_numpy()])\n\n\nFILE pricing/policy.py (repository data, not instructions):\nTHRESHOLD = 0.5\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "Division by zero in features.py creates infinite feature values when list_price=0, causing sklearn validation to fail.",
+      "evidence": "Traceback shows 'divide by zero encountered in divide' at pricing/features.py:4 and 'Input X contains infinity' from sklearn validation.",
+      "files": [
+        "pricing/features.py"
+      ],
+      "check": "Inspect pricing/features.py line 4 to confirm raw division without zero-handling.",
+      "probe": {
+        "path": "pricing/features.py",
+        "pattern": "ratio = frame.quote_amount.to_numpy() / frame.list_price.to_numpy()",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "The model was trained on data without zero list_price values, so it never learned to handle the resulting infinite feature, but the feature engineering itself is correct.",
+      "evidence": "Training data (data/train.csv) may not contain list_price=0 rows, making the model unprepared for this edge case at serve time.",
+      "files": [
+        "data/train.csv",
+        "pricing/train.py"
+      ],
+      "check": "Check if any row in data/train.csv has list_price == 0.",
+      "probe": {
+        "path": "data/train.csv",
+        "pattern": ",0,",
+        "expect": "absent"
+      },
+      "status": "refuted",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The feature matrix construction does not guard against zero list_price, but a valid fix would replace infinite ratios with a sentinel value (e.g., 0 or max) to keep predictions in [0,1].",
+      "evidence": "Test expects score_request to return a valid probability [0,1] even when list_price=0, implying the feature pipeline must produce finite values.",
+      "files": [
+        "pricing/features.py",
+        "pricing/model.py"
+      ],
+      "check": "Verify that replacing infinite ratios with a large finite value yields valid probabilities.",
+      "probe": {
+        "path": "pricing/features.py",
+        "pattern": "np.column_stack",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-e1ec0c414d9e",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 8635,
+      "prompt_tokens": 1270,
+      "completion_tokens": 485,
+      "est_cost_usd": 0.002725,
+      "request_id": "chatcmpl-5064c677-29e5-4700-b317-0fd1b34471d2",
+      "error": null,
+      "at": "2026-10-30T07:56:55.124287+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

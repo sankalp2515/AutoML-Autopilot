@@ -1,0 +1,29 @@
+version: 1
+name: refund-risk
+python: "3.12"
+install: "pip install -r requirements.txt"
+commands:
+  test: "pytest -q tests"
+  train: "python -m refunds.train --data data/train.csv --out {artifacts}/model.joblib"
+  predict: "python -m refunds.predict --model {artifacts}/model.joblib --input {holdout_features} --out {predictions}"
+entrypoints:
+  serve: "refunds.serve:score_request"
+data:
+  train: data/train.csv
+  holdout_features: data/holdout_features.csv
+  id_column: row_id
+  target: outcome
+  positive_label: 1
+  unavailable_at_prediction: [support_contact_after_delivery]
+task:
+  type: improve
+  metric: recall
+  fail_to_pass: ["tests/test_service.py::test_quality"]
+  ml_invariants: ["no_target_leakage", "holdout_non_inferior"]
+policy:
+  allowed_edit_roots: ["refunds/", "tests/"]
+  immutable: ["data/", "requirements.txt"]
+  immutable_existing_tests: true
+limits:
+  test_seconds: 120
+  train_seconds: 120

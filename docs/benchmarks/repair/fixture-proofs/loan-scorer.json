@@ -1,0 +1,236 @@
+{
+  "fixture": "loan-scorer",
+  "kind": "checker-proof",
+  "runner": "process-unisolated",
+  "autonomous_agent": false,
+  "base_commit_sha": "67f0596d39e9b18af95e3d82a5a81d9477ca6f54",
+  "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+  "receipts": {
+    "wrong_fix": {
+      "code": {
+        "task_id": "proof-loan-scorer",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
+        "diff_digest": "sha256:6bff9c6ffb1d442a4e1cb1002e04c2792fb8adce54bb20a1d8de86341de034a7",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (2 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 2,
+              "collected_candidate": 2,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:38:01.999+00:00",
+        "receipt_digest": "sha256:ed02b8890863550073ce2f35d34117c76f6f37de1c3643fb213dfa20eaf58a29",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-loan-scorer",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
+        "diff_digest": "sha256:6bff9c6ffb1d442a4e1cb1002e04c2792fb8adce54bb20a1d8de86341de034a7",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "train_serve_parity",
+            "status": "FAIL",
+            "detail": "online scoring disagrees with batch scoring on 200/200 rows",
+            "evidence": {
+              "entrypoint": "scorer.serve:score_request",
+              "tolerance": 1e-06,
+              "max_abs_diff": 0.09999901712936543,
+              "mismatched_rows": 200,
+              "median_abs_diff": 0.046822898697883725,
+              "errors": [],
+              "comparison_authority": "verifier",
+              "fresh_execution_branch": true
+            }
+          }
+        ],
+        "decision": "REJECTED",
+        "reasons": [
+          "E_TRAIN_SERVE_PARITY"
+        ],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:38:18.160+00:00",
+        "receipt_digest": "sha256:7ad4eedac25646eb8b5f86c0bcf078b4551491197eada34d851402cb499c5a59",
+        "kind": "ml",
+        "metrics": {},
+        "holdout_opened": false
+      }
+    },
+    "reference_fix": {
+      "code": {
+        "task_id": "proof-loan-scorer",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
+        "diff_digest": "sha256:c95cc26a2ee051f9762ccc33aee67a5c34fe6b1e5fa3cba5ab1a614dd7680c00",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (2 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 2,
+              "collected_candidate": 3,
+              "added_tests": [
+                "tests/test_scorer_regression.py::test_probability_roundtrip"
+              ]
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:38:26.059+00:00",
+        "receipt_digest": "sha256:b8e4c7136847b1aa73c50e2a9608467d6c84c221e8a4e9a53778ad3e04587e47",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-loan-scorer",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:76d0b82cbff88052d0c01dced00e4d2e4977ff99a2459c2d3a8af28811fc7dfa",
+        "diff_digest": "sha256:c95cc26a2ee051f9762ccc33aee67a5c34fe6b1e5fa3cba5ab1a614dd7680c00",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "train_serve_parity",
+            "status": "PASS",
+            "detail": "online scores match batch scores on 200 rows (max |\u0394| 1.11e-16)",
+            "evidence": {
+              "entrypoint": "scorer.serve:score_request",
+              "tolerance": 1e-06,
+              "max_abs_diff": 1.1102230246251565e-16,
+              "mismatched_rows": 0,
+              "median_abs_diff": 2.677979366039196e-17,
+              "errors": [],
+              "comparison_authority": "verifier",
+              "fresh_execution_branch": true
+            }
+          },
+          {
+            "name": "holdout_integrity",
+            "status": "PASS",
+            "detail": "holdout labels opened once, for the frozen finalist",
+            "evidence": {
+              "rows": 600,
+              "positives": 300
+            }
+          },
+          {
+            "name": "holdout_non_inferior",
+            "status": "PASS",
+            "detail": "roc_auc 0.9997 vs last known good 1.0 (margin 0.02); the base commit cannot produce predictions",
+            "evidence": {
+              "candidate": 0.9997,
+              "recorded_baseline": 1.0
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:38:43.497+00:00",
+        "receipt_digest": "sha256:3ea2a4542ff8dec80bb32dd97714d8d335846a1884af63c27e7f00bb0640e811",
+        "kind": "ml",
+        "metrics": {
+          "holdout": {
+            "metric": "roc_auc",
+            "candidate": 0.9997,
+            "rows": 600
+          }
+        },
+        "holdout_opened": true
+      }
+    }
+  }
+}

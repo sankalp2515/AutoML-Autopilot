@@ -1,0 +1,445 @@
+{
+  "dataset": "UCI Adult",
+  "source": "https://doi.org/10.24432/C5XW20",
+  "license": "CC BY 4.0",
+  "fault": "Injected age-unit conversion (years to decades) in a random current window; not a real production outage",
+  "seeds": [
+    100,
+    101,
+    102,
+    103,
+    104
+  ],
+  "planner": "deterministic",
+  "arms": {
+    "retrain_first": {
+      "runs": 5,
+      "correct": 0,
+      "accuracy": 0.0,
+      "false_promotions": 0,
+      "median_experiments": 1,
+      "mean_experiments": 1,
+      "median_cost_units": 10.0,
+      "total_cost_units": 50.0,
+      "median_cpu_seconds": 15.626,
+      "total_retrains": 5,
+      "holdout_uses": 5
+    },
+    "fixed_order": {
+      "runs": 5,
+      "correct": 0,
+      "accuracy": 0.0,
+      "false_promotions": 0,
+      "median_experiments": 3,
+      "mean_experiments": 3,
+      "median_cost_units": 5.0,
+      "total_cost_units": 25.0,
+      "median_cpu_seconds": 1.466,
+      "total_retrains": 0,
+      "holdout_uses": 0
+    },
+    "random": {
+      "runs": 5,
+      "correct": 4,
+      "accuracy": 0.8,
+      "false_promotions": 0,
+      "median_experiments": 4,
+      "mean_experiments": 3.4,
+      "median_cost_units": 7.0,
+      "total_cost_units": 34.0,
+      "median_cpu_seconds": 1.171,
+      "total_retrains": 0,
+      "holdout_uses": 2
+    },
+    "autopilot": {
+      "runs": 5,
+      "correct": 5,
+      "accuracy": 1.0,
+      "false_promotions": 0,
+      "median_experiments": 2,
+      "mean_experiments": 2,
+      "median_cost_units": 5.0,
+      "total_cost_units": 25.0,
+      "median_cpu_seconds": 0.411,
+      "total_retrains": 0,
+      "holdout_uses": 5
+    }
+  },
+  "rows": {
+    "retrain_first": [
+      {
+        "scenario": "A01",
+        "seed": 100,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 15.626,
+        "wall_seconds": 16.886,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 101,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 5.636,
+        "wall_seconds": 6.846,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 102,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 18.7,
+        "wall_seconds": 40.063,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 103,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 33.405,
+        "wall_seconds": 34.742,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 104,
+        "decision": "REJECT",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 1,
+        "diagnostics": 0,
+        "retrains": 1,
+        "cost_units": 10.0,
+        "cpu_seconds": 7.415,
+        "wall_seconds": 8.292,
+        "holdout_uses": 1,
+        "templates": [
+          "MODEL_FAMILY_CHALLENGER"
+        ]
+      }
+    ],
+    "fixed_order": [
+      {
+        "scenario": "A01",
+        "seed": 100,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.466,
+        "wall_seconds": 1.624,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 101,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.101,
+        "wall_seconds": 1.253,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 102,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.602,
+        "wall_seconds": 1.759,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 2.226,
+        "wall_seconds": 2.391,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 104,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 1.132,
+        "wall_seconds": 1.274,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      }
+    ],
+    "random": [
+      {
+        "scenario": "A01",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 3,
+        "retrains": 0,
+        "cost_units": 9.0,
+        "cpu_seconds": 2.111,
+        "wall_seconds": 2.577,
+        "holdout_uses": 1,
+        "templates": [
+          "THRESHOLD_STUDY",
+          "SEGMENT_FAILURE_AUDIT",
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 101,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 0.526,
+        "wall_seconds": 0.717,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SEGMENT_FAILURE_AUDIT",
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 102,
+        "decision": "INCONCLUSIVE",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 4,
+        "diagnostics": 4,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 1.658,
+        "wall_seconds": 1.857,
+        "holdout_uses": 0,
+        "templates": [
+          "CONTRACT_DIAGNOSTIC",
+          "SEGMENT_FAILURE_AUDIT",
+          "THRESHOLD_STUDY",
+          "TRAIN_SERVE_PARITY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 103,
+        "decision": "DIAGNOSIS_SUPPORTED",
+        "correct": false,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 4.0,
+        "cpu_seconds": 1.171,
+        "wall_seconds": 1.348,
+        "holdout_uses": 0,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "THRESHOLD_STUDY"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 3,
+        "diagnostics": 2,
+        "retrains": 0,
+        "cost_units": 7.0,
+        "cpu_seconds": 0.556,
+        "wall_seconds": 1.134,
+        "holdout_uses": 1,
+        "templates": [
+          "SHIFT_AND_LABEL_CHECK",
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      }
+    ],
+    "autopilot": [
+      {
+        "scenario": "A01",
+        "seed": 100,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.586,
+        "wall_seconds": 1.307,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 101,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.401,
+        "wall_seconds": 0.918,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 102,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.353,
+        "wall_seconds": 0.975,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 103,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.411,
+        "wall_seconds": 0.954,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      },
+      {
+        "scenario": "A01",
+        "seed": 104,
+        "decision": "CORRECTION_VERIFIED",
+        "correct": true,
+        "false_promotion": false,
+        "experiments": 2,
+        "diagnostics": 1,
+        "retrains": 0,
+        "cost_units": 5.0,
+        "cpu_seconds": 0.614,
+        "wall_seconds": 1.383,
+        "holdout_uses": 1,
+        "templates": [
+          "TRAIN_SERVE_PARITY",
+          "PREPROCESSING_ABLATION"
+        ]
+      }
+    ]
+  }
+}

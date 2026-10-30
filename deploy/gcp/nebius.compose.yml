@@ -1,0 +1,20 @@
+# Applied only to the cloud deployment. The Docker recording stack is unchanged.
+services:
+  sandbox-runner:
+    user: "10001:10001"
+    cap_add: !reset []
+    volumes: !override
+      - ${REPAIR_NEBIUS_STATE_DIR:?set private sandbox state directory}:/nebius-state
+    environment:
+      REPAIR_RUNNER: nebius
+      REPAIR_ENV_ROOT: /nebius-state
+      NEBIUS_API_KEY: ${NEBIUS_API_KEY:?set Token Factory key}
+      NEBIUS_PROJECT_ID: ${NEBIUS_PROJECT_ID:?set sandbox-enabled project}
+      NEBIUS_SANDBOX_LAYER_BYTES: "2147483648"
+    networks: [backplane, egress]
+  repair-worker:
+    environment:
+      NEBIUS_TIMEOUT_S: "90"
+      NEBIUS_PLANNER_MODEL: ${NEBIUS_PLANNER_MODEL:-nvidia/nemotron-3-super-120b-a12b}
+      NEBIUS_CODER_MODEL: ${NEBIUS_CODER_MODEL:-nvidia/nemotron-3-super-120b-a12b}
+      NEBIUS_FAST_MODEL: ${NEBIUS_FAST_MODEL:-nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B}

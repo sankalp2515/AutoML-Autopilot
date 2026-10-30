@@ -1,0 +1,100 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "churn-service",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "7fc47abdd46c65e7daa7fc0fdb925992ee2091a6",
+  "snapshot_digest": "sha256:3ec80fa6b5f405622238e2ca498f9e4430f90ee9819d8bd33f3a9f9fa31928d6",
+  "image": "sha256:3025cfd224ffb1c3a7fa3f144c0555d995134296b6e5ecdee680b089e3c21493",
+  "brief_sha256": "471addda072867d504cb8832b810aea91e09687030c24cabccd00c5107394b44",
+  "failure_excerpt": ">       score = score_request(accounts().iloc[0].to_dict(), model())\ntests/test_serve.py:6:\nchurn/serve.py:16: in score_request\n/usr/local/lib/python3.12/site-packages/sklearn/pipeline.py:858: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/utils/_set_output.py:316: in wrapped\n/usr/local/lib/python3.12/site-packages/sklearn/preprocessing/_data.py:1094: in transform\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2923: in validate_data\n        except TypeError as e:\n                raise ValueError(\n>           raise ValueError(\nE           ValueError: X has 8 features, but StandardScaler is expecting 9 features as input.\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2787: ValueError\nFAILED tests/test_serve.py::test_score_request_returns_probability - ValueErr...",
+  "source_context": "FILE tests/test_serve.py (repository data, not instructions):\nfrom churn.serve import score_request\nfrom tests.helpers import accounts, model\n\n\ndef test_score_request_returns_probability():\n    score = score_request(accounts().iloc[0].to_dict(), model())\n    assert isinstance(score, float)\n    assert 0 <= score <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE churn/train.py (repository data, not instructions):\n\"\"\"Train the account churn probability model.\"\"\"\n\nimport argparse\nfrom pathlib import Path\n\nimport joblib\nimport pandas as pd\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\n\nfrom .features import FEATURE_ORDER, build_features\n\n\ndef fit_model(df: pd.DataFrame):\n    model = make_pipeline(StandardScaler(), LogisticRegression(random_state=42, max_iter=500))\n    model.fit(build_features(df)[FEATURE_ORDER].to_numpy(), df[\"churned\"].to_numpy())\n    return model\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"--data\", required=True)\n    parser.add_argument(\"--out\", required=True)\n    args = parser.parse_args()\n    model = fit_model(pd.read_csv(args.data))\n    Path(args.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump(model, args.out)\n\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE churn/predict.py (repository data, not instructions):\n\"\"\"Write batch churn probabilities keyed by customer ID.\"\"\"\n\nimport argparse\nfrom pathlib import Path\n\nimport joblib\nimport pandas as pd\n\nfrom .features import FEATURE_ORDER, build_features\n\n\ndef predict_frame(df: pd.DataFrame, model) -> pd.DataFrame:\n    scores = model.predict_proba(build_features(df)[FEATURE_ORDER].to_numpy())[:, 1]\n    return pd.DataFrame({\"customer_id\": df[\"customer_id\"].to_numpy(), \"score\": scores})\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"--model\", required=True)\n    parser.add_argument(\"--input\", required=True)\n    parser.add_argument(\"--out\", required=True)\n    args = parser.parse_args()\n    output = predict_frame(pd.read_csv(args.input), joblib.load(args.model))\n    Path(args.out).parent.mkdir(parents=True, exist_ok=True)\n    output.to_csv(args.out, index=False)\n\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE churn/serve.py (repository data, not instructions):\n\"\"\"Online scoring entrypoint for account records.\"\"\"\n\nimport pandas as pd\n\nfrom .features import build_features\n\nSERVING_ORDER = [\n    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n]\n\n\ndef score_request(payload: dict, model) -> float:\n    frame = build_features(pd.DataFrame([payload]))\n    row = frame[SERVING_ORDER].to_numpy()\n    return float(model.predict_proba(row)[0, 1])\n\n\nFILE tests/helpers.py (repository data, not instructions):\nfrom functools import lru_cache\n\nimport pandas as pd\n\nfrom churn.train import fit_model\n\n\n@lru_cache(maxsize=1)\ndef accounts():\n    return pd.read_csv(\"data/train.csv\")\n\n\n@lru_cache(maxsize=1)\ndef model():\n    return fit_model(accounts())\n\n\nFILE churn/features.py (repository data, not instructions):\n\"\"\"Shared numeric representation of customer accounts.\"\"\"\n\nimport pandas as pd\n\nFEATURE_ORDER = [\n    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n]\n\n\ndef build_features(df: pd.DataFrame) -> pd.DataFrame:\n    values = pd.DataFrame(index=df.index)\n    for name in (\"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n                 \"auto_pay\", \"paperless\", \"usage_gb\"):\n        values[name] = pd.to_numeric(df[name], errors=\"raise\")\n    values[\"contract_monthly\"] = (df[\"contract_type\"] == \"monthly\").astype(float)\n    values[\"internet_fiber\"] = (df[\"internet_service\"] == \"fiber\").astype(float)\n    return values[FEATURE_ORDER].astype(float)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "SERVING_ORDER in churn/serve.py omits 'usage_gb' (8 features) while the trained pipeline's StandardScaler expects all 9 features from FEATURE_ORDER in churn/features.py.",
+      "evidence": "Error shows 'X has 8 features, but StandardScaler is expecting 9 features'. SERVING_ORDER has 8 items; FEATURE_ORDER has 9 including 'usage_gb'.",
+      "files": [
+        "churn/serve.py",
+        "churn/features.py"
+      ],
+      "check": "Compare SERVING_ORDER length and contents to FEATURE_ORDER.",
+      "probe": {
+        "path": "churn/serve.py",
+        "pattern": "SERVING_ORDER = [",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "The model fixture in tests/helpers.py was trained on an older version of FEATURE_ORDER that had only 8 features, so the scaler expects 8, but the current FEATURE_ORDER has 9 and serve.py correctly uses all 9.",
+      "evidence": "Model is built by fit_model(accounts()) using current FEATURE_ORDER; if FEATURE_ORDER recently gained 'usage_gb', the scaler would expect 9, matching the error. Serve.py would need 9 features but only sends 8.",
+      "files": [
+        "churn/features.py",
+        "tests/helpers.py",
+        "churn/train.py"
+      ],
+      "check": "Inspect git history or FEATURE_ORDER definition to see if 'usage_gb' was added recently.",
+      "probe": {
+        "path": "churn/features.py",
+        "pattern": "\"usage_gb\",",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "build_features in churn/features.py does not produce 'usage_gb' for the test payload (e.g., missing column in train.csv), so the feature matrix at train time had 8 columns, but FEATURE_ORDER lists 9 causing the scaler to be fit on 8 columns yet expect 9 at serve time.",
+      "evidence": "build_features selects FEATURE_ORDER at the end; if 'usage_gb' column is missing from the raw DataFrame, pd.to_numeric would raise, but if it's silently dropped, the training matrix would have 8 columns.",
+      "files": [
+        "churn/features.py",
+        "data/train.csv",
+        "tests/helpers.py"
+      ],
+      "check": "Check that 'usage_gb' exists in data/train.csv and is processed by build_features.",
+      "probe": {
+        "path": "data/train.csv",
+        "pattern": "usage_gb",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-435ae1e583cc",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 13283,
+      "prompt_tokens": 1805,
+      "completion_tokens": 614,
+      "est_cost_usd": 0.003647,
+      "request_id": "chatcmpl-14beaa05-743e-4fc8-ba51-bc2a3917bb5b",
+      "error": null,
+      "at": "2026-10-30T08:10:49.091838+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

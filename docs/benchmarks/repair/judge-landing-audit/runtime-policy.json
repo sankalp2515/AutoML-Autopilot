@@ -1,0 +1,16 @@
+{
+  "access_policy": {
+    "judge_only": true,
+    "daily_runs_per_workspace": 12,
+    "cooldown_seconds": 30,
+    "max_active_tasks": 2,
+    "total_estimated_usd_cap": 20.0,
+    "reason": "Live inference is funded by a finite hackathon credit balance. Limits preserve access throughout judging; viewing recordings, receipts and diffs does not spend inference credits."
+  },
+  "live_inference_disabled": true,
+  "provider_not_configured": true,
+  "legacy_worker": {
+    "provider_keys_absent": true
+  },
+  "landing_served_from_compose": true
+}

@@ -1,0 +1,13 @@
+
+Running 3 tests using 1 worker
+
+(node:40652) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40652) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › repair-live.spec.ts:10:5 › six sample repositories are discoverable through the real API and the credit contract can be reviewed (6.8s)
+  ok 2 [chromium] › repair-live.spec.ts:50:5 › real v5 stack reports status, samples, staging, validation and replay-safe navigation (4.3s)
+  -  3 [chromium] › repair-live.spec.ts:78:5 › capture actual local UI in both themes and at mobile width
+
+  1 skipped
+  2 passed (13.3s)

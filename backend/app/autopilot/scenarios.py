@@ -75,6 +75,7 @@ class IncidentPack:
     symptom: str                    # what the on-call engineer reports (no cause)
     reference: pd.DataFrame
     current: pd.DataFrame
+    score_column: str | None = None
     target: str = TARGET
     primary_metric: str = "f1"
     pipeline: dict[str, Any] = field(default_factory=lambda: dict(BASE_PIPELINE))
@@ -245,11 +246,34 @@ def _t01(seed):
         incumbent_pipeline=dict(BASE_PIPELINE))   # error log comes from a REAL failed fit
 
 
+def _adult(seed):
+    import hashlib
+    import json
+    from pathlib import Path
+    root = Path(__file__).with_name("data")
+    manifest = json.loads((root / "adult_manifest.json").read_text(encoding="utf-8"))
+    raw = (root / "adult_sample.csv").read_bytes()
+    if hashlib.sha256(raw).hexdigest() != manifest["sample_sha256"]:
+        raise ValueError("public dataset fixture digest mismatch")
+    df = pd.read_csv(root / "adult_sample.csv").sample(frac=1, random_state=seed).reset_index(drop=True)
+    ref, cur = df.iloc[:5000].copy(), df.iloc[5000:].copy()
+    cur["age"] = cur["age"] / 10   # serving adapter now emits decades, model expects years
+    cfg = {"model": "logistic_regression", "numeric": ["age", "education_num", "capital_gain", "capital_loss", "hours_per_week"],
+           "categorical": ["workclass", "marital_status", "occupation", "relationship"],
+           "onehot": {"handle_unknown": "ignore", "sparse_output": False}, "threshold": 0.4, "class_weight": None}
+    return IncidentPack("A01", "degradation", "Public data: quality alert after an input adapter release",
+                        "Income classifier quality fell after a feature-format release.", ref, cur,
+                        target="above_50k", pipeline=cfg, serving={"threshold": 0.4},
+                        critical_segment={"column": "sex", "value": None, "metric": "f1", "max_drop": 0.05},
+                        source="public_dataset", notes="UCI Adult (CC BY 4.0), random windows, injected adapter fault. Not a real outage. The adapter team changed age representation.")
+
+
 _BUILDERS = {"S01": _s01, "S02": _s02, "S03": _s03, "S04": _s04, "S05": _s05, "S07": _s07,
-             "S08": _s08, "S09": _s09, "S10": _s10, "S12": _s12, "T01": _t01}
+             "S08": _s08, "S09": _s09, "S10": _s10, "S12": _s12, "T01": _t01, "A01": _adult}
 
 # Oracle — benchmark/tests only. expected = acceptable terminal decisions.
 _ORACLE = {
+    "A01": {"fault": "PREPROCESSING_MISMATCH", "expected": {"CORRECTION_VERIFIED", "INCONCLUSIVE"}},
     "S01": {"fault": None, "expected": {"INCONCLUSIVE"}},
     "S02": {"fault": "PREPROCESSING_MISMATCH", "expected": {"CORRECTION_VERIFIED"}},
     "S03": {"fault": "THRESHOLD_MISCALIBRATION", "expected": {"CORRECTION_VERIFIED"}},

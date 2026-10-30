@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Autopilot shared form, report and status primitives. */
+:root { --success: #86efac; --danger: #fca5a5; --warning: #fcd34d; }
+html.dark:root { --t3: #b4ad99; --t4: #b4ad99; }
+html.dark .ds-btn-acc { background: #0b6e74; }
+html.light:root { --success: #166534; --danger: #b91c1c; --warning: #854d0e; --t3: #686253; --t4: #686253; }
+.ap-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+.ap-stage-compact { display: none; }
+.ap-link { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; color: var(--acc); }
+.ap-section { display: none; min-width: 0; }
+.ap-section.ap-selected { display: grid; gap: 16px; }
+.ap-progress { position: sticky; top: 0; z-index: 15; background: var(--card); border: 1px solid var(--acc); border-radius: 10px; padding: 12px; display: grid; gap: 5px; font-size: 12px; }
+.ap-tour { position: fixed; bottom: 20px; right: 20px; z-index: 25; max-width: min(360px, calc(100vw - 40px)); padding: 18px; background: var(--card); border: 2px solid var(--acc); border-radius: 12px; box-shadow: var(--shadow); font-size: 13px; }
+.ap-dialog { width: min(500px, calc(100vw - 32px)); background: var(--card); color: var(--t1); border: 1px solid var(--bd); border-radius: 12px; padding: 24px; }
+.ap-dialog::backdrop { background: #0009; }
+.ap-field { display: grid; gap: 6px; margin: 12px 0; font-size: 13px; }
+.ap-field input:not([type=checkbox]), .ap-field select, .ap-field textarea { min-width: 0; padding: 8px; background: var(--inp); border: 1px solid var(--bd); border-radius: 6px; color: var(--t1); }
+.ap-drop { border: 1px dashed var(--acc); padding: 12px; border-radius: 8px; min-width: 0; }
+.ap-drop input { max-width: 100%; }
+.ap-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.ap-table td, .ap-table th { padding: 8px; border-bottom: 1px solid var(--bd); overflow-wrap: anywhere; }
+:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+.ap-investigation { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .ap-new-label { display: none; }
+  .ap-stage-list { display: none !important; }
+  .ap-stage-compact { display: block; }
+}
+@media print {
+  .no-print, aside, nav, header.ds-topbar, dialog, [aria-label="Notifications"] { display: none !important; }
+  .ap-section { display: block !important; }
+  .ap-section > * { margin: 12px 0; break-inside: avoid; }
+  .ap-investigation { max-width: none !important; padding: 0 !important; }
+  html, body, body > div, body > div > div, main { height: auto !important; overflow: visible !important; display: block !important; }
+  * { box-shadow: none !important; animation: none !important; color: #111 !important; background-color: white !important; }
+  table { min-width: 0 !important; font-size: 9px; }
+  pre { white-space: pre-wrap; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    OBSIDIAN ATELIER — luxury & futuristic design system, dual-theme
    Dark: warm obsidian · bone ivory · champagne gold

@@ -1,0 +1,6 @@
+{
+  "fault": "B01",
+  "rejection_check": "train_serve_parity",
+  "story": "Update preprocessing for the pinned scikit-learn API.",
+  "synthetic": true
+}

@@ -1,0 +1,15 @@
+--- a/fraud/predict.py
++++ b/fraud/predict.py
+@@ -12,7 +12,11 @@
+     p.add_argument("--out", required=True)
+     a = p.parse_args()
+     frame = pd.read_csv(a.input)
+-    model = joblib.load(a.model)
++    try:
++        model = joblib.load(a.model)
++    except AttributeError:
++        from fraud.model import fit
++        model = fit(pd.read_csv("data/train.csv"))
+     values = scores(frame, model)
+     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+     pd.DataFrame({"row_id": frame.row_id, "score": values,

@@ -1,0 +1,30 @@
+--- a/fraud/train.py
++++ b/fraud/train.py
+@@ -4,9 +4,7 @@
+ import pandas as pd
+ from fraud.model import fit
+ 
+-class ClipOutliers:
+-    def transform(self, frame):
+-        return frame
++from fraud.transformers import ClipOutliers
+ 
+ def main():
+     p = argparse.ArgumentParser()
+--- /dev/null
++++ b/fraud/transformers.py
+@@ -0,0 +1,3 @@
++class ClipOutliers:
++    def transform(self, frame):
++        return frame
+--- /dev/null
++++ b/tests/test_fraud_regression.py
+@@ -0,0 +1,8 @@
++from fraud.model import fit
++from fraud.serve import score_request
++import pandas as pd
++
++def test_probability_roundtrip():
++    frame = pd.read_csv("data/train.csv")
++    model = fit(frame)
++    assert all(0 <= score_request(row, model) <= 1 for row in frame.head(10).to_dict("records"))

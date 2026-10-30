@@ -8,6 +8,7 @@ import type { Run } from '@/lib/types';
 import type { ToastDetail } from '@/lib/toast';
 import { supabase, authEnabled } from '@/lib/supabase';
 import AuthGate from '@/components/AuthGate';
+import RepairShell from '@/components/repair/Shell';
 import { Button } from '@/components/ui';
 
 // Hackathon build: Autopilot only (the orchestrator pages need services it does not run).
@@ -231,7 +232,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
 }
 
 // ── Shell ─────────────────────────────────────────────────────────────────────
-export default function AppShell({ children }: { children: React.ReactNode }) {
+function LegacyAppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [runs, setRuns] = useState<Run[]>([]);
@@ -356,32 +357,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email ?? 'Local'}</div>
             <div style={{ fontSize: 10, color: 'var(--t4)' }}>{authEnabled ? (email ? 'Signed in' : 'Signed out') : 'Public mode'}</div>
           </div>
-          <div onClick={toggleTheme} title="Toggle theme" style={{ width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t3)', background: 'var(--inp)', flexShrink: 0 }}>
+          <button type="button" aria-label="Toggle theme" onClick={toggleTheme} title="Toggle theme" style={{ border: 0, width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t3)', background: 'var(--inp)', flexShrink: 0 }}>
             {isDark ? (
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.2" y1="4.2" x2="5.6" y2="5.6" /><line x1="18.4" y1="18.4" x2="19.8" y2="19.8" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.2" y1="19.8" x2="5.6" y2="18.4" /><line x1="18.4" y1="5.6" x2="19.8" y2="4.2" /></svg>
             ) : (
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
             )}
-          </div>
+          </button>
         </div>
       </aside>
 
       {/* Main */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-        <header style={{ height: 50, minHeight: 50, borderBottom: '1px solid var(--bd)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8, background: 'var(--sb)' }}>
-          <div className="ds-hamburger" onClick={() => setSidebarOpen(true)} title="Menu" style={{ width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)', background: 'var(--inp)' }}>
+        <header className="no-print" style={{ height: 50, minHeight: 50, borderBottom: '1px solid var(--bd)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8, background: 'var(--sb)' }}>
+          <button type="button" aria-label="Menu" className="ds-hamburger" onClick={() => setSidebarOpen(true)} title="Menu" style={{ border: 0, width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)', background: 'var(--inp)' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-          </div>
+          </button>
           {showBack && (
-            <div onClick={() => router.back()} title="Back" style={{ width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)', background: 'var(--inp)' }}>
+            <button type="button" aria-label="Back" onClick={() => router.back()} title="Back" style={{ border: 0, width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)', background: 'var(--inp)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15,18 9,12 15,6" /></svg>
-            </div>
+            </button>
           )}
           <span style={{ fontSize: 13, color: 'var(--t1)', fontWeight: 600 }}>{pageTitle}</span>
           <div style={{ flex: 1 }} />
-          <button className="ds-btn-acc" style={{ height: 32, padding: '0 13px', fontSize: 12, boxShadow: '0 2px 10px rgba(11,110,116,0.25)' }} onClick={() => (AUTOPILOT_ONLY ? router.push('/autopilot') : setShowModal(true))}>
+          <button aria-label={AUTOPILOT_ONLY ? 'New investigation' : 'New Run'} className="ds-btn-acc" style={{ height: 32, padding: '0 13px', fontSize: 12, boxShadow: '0 2px 10px rgba(11,110,116,0.25)' }} onClick={() => (AUTOPILOT_ONLY ? router.push('/autopilot') : setShowModal(true))}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-            {AUTOPILOT_ONLY ? 'New investigation' : 'New Run'}
+            <span className="ap-new-label">{AUTOPILOT_ONLY ? 'New investigation' : 'New Run'}</span>
           </button>
           {!AUTOPILOT_ONLY && <div onClick={() => router.push('/settings')} style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>{avatar}</div>}
         </header>
@@ -395,4 +396,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Toasts />
     </div>
   );
+}
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  if (pathname === '/' || pathname.startsWith('/repair')) return <RepairShell>{children}</RepairShell>;
+  return <LegacyAppShell>{children}</LegacyAppShell>;
 }

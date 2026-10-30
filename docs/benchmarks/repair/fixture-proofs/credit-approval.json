@@ -1,0 +1,320 @@
+{
+  "fixture": "credit-approval",
+  "kind": "checker-proof",
+  "runner": "process-unisolated",
+  "autonomous_agent": false,
+  "base_commit_sha": "2844564a13659863b1e08c5246195542a8b21021",
+  "snapshot_digest": "sha256:7b1b4c8b74819bb1e5cdc6a54a8ff04f5a39b5dfcd5dc9b4c8f9b6e01744454d",
+  "receipts": {
+    "wrong_fix": {
+      "code": {
+        "task_id": "proof-credit-approval",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13",
+        "diff_digest": "sha256:d4ec075906d86f80a962aa9876bca89cd80fc9e570fc1e8e486a7096b6c472f9",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (1 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 3,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:40:50.969+00:00",
+        "receipt_digest": "sha256:5169939ff330e302ea964e58bc7eb1547096181b12777b8ba81680e9bea513ae",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-credit-approval",
+        "candidate_id": "wrong_fix",
+        "contract_digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13",
+        "diff_digest": "sha256:d4ec075906d86f80a962aa9876bca89cd80fc9e570fc1e8e486a7096b6c472f9",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "holdout_integrity",
+            "status": "PASS",
+            "detail": "holdout labels opened once, for the frozen finalist",
+            "evidence": {
+              "rows": 600,
+              "positives": 300
+            }
+          },
+          {
+            "name": "holdout_improves",
+            "status": "PASS",
+            "detail": "f1 improves; 95% CI excludes zero",
+            "evidence": {
+              "delta": 0.2986,
+              "ci_low": 0.2353,
+              "ci_high": 0.3562,
+              "n_boot": 400,
+              "relative": false
+            }
+          },
+          {
+            "name": "segment_guardrail",
+            "status": "FAIL",
+            "detail": "recall must not get worse by more than 0.03 in any region group (worst: rural, -0.4833)",
+            "evidence": {
+              "worst_group": "rural",
+              "too_small": []
+            }
+          }
+        ],
+        "decision": "REJECTED",
+        "reasons": [
+          "E_SEGMENT_GUARDRAIL"
+        ],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:40:59.313+00:00",
+        "receipt_digest": "sha256:fe8a3017915688cbc6c89045cb129e3998f26af04a701ea555328308329b4877",
+        "kind": "ml",
+        "metrics": {
+          "holdout": {
+            "metric": "f1",
+            "candidate": 0.8868,
+            "rows": 600,
+            "baseline": 0.5882
+          },
+          "delta": {
+            "delta": 0.2986,
+            "ci_low": 0.2353,
+            "ci_high": 0.3562,
+            "n_boot": 400,
+            "relative": false
+          },
+          "segments": {
+            "column": "region",
+            "metric": "recall",
+            "by_group": {
+              "rural": {
+                "candidate": 0.0,
+                "baseline": 0.4833,
+                "delta": -0.4833,
+                "rows": 120
+              },
+              "suburban": {
+                "candidate": 1.0,
+                "baseline": 0.4,
+                "delta": 0.6,
+                "rows": 180
+              },
+              "urban": {
+                "candidate": 0.9933,
+                "baseline": 0.4,
+                "delta": 0.5933,
+                "rows": 300
+              }
+            },
+            "too_small": []
+          }
+        },
+        "holdout_opened": true
+      }
+    },
+    "reference_fix": {
+      "code": {
+        "task_id": "proof-credit-approval",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13",
+        "diff_digest": "sha256:cdb5bf113092a444abca524718179d3a86e5d93e06b68f0a97c94ff5a58c963a",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (2 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 3,
+              "collected_candidate": 4,
+              "added_tests": [
+                "tests/test_credit_regression.py::test_probability_roundtrip"
+              ]
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:41:03.936+00:00",
+        "receipt_digest": "sha256:f040efcd1e9605c4cb3ff072376bd68b0968e006e2f9050ed43595efab9fa5a6",
+        "kind": "code"
+      },
+      "ml": {
+        "task_id": "proof-credit-approval",
+        "candidate_id": "reference_fix",
+        "contract_digest": "sha256:574e13da287d1272699e865fbd5880601c79696c961e2b6cac169460b6f73e13",
+        "diff_digest": "sha256:cdb5bf113092a444abca524718179d3a86e5d93e06b68f0a97c94ff5a58c963a",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "holdout_integrity",
+            "status": "PASS",
+            "detail": "holdout labels opened once, for the frozen finalist",
+            "evidence": {
+              "rows": 600,
+              "positives": 300
+            }
+          },
+          {
+            "name": "holdout_improves",
+            "status": "PASS",
+            "detail": "f1 improves; 95% CI excludes zero",
+            "evidence": {
+              "delta": 0.4101,
+              "ci_low": 0.3555,
+              "ci_high": 0.4647,
+              "n_boot": 400,
+              "relative": false
+            }
+          },
+          {
+            "name": "segment_guardrail",
+            "status": "PASS",
+            "detail": "recall must not get worse by more than 0.03 in any region group (worst: rural, +0.5167)",
+            "evidence": {
+              "worst_group": "rural",
+              "too_small": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "process-unisolated",
+        "created_at": "2026-10-29T22:41:13.712+00:00",
+        "receipt_digest": "sha256:a6ae79f6e620b77554ca2129e9c083111415b901d47b732705b0e8f3891cf6de",
+        "kind": "ml",
+        "metrics": {
+          "holdout": {
+            "metric": "f1",
+            "candidate": 0.9983,
+            "rows": 600,
+            "baseline": 0.5882
+          },
+          "delta": {
+            "delta": 0.4101,
+            "ci_low": 0.3555,
+            "ci_high": 0.4647,
+            "n_boot": 400,
+            "relative": false
+          },
+          "segments": {
+            "column": "region",
+            "metric": "recall",
+            "by_group": {
+              "rural": {
+                "candidate": 1.0,
+                "baseline": 0.4833,
+                "delta": 0.5167,
+                "rows": 120
+              },
+              "suburban": {
+                "candidate": 1.0,
+                "baseline": 0.4,
+                "delta": 0.6,
+                "rows": 180
+              },
+              "urban": {
+                "candidate": 0.9933,
+                "baseline": 0.4,
+                "delta": 0.5933,
+                "rows": 300
+              }
+            },
+            "too_small": []
+          }
+        },
+        "holdout_opened": true
+      }
+    }
+  }
+}

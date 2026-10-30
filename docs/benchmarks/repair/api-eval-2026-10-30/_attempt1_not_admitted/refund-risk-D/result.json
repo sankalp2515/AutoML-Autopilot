@@ -1,0 +1,6 @@
+{
+  "fixture": "refund-risk",
+  "arm": "D",
+  "status": "NOT_ADMITTED",
+  "detail": "Internal Server Error"
+}

@@ -1,0 +1,79 @@
+{
+  "ambiguous_prompt_v10": true,
+  "ambiguous_prompt_v11": true,
+  "ambiguous_prompt_v12": true,
+  "ambiguous_prompt_v3": true,
+  "ambiguous_prompt_v4": true,
+  "ambiguous_prompt_v7": true,
+  "ambiguous_prompt_v9": true,
+  "clustered_hidden_f2p_tests": [
+    "missing_required_fields_across_multiple_rows_are_aggregated",
+    "blank_required_values_across_rows_are_aggregated",
+    "failure_artifact_roundtrip_matches_returned_report",
+    "multiple_invalid_timestamps_preserve_record_ids",
+    "relaxed_freshness_threshold_allows_old_but_valid_rows",
+    "decision_id_is_stable_when_record_key_order_changes",
+    "duplicate_count_reports_only_repeat_identifiers",
+    "invalid_numeric_values_across_multiple_rows_are_aggregated",
+    "stage_specific_variant_a",
+    "stage_specific_variant_b"
+  ],
+  "f2p_test_count": 3,
+  "harder_v2_contract": true,
+  "instance_id": "MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING",
+  "p2p_test_count": 4,
+  "prompt_surface": "public_api_preserved_action_taxonomy_explicit_stage_logic_implicit",
+  "repo_key": "25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS",
+  "selective_edge_hidden_f2p_tests": [
+    "summary_materializes_single_pass_iterable_and_counts_unique_entities",
+    "datetime_objects_are_accepted_for_timestamp_field",
+    "serving_p95_uses_contract_small_window_index"
+  ],
+  "source_kind": "hard_stage_contract",
+  "stage": "MODEL_SERVING",
+  "target_function": "evaluate_serving_window",
+  "target_module": "mlops_bench_contracts.serving_gate",
+  "targeted_stage_hidden_f2p_tests": [
+    "default_error_budget_blocks_one_5xx_in_small_window",
+    "relaxed_error_budget_allows_one_fast_5xx",
+    "numeric_strings_are_accepted_for_serving_measurements",
+    "serving_error_rate_metric_is_fraction_of_statuses",
+    "invalid_status_code_preserves_request_id",
+    "latency_breach_sets_retrain_action"
+  ],
+  "thresholds": {
+    "max_age_minutes": 40,
+    "max_alert_rate": 0.24,
+    "max_drift_ratio": 0.14,
+    "max_duplicate_rate": 0.005,
+    "max_error_rate": 0.01,
+    "max_feature_skew": 0.05,
+    "max_loss_regression": 0.03,
+    "max_missing_rate": 0.0,
+    "max_p95_latency_ms": 155,
+    "min_accuracy": 0.8,
+    "min_quality_score": 0.8,
+    "min_roc_auc": 0.74
+  },
+  "v11_partial_credit_hidden_f2p_tests": [
+    "v11_all_5xx_rows_report_full_error_rate",
+    "v11_string_503_counts_toward_error_rate",
+    "v11_latency_and_error_emit_independent_codes",
+    "v11_relaxed_latency_still_blocks_single_class_predictions",
+    "v11_blank_model_version_is_null_required_field",
+    "v11_duplicate_and_invalid_status_are_both_reported",
+    "v11_output_artifact_roundtrips_failed_serving_report",
+    "v11_threshold_override_is_serialized_as_float",
+    "v11_prediction_numeric_strings_do_not_create_invalid_numeric",
+    "v11_serving_summary_counts_unique_request_ids"
+  ],
+  "v11_removed_training_hidden_f2p_tests": [],
+  "v12_partial_credit_hidden_f2p_tests": [
+    "v12_serving_all_failures_keep_distinct_violation_codes",
+    "v12_serving_error_budget_zero_blocks_single_server_error",
+    "v12_serving_latency_threshold_zero_blocks_nonzero_latency",
+    "v12_serving_status_strings_and_ints_mix_in_error_rate",
+    "v12_serving_duplicate_metric_survives_other_failures",
+    "v12_serving_failed_report_recommended_action_is_not_none"
+  ]
+}

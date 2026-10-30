@@ -1,0 +1,28 @@
+version: 1
+name: fraud-batch
+python: "3.12"
+install: "pip install -r requirements.txt"
+commands:
+  test: "pytest -q tests"
+  train: "python -m fraud.train --data data/train.csv --out {artifacts}/model.joblib"
+  predict: "python -m fraud.predict --model {artifacts}/model.joblib --input {holdout_features} --out {predictions}"
+entrypoints:
+  serve: "fraud.serve:score_request"
+data:
+  train: data/train.csv
+  holdout_features: data/holdout_features.csv
+  id_column: row_id
+  target: outcome
+  positive_label: 1
+task:
+  type: restore
+  metric: roc_auc
+  fail_to_pass: ["tests/test_service.py::test_artifact_roundtrip"]
+  ml_invariants: ["train_serve_parity", "holdout_non_inferior"]
+policy:
+  allowed_edit_roots: ["fraud/", "tests/"]
+  immutable: ["data/", "requirements.txt"]
+  immutable_existing_tests: true
+limits:
+  test_seconds: 120
+  train_seconds: 120

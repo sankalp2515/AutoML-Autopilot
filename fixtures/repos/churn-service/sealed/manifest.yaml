@@ -1,0 +1,6 @@
+# Grader bundle for the platform oracles. Never shown to the agent.
+version: 1
+labels: holdout_labels.csv
+# Parity is an ML invariant here, so the ML oracle checks it with the platform probe.
+# tests/ stays for scripts/prove_fixture.py and is not run by the code oracle.
+parity_rows: 200

@@ -1,0 +1,32 @@
+{
+  "id": "936aa843-c59a-4f6b-8fe5-05a44eb8d76e",
+  "status": "REJECTED",
+  "version": 46,
+  "fencing_token": 1,
+  "contract_digest": "sha256:b004b98cb982ca8166da9ef8491f0b94a133f1df01f57e58b44e54a9bfbc7256",
+  "target": "Improve recall using checkout-time information only.",
+  "event_seq": 30,
+  "cancel_requested": false,
+  "created_at": 1793376066.7744775,
+  "engine": "v5",
+  "mode": "full",
+  "sample": "refund-risk",
+  "source": "sample",
+  "repo_name": "refund-risk",
+  "fail_to_pass": [
+    "tests/test_service.py::test_quality"
+  ],
+  "ml_invariants": [
+    "no_target_leakage",
+    "holdout_non_inferior"
+  ],
+  "has_labels": true,
+  "decision": "REJECTED",
+  "reasons": [
+    "E_NO_ELIGIBLE_CANDIDATE"
+  ],
+  "finalist": null,
+  "cost_usd": 0.015822,
+  "seconds": 95.5,
+  "error": null
+}

@@ -1,0 +1,30 @@
+diff --git a/mlops_bench_contracts/feature_parity.py b/mlops_bench_contracts/feature_parity.py
+--- a/mlops_bench_contracts/feature_parity.py
++++ b/mlops_bench_contracts/feature_parity.py
+@@ -155,7 +155,7 @@
+     })
+     violations: List[Dict[str, Any]] = []
+ 
+-    if 'baseline' == "baseline":
++    if 'oracle' == "baseline":
+         violations.append(_violation("not_implemented", "Stage contract is not implemented.", severity="critical"))
+         report = {
+             "passed": False,
+@@ -188,7 +188,7 @@
+                 violations.append(_violation("null_required_field", f"Field {field} cannot be null or blank.", field=field, record_id=record_id))
+ 
+         rid = str(record_id)
+-        if rid in seen and 'baseline' != "skip_duplicates_and_drift":
++        if rid in seen and 'oracle' != "skip_duplicates_and_drift":
+             metrics["duplicate_count"] += 1
+             bad_row = True
+             violations.append(_violation("duplicate_identifier", f"Duplicate {ID_FIELD} {rid}.", field=ID_FIELD, record_id=record_id))
+@@ -225,7 +225,7 @@
+     if metric_values:
+         metrics["mean_primary_metric"] = round(mean(metric_values), 6)
+ 
+-    _apply_extra_checks(rows, baseline, active, metrics, violations, 'baseline')
++    _apply_extra_checks(rows, baseline, active, metrics, violations, 'oracle')
+ 
+     passed = bool(rows) and not violations
+     if not rows:

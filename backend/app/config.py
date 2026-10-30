@@ -129,6 +129,9 @@ class Settings(BaseSettings):
     # deterministic mode and every receipt says so; there is no silent fallback
     # to another vendor's model.
     NEBIUS_API_KEY: str = ""
+    NEBIUS_PROJECT_ID: str = ""
+    NEBIUS_SANDBOX_URL: str = "https://api.tokenfactory.nebius.com/sandboxes/v1"
+    NEBIUS_SANDBOX_LAYER_BYTES: int = 2 * 1024 * 1024 * 1024
     NEBIUS_BASE_URL: str = "https://api.tokenfactory.nebius.com/v1/"
     NEBIUS_PLANNER_MODEL: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     # Small model for the stakeholder summary (cheap, fast; output is number-checked).
@@ -138,6 +141,9 @@ class Settings(BaseSettings):
     # OpenAI-compatible endpoint. Used when NEBIUS_API_KEY is empty. Nebius wins
     # when both are set, so the hackathon path stays Token Factory once it works.
     NVIDIA_API_KEY: str = ""
+    NVIDIA_API_KEY_2: str = ""
+    NVIDIA_API_KEY_3: str = ""
+    NVIDIA_API_KEY_4: str = ""
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_PLANNER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
     NVIDIA_FAST_MODEL: str = "nvidia/nemotron-3.5-lightning-30b-a3b"
@@ -145,6 +151,55 @@ class Settings(BaseSettings):
     # Nemotron 3 reasons before answering by default (40-80 s per plan). The planner
     # output is schema-checked JSON, so the trace adds latency without adding trust.
     NVIDIA_ENABLE_THINKING: bool = False
+    # v5 repair agent tiers. Ultra reasons about hypotheses; the coder writes edits; the fast
+    # tier is reserved for compaction. Historical NVIDIA catalog probes returned 404 for
+    # cheaper tiers, so its explicit coding fallback remains Ultra pending a successful probe.
+    # Nebius IDs follow the official cookbook; account-level verification is still required.
+    NEBIUS_CODER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b"
+    NVIDIA_CODER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
+    # v5 services. Empty URLs mean "in-process" (development); production sets both.
+    REPAIR_SANDBOX_URL: str = ""             # sandbox-runner service (only component with Docker access)
+    REPAIR_SANDBOX_TOKEN: str = ""
+    REPAIR_VERIFIER_URL: str = ""            # verifier service v5 (only component with labels)
+    REPAIR_VERIFIER_TOKEN: str = ""
+    REPAIR_RUNNER: str = "docker"            # docker | process (process = unisolated, tests/dev only)
+    REPAIR_ENV_ROOT: str = ""                # where environments live; must be the same path on the Docker host
+    REPAIR_SANDBOX_MAX_CONCURRENT: int = 2
+    REPAIR_SANDBOX_MAX_ENVIRONMENTS: int = 64
+    REPAIR_FIXTURES_DIR: str = ""            # bundled sample repositories (api + verifier only)
+    # Access and spend (BE-12). Live runs are off unless enabled; replays always work.
+    REPAIR_LIVE_ENABLED: bool = False
+    REPAIR_INVITE_CODES: str = ""            # comma-separated; empty = no code needed when live is enabled
+    REPAIR_DAILY_USD_CAP: float = 5.0
+    REPAIR_JUDGE_ONLY: bool = False
+    REPAIR_TOTAL_USD_CAP: float = 0.0       # deployment lifetime; zero disables, never a daily reset
+    REPAIR_CREATE_COOLDOWN_S: int = 0
+    REPAIR_MAX_ACTIVE_TASKS: int = 0         # global queued/running ceiling; zero disables
+    REPAIR_DAILY_TOKEN_CAP: int = 2_000_000
+    REPAIR_LEDGER_DATABASE_URL: str = ""   # verifier-only PostgreSQL; never supplied to the worker
+    REPAIR_ADMISSION_TOKEN: str = ""       # API -> verifier registration; worker cannot register contracts
+    REPAIR_TRUSTED_SANDBOX_TOKEN: str = "" # verifier -> clean artifact evaluator capability
+    REPAIR_TASK_USD_CEILING: float = 0.40    # worst-case estimate reserved per task against the daily cap
+    REPAIR_DAILY_TASKS_PER_TENANT: int = 5
+    REPAIR_MAX_REPO_MB: int = 50
+    REPAIR_MAX_FILES: int = 5000
+    REPAIR_ALLOWED_GIT_HOSTS: str = "github.com,gitlab.com,bitbucket.org"
+    REPAIR_RETENTION_HOURS: int = 72
+    REPAIR_QUEUE_TTL_S: int = 3600
+    REPAIR_PIP_INDEX_URL: str = ""           # optional allow-listed package index for installs
+    REPAIR_VERIFIER_STATE_DIR: str = ""      # verifier-only writable state (ledger, admissions, caches)
+    REPAIR_PACKS_DIR: str = ""               # holdout label packs: api writes, verifier reads, worker never mounts
+    REPAIR_REPLAYS_DIR: str = ""             # bundled recorded runs (docs/benchmarks/repair)
+    # BE-23 accounts: GitHub sign-in (OAuth app) and signed session tokens. Empty = anonymous only.
+    REPAIR_SESSION_SECRET: str = ""
+    REPAIR_SESSION_HOURS: int = 168
+    GITHUB_OAUTH_CLIENT_ID: str = ""
+    GITHUB_OAUTH_CLIENT_SECRET: str = ""
+    GITHUB_OAUTH_REDIRECT_URL: str = ""      # the web app's callback page
+    # BE-24 GitHub App: webhook secret (api) and app id + private key (repair-worker, opens draft PRs).
+    GITHUB_WEBHOOK_SECRET: str = ""
+    GITHUB_APP_ID: str = ""
+    GITHUB_APP_PRIVATE_KEY: str = ""         # PEM; escaped newlines are accepted
     # Tavily runtime research. Empty key = research state UNAVAILABLE.
     TAVILY_API_KEY: str = ""
     TAVILY_BASE_URL: str = "https://api.tavily.com"
@@ -169,6 +224,9 @@ class Settings(BaseSettings):
     AUTOPILOT_DAILY_LLM_CALLS: int = 400       # Nemotron calls per UTC day, all visitors
     AUTOPILOT_DAILY_TAVILY_CALLS: int = 200    # Tavily calls per UTC day, all visitors
     AUTOPILOT_IDLE_EXPIRY_MIN: int = 15        # step-mode runs untouched this long are cancelled
+    AUTOPILOT_SHARE_SECRET: str = ""          # otherwise persisted in DATA_DIR/.share-key
+    AUTOPILOT_ALERT_TOKEN: str = ""           # disabled until configured
+    AUTOPILOT_UPLOAD_TTL_HOURS: int = 24
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

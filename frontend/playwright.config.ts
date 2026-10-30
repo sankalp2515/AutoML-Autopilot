@@ -16,6 +16,7 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.E2E_WEB_URL || "http://localhost:3002";
 
 export default defineConfig({
+  webServer: process.env.E2E_MOCK_API === '1' ? { command: `npm run start -- -p ${new URL(baseURL).port || '3002'}`, url: baseURL, reuseExistingServer: !process.env.CI, timeout: 120000 } : undefined,
   testDir: "./e2e",
   // A failing E2E must be actionable, so keep traces/screenshots on failure.
   reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { autopilot } from '@/lib/autopilot';
+import { autopilot, type Ablation, type Benchmark } from '@/lib/autopilot';
 import { Card, StateView } from '@/components/ui';
 
 const ARM_LABEL: Record<string, string> = {
@@ -15,10 +15,10 @@ const ARM_LABEL: Record<string, string> = {
 const th = { textAlign: 'left' as const, fontSize: 10.5, color: 'var(--t3)', padding: '8px 10px', borderBottom: '1px solid var(--bd)', textTransform: 'uppercase' as const };
 const td = { fontSize: 12.5, padding: '8px 10px', borderBottom: '1px solid var(--bd2)', fontFamily: 'var(--font-mono), monospace' };
 
-function LiveAblation({ a }: { a: any }) {
+function LiveAblation({ a }: { a: Ablation | null }) {
   if (!a) return null;
   if (!a.available) {
-    return <Card><p style={{ margin: 0, fontSize: 13 }}>Live ablation not run yet. Run <code>{a.how_to_run}</code>.</p></Card>;
+    return <Card><p style={{ margin: 0, fontSize: 13 }}>Live ablation evidence is not yet available.{process.env.NODE_ENV === 'development' && <code>{a.how_to_run}</code>}</p></Card>;
   }
   const arms: [string, string][] = [['rules', 'Rules planner (no model)'], ['nemotron', `Nemotron planner · ${a.planner_model}`]];
   const t = a.tavily_ablation_T01;
@@ -65,12 +65,14 @@ function LiveAblation({ a }: { a: any }) {
 }
 
 export default function BenchmarkPage() {
-  const [data, setData] = useState<any>(null);
-  const [abl, setAbl] = useState<any>(null);
+  const [data, setData] = useState<Benchmark | null>(null);
+  const [abl, setAbl] = useState<Ablation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [publicData, setPublicData] = useState<Awaited<ReturnType<typeof autopilot.publicBenchmark>> | null>(null);
   useEffect(() => {
     autopilot.benchmark().then(setData).catch((e: Error) => setError(e.message));
     autopilot.ablation().then(setAbl).catch(() => setAbl(null));
+    autopilot.publicBenchmark().then(setPublicData).catch(() => setPublicData(null));
   }, []);
 
   return (
@@ -83,16 +85,26 @@ export default function BenchmarkPage() {
       </p>
       <StateView loading={!data && !error} error={error}>
         {data && !data.available && (
-          <Card><p style={{ margin: 0, fontSize: 13 }}>No benchmark report yet. Run <code>{data.how_to_run}</code>.</p></Card>
+          <Card><p style={{ margin: 0, fontSize: 13 }}>Benchmark evidence is not yet available.{process.env.NODE_ENV === 'development' && <code>{data.how_to_run}</code>}</p></Card>
         )}
         {data?.available && (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }}>
+            <Card>
+              <h2 style={{ marginTop: 0 }}>{data.arms.autopilot.correct}/{data.arms.autopilot.runs} correct decisions at {(data.arms.autopilot.total_cost_units / data.arms.retrain_first.total_cost_units * 100).toFixed(0)}% of retrain-first experiment cost</h2>
+              <p>Offline synthetic incidents, rules planner. Experiment cost units are relative weights, not dollars. Retrain-first achieved {data.arms.retrain_first.correct}/{data.arms.retrain_first.runs}; see the live model ablation below.</p>
+              {Object.entries(data.arms).map(([arm, s]) => <div key={arm} style={{ margin: '12px 0', fontSize: 12 }}>
+                <strong>{ARM_LABEL[arm] ?? arm}</strong> · {s.correct}/{s.runs} correct · {s.total_cost_units} cost units
+                <div role="img" aria-label={`${s.correct} of ${s.runs} correct`} style={{ background: 'var(--sur)', marginTop: 4 }}><div style={{ width: `${100 * s.correct / s.runs}%`, height: 8, background: 'var(--acc)' }} /></div>
+                <div role="img" aria-label={`${s.total_cost_units} cost units`} style={{ background: 'var(--sur)', marginTop: 4 }}><div style={{ width: `${100 * s.total_cost_units / Math.max(...Object.values(data.arms).map((x) => x.total_cost_units))}%`, height: 8, background: 'var(--t2)' }} /></div>
+              </div>)}
+              <p style={{ fontSize: 12 }}>Teal: correct decisions. Grey: experiment cost (relative to the most expensive arm).</p>
+            </Card>
             <Card padding={0}>
               <div style={{ overflowX: 'auto' }}>
                 <table aria-label="Benchmark results by arm" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
                   <thead><tr>{['Arm', 'Correct', 'False promotions', 'Median tests', 'Mean tests', 'Total cost units', 'Retrains', 'Median CPU s'].map((h) => <th key={h} scope="col" style={th}>{h}</th>)}</tr></thead>
                   <tbody>
-                    {Object.entries(data.arms).map(([arm, s]: [string, any]) => (
+                    {Object.entries(data.arms).map(([arm, s]) => (
                       <tr key={arm} style={{ background: arm === 'autopilot' ? 'var(--accw)' : undefined }}>
                         <td style={{ ...td, fontFamily: 'inherit', fontWeight: arm === 'autopilot' ? 700 : 500 }}>{ARM_LABEL[arm] ?? arm}</td>
                         <td style={td}>{s.correct}/{s.runs}</td>
@@ -109,6 +121,7 @@ export default function BenchmarkPage() {
               </div>
             </Card>
             <LiveAblation a={abl} />
+            {publicData?.available && <Card><h2 style={{ fontSize: 16 }}>Public-data robustness check: {publicData.dataset}</h2><p>{publicData.fault}</p><p>Rules planner · five independent split seeds · <a href={publicData.source} style={{ color: 'var(--acc)' }}>Dataset citation (CC BY 4.0)</a></p><ul>{Object.entries(publicData.arms).map(([arm,s]) => <li key={arm}>{ARM_LABEL[arm] ?? arm}: {s.correct}/{s.runs} accepted decisions, {s.false_promotions} false promotions, {s.total_cost_units} experiment cost units.</li>)}</ul><p>This controlled fault checks portability to real rows. It does not establish production impact.</p></Card>}
             <Card>
               <h2 style={{ fontSize: 14, margin: '0 0 8px' }}>Verifier must-fail controls</h2>
               <p style={{ fontSize: 12.5, margin: 0 }}>

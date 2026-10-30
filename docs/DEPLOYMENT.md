@@ -1,5 +1,9 @@
 # Deployment
 
+For the current eight-service v5 stack, startup, trust boundaries, backup/restore and limitations, see [V5_OPERATIONS.md](V5_OPERATIONS.md). The section below describes the historical v4 deployment.
+
+# Historical v4 deployment
+
 AutoML Autopilot ships as five containers on one private Docker network. One command
 starts everything; only the web container publishes a port.
 

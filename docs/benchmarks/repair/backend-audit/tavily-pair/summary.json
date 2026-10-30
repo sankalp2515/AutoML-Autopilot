@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "kind": "autonomous-comparison",
+  "arms": [
+    {
+      "arm": "A",
+      "attempted": 0,
+      "accepted": 0,
+      "verified": 0,
+      "false_accepts": 0,
+      "unresolved_accepts": 0,
+      "verified_rate": null,
+      "verified_ci95": null,
+      "false_accept_rate": null,
+      "false_accept_ci95": null,
+      "cost_usd": null,
+      "cost_per_verified": null
+    },
+    {
+      "arm": "D",
+      "attempted": 1,
+      "accepted": 1,
+      "verified": 1,
+      "false_accepts": 0,
+      "unresolved_accepts": 0,
+      "verified_rate": 1.0,
+      "verified_ci95": [
+        0.206543,
+        1
+      ],
+      "false_accept_rate": 0.0,
+      "false_accept_ci95": [
+        0,
+        0.793457
+      ],
+      "cost_usd": null,
+      "cost_per_verified": null
+    },
+    {
+      "arm": "D-ML",
+      "attempted": 0,
+      "accepted": 0,
+      "verified": 0,
+      "false_accepts": 0,
+      "unresolved_accepts": 0,
+      "verified_rate": null,
+      "verified_ci95": null,
+      "false_accept_rate": null,
+      "false_accept_ci95": null,
+      "cost_usd": null,
+      "cost_per_verified": null
+    },
+    {
+      "arm": "D-TAV",
+      "attempted": 1,
+      "accepted": 1,
+      "verified": 1,
+      "false_accepts": 0,
+      "unresolved_accepts": 0,
+      "verified_rate": 1.0,
+      "verified_ci95": [
+        0.206543,
+        1
+      ],
+      "false_accept_rate": 0.0,
+      "false_accept_ci95": [
+        0,
+        0.793457
+      ],
+      "cost_usd": null,
+      "cost_per_verified": null
+    }
+  ],
+  "rows": [
+    {
+      "fixture": "loan-scorer",
+      "seed": 47,
+      "arm": "D",
+      "accepted": true,
+      "external_decision": "VERIFIED",
+      "cost_usd": null,
+      "agent_decision": "VERIFIED",
+      "seconds": 277.2,
+      "task_id": "00a3ee2e-5105-4671-b20f-25a225e23a79",
+      "provider": "nvidia_api",
+      "models": {
+        "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+        "super": "nvidia/nemotron-3-ultra-550b-a55b",
+        "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+      },
+      "prompt_hash": "9ed8fcf4c4e9f218",
+      "runner": "local-container",
+      "limits": {
+        "wall_seconds": 1800,
+        "sandbox_seconds": 900,
+        "max_candidates": 2,
+        "max_iterations": 8,
+        "max_tool_calls": 60,
+        "max_diff_lines": 200,
+        "model_tokens": {
+          "ultra": 12000,
+          "super": 160000,
+          "nano": 20000
+        },
+        "tavily_calls": 3
+      },
+      "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+      "cost_complete": false,
+      "plan_sha256": "d69f4a9bcfa0983d20c208323235af097c7ccf0470f63a432e5473a3b7b4cba2",
+      "admission_sha256": "4f0797bc8116e9ef770bf0ff68ad5ffcfec5082b4d418727ece78e3784342e91",
+      "run_manifest_sha256": "ce4d866c107418a0a95f011d56a7bb925117fd0fe9ae3ac4da2059a5dfae7c76",
+      "report_sha256": "09ac39c455fff8af49ccf3c9401f81916c976050878cf0389a1366f0ebe49ff0"
+    },
+    {
+      "fixture": "loan-scorer",
+      "seed": 47,
+      "arm": "D-TAV",
+      "accepted": true,
+      "external_decision": "VERIFIED",
+      "cost_usd": null,
+      "agent_decision": "VERIFIED",
+      "seconds": 290.4,
+      "task_id": "ff6d8ac6-6e8e-44c7-b8b4-8c19a1c1165b",
+      "provider": "nvidia_api",
+      "models": {
+        "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+        "super": "nvidia/nemotron-3-ultra-550b-a55b",
+        "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+      },
+      "prompt_hash": "9ed8fcf4c4e9f218",
+      "runner": "local-container",
+      "limits": {
+        "wall_seconds": 1800,
+        "sandbox_seconds": 900,
+        "max_candidates": 2,
+        "max_iterations": 8,
+        "max_tool_calls": 60,
+        "max_diff_lines": 200,
+        "model_tokens": {
+          "ultra": 12000,
+          "super": 160000,
+          "nano": 20000
+        },
+        "tavily_calls": 3
+      },
+      "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+      "cost_complete": false,
+      "plan_sha256": "d69f4a9bcfa0983d20c208323235af097c7ccf0470f63a432e5473a3b7b4cba2",
+      "admission_sha256": "a1bfa5e580a5f9012c77c184cf998e65afbdb23a91850c62ca920748f0f3b09f",
+      "run_manifest_sha256": "ce4d866c107418a0a95f011d56a7bb925117fd0fe9ae3ac4da2059a5dfae7c76",
+      "report_sha256": "2ab5a175a047ea5850b28ad9076211f67753bdd7cd75bcbc2fb7f349984d5ccc"
+    }
+  ],
+  "expected_slots": 2,
+  "complete": false,
+  "limitations": [
+    "Rates describe these tasks/seeds only; fixtures are not independent real-world samples.",
+    "False acceptance denominator is arm-accepted patches; unresolved acceptance is separately reported.",
+    "Costs are provider token-price estimates excluding compute/storage/research; missing costs are not zero."
+  ]
+}

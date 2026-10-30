@@ -1,0 +1,53 @@
+
+> automl-frontend@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.18
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/20) ...
+   Generating static pages (5/20) 
+   Generating static pages (10/20) 
+   Generating static pages (15/20) 
+ ✓ Generating static pages (20/20)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    189 B           204 kB
+├ ○ /_not-found                          158 B          87.4 kB
+├ ○ /auth/callback                       830 B           197 kB
+├ ○ /autopilot                           4.17 kB         166 kB
+├ ƒ /autopilot/[id]                      375 B           176 kB
+├ ○ /autopilot/benchmark                 3.03 kB         165 kB
+├ ○ /autopilot/example                   189 B           175 kB
+├ ○ /autopilot/new                       6.97 kB         169 kB
+├ ƒ /autopilot/opengraph-image           0 B                0 B
+├ ƒ /autopilot/share/[token]             385 B           176 kB
+├ ○ /login                               1.35 kB         150 kB
+├ ○ /registry                            5.29 kB         154 kB
+├ ○ /repair                              189 B           204 kB
+├ ○ /repair/benchmark                    6.36 kB         202 kB
+├ ○ /repair/docs                         7.24 kB         203 kB
+├ ○ /repair/how-it-works                 4.64 kB         200 kB
+├ ○ /repair/new                          10 kB           206 kB
+├ ƒ /repair/replay/[id]                  154 B           211 kB
+├ ○ /repair/runs                         3.94 kB         200 kB
+├ ○ /repair/settings                     5 kB            201 kB
+├ ƒ /repair/tasks/[id]                   154 B           211 kB
+├ ○ /runs                                3.96 kB         153 kB
+├ ƒ /runs/[run_id]                       37.4 kB         186 kB
+└ ○ /settings                            4.96 kB         154 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/2117-353d1edd9d3a1da1.js      31.6 kB
+  ├ chunks/fd9d1056-2c99d0106c70b214.js  53.6 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

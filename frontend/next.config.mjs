@@ -15,7 +15,10 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  experimental: {},
+  // Cold sandbox setup and task admission can outlast Next's 30-second proxy
+  // default. Match the client's bounded admission timeout; the backend still
+  // enforces command and task deadlines.
+  experimental: { proxyTimeout: 960000 },
   async rewrites() {
     return API_INTERNAL_URL
       ? [{ source: '/api/:path*', destination: `${API_INTERNAL_URL}/api/:path*` }]
@@ -26,7 +29,7 @@ const nextConfig = {
     // (MLflow, sandbox, LangGraph agents) that this deployment does not run.
     return AUTOPILOT_ONLY
       ? [
-          { source: '/', destination: '/autopilot', permanent: false },
+          { source: '/', destination: '/repair', permanent: false },
           { source: '/runs/:path*', destination: '/autopilot', permanent: false },
           { source: '/registry/:path*', destination: '/autopilot', permanent: false },
         ]

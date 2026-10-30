@@ -1,0 +1,21 @@
+--- a/pricing/features.py
++++ b/pricing/features.py
+@@ -1,5 +1,6 @@
+ import numpy as np
+ 
+ def matrix(frame):
+-    ratio = frame.quote_amount.to_numpy() / frame.list_price.to_numpy()
++    denom = frame.list_price.to_numpy()
++    ratio = np.divide(frame.quote_amount.to_numpy(), denom, out=np.zeros(len(frame)), where=denom != 0)
+     return np.column_stack([ratio, frame.aux.to_numpy()])
+--- /dev/null
++++ b/tests/test_pricing_regression.py
+@@ -0,0 +1,8 @@
++from pricing.model import fit
++from pricing.serve import score_request
++import pandas as pd
++
++def test_probability_roundtrip():
++    frame = pd.read_csv("data/train.csv")
++    model = fit(frame)
++    assert all(0 <= score_request(row, model) <= 1 for row in frame.head(10).to_dict("records"))

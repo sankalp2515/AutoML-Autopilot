@@ -1,0 +1,32 @@
+name: Bug report
+description: Reproduce a product defect with public or synthetic inputs
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include credentials, judge access codes, private code or holdout labels. For sensitive issues, read SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Commit and environment
+      description: Commit SHA, OS, browser and runtime (Docker or other)
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Use a bundled sample or a minimal public/synthetic example.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Relevant route, event/receipt IDs or screenshot; no secrets or private payloads.

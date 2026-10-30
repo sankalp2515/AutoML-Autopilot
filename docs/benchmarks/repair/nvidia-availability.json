@@ -1,0 +1,65 @@
+{
+  "provider": "nvidia_api",
+  "kind": "account-level-short-completion-probes",
+  "nebius_execution": false,
+  "probes": [
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "http_status": 200,
+      "seconds": 3.58,
+      "usage": {
+        "prompt_tokens": 25,
+        "completion_tokens": 6,
+        "total_tokens": 31
+      },
+      "finish_reason": "stop",
+      "valid_reply": true
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "http_status": 404,
+      "seconds": 1.08
+    },
+    {
+      "model": "nvidia/nemotron-nano-3-30b-a3b",
+      "http_status": 404,
+      "seconds": 1.06
+    }
+  ],
+  "additional_authorized_credentials": [
+    {
+      "credential_slot": "NVIDIA_API_KEY_2",
+      "error": "ReadTimeout"
+    },
+    {
+      "credential_slot": "NVIDIA_API_KEY_3",
+      "error": "ReadTimeout"
+    },
+    {
+      "credential_slot": "NVIDIA_API_KEY_4",
+      "error": "ReadTimeout"
+    }
+  ],
+  "follow_up_probes": [
+    {
+      "credential_slot": "NVIDIA_API_KEY",
+      "http_status": 503,
+      "seconds": 4.09
+    },
+    {
+      "credential_slot": "NVIDIA_API_KEY_2",
+      "http_status": 503,
+      "seconds": 2.49
+    },
+    {
+      "credential_slot": "NVIDIA_API_KEY_3",
+      "http_status": 503,
+      "seconds": 1.74
+    },
+    {
+      "credential_slot": "NVIDIA_API_KEY_4",
+      "http_status": 503,
+      "seconds": 1.14
+    }
+  ]
+}

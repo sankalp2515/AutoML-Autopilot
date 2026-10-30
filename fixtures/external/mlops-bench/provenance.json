@@ -1,0 +1,44 @@
+{
+  "repository": "https://github.com/oracle-samples/mlops-bench",
+  "commit": "8f48b685df0491af048bde4b56c7917d0e42d336",
+  "kind": "public-task-subset",
+  "tasks": [
+    {
+      "id": "great-expectations-serving",
+      "upstream_path": "dataset/mlops-bench/25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS/04_model_serving/MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING"
+    },
+    {
+      "id": "mlflow-features",
+      "upstream_path": "dataset/mlops-bench/22_MLFLOW__MLFLOW/02_feature_engineering/MLO-22_MLFLOW__MLFLOW-02_FEATURE_ENGINEERING"
+    }
+  ],
+  "files": {
+    "great-expectations-serving/README.md": "a4acc1bbd24d410e9aa20be036d5f2a44e201e092d1265eccdbe9775a542795e",
+    "great-expectations-serving/expected_changes.patch": "6066e16a2eda6b1994ee330afb1a488f05de16d5c3cd86f110bc72058aa11804",
+    "great-expectations-serving/metadata.json": "aa1eb7166432f50803a323a4c685a2a2839895e914f7ece4b269591cef654468",
+    "great-expectations-serving/oracle/mlops_bench_contracts/__init__.py": "beb038b337d0cda2bcebe952aa12e98ac4fd1c80503cf217660a87a21a883bb1",
+    "great-expectations-serving/oracle/mlops_bench_contracts/serving_gate.py": "8e78d35c761402988a2a421c5766bd166f749cd1be50633a3b095d49e81f4946",
+    "great-expectations-serving/oracle/tests/test_stage_contract.py": "2509e6909d13d7ecc4429e1e3f6b2af98d6b304654ee82c803403efdc9213d12",
+    "great-expectations-serving/problem.json": "cbe4290a9abddf6eeb9c953071015b2c5ca912be2c7ff0dfef62f7ccbd0d7e51",
+    "great-expectations-serving/repo/mlops_bench_contracts/__init__.py": "beb038b337d0cda2bcebe952aa12e98ac4fd1c80503cf217660a87a21a883bb1",
+    "great-expectations-serving/repo/mlops_bench_contracts/serving_gate.py": "4050cd3231db60bca226dd40f040365cfaa1056311bf22cec90f88819fdd094a",
+    "great-expectations-serving/tests/test_f2p.py": "8e812cf13d00103e37b641cf9e51d8cdad246d0642e759714b1b8b2f2cb0a953",
+    "great-expectations-serving/tests/test_p2p.py": "5de75e00c614d11fa1dd34acefb9daf6cbd039d86e1928a2be71fd9a5955cbb5",
+    "mlflow-features/README.md": "e986659e789c4516e8741413b1c5f583c54791b8bfe44ede288349f695455a76",
+    "mlflow-features/expected_changes.patch": "54df01550f0b63c93b02088c98a2cc1281568d951fa56ba53f48c8fbbe3d8144",
+    "mlflow-features/metadata.json": "3bc20947973badfa9207bfc83332feb154c2f0ddb713823a7b519e2c53a56d92",
+    "mlflow-features/oracle/mlops_bench_contracts/__init__.py": "beb038b337d0cda2bcebe952aa12e98ac4fd1c80503cf217660a87a21a883bb1",
+    "mlflow-features/oracle/mlops_bench_contracts/feature_parity.py": "4b6e0700c3c475ba54eb3a1bc889ed5f71248fa4692b6026b24a8ad911cc1fb9",
+    "mlflow-features/oracle/tests/test_stage_contract.py": "e1002be5ae5e92ee3238fc054cb9b555aaec4eb58be1fa17fdf1e27cd71f3972",
+    "mlflow-features/problem.json": "3b03d9c7be28749b59d093e64fc72239ff3a0f08a1875f21bc37e92385be0e59",
+    "mlflow-features/repo/mlops_bench_contracts/__init__.py": "beb038b337d0cda2bcebe952aa12e98ac4fd1c80503cf217660a87a21a883bb1",
+    "mlflow-features/repo/mlops_bench_contracts/feature_parity.py": "a95748f078c6051bbc733afd7800566cf773a5b7777c291fe22949e39fa0abd7",
+    "mlflow-features/tests/test_f2p.py": "24c4b3c47cddfcc73ccdf31b8ddb3c47689f5c5b95c39eafa4d0fef6782e09e8",
+    "mlflow-features/tests/test_p2p.py": "9ccd11a1f550e56c1ed7eafc5ca53b354321857b7329f30b68a606dd55a9e12f",
+    "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "THIRD_PARTY_LICENSES.txt": "0104e89137398b2c3b55ed3e1c3174e0a7db44605a28b21d1b86b0a79f4da5c1",
+    "dataset/metadata/SOURCE_REPOSITORIES.tsv": "63bbf086d86ad704f05bf573af09cb91c223f29c6d285b903dd801094f24847b",
+    "dataset/metadata/third_party_licenses/22_mlflow__mlflow.txt": "6395355de6f391afff35996a30fb41b189b4991a4cb54993ace35ab69a0bfa28",
+    "dataset/metadata/third_party_licenses/25_great-expectations__great_expectations.txt": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+  }
+}

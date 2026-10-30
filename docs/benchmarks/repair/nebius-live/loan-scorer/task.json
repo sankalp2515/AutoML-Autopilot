@@ -1,0 +1,30 @@
+{
+  "id": "eef0e1f5-c381-470d-8e06-1e0c55c55ca6",
+  "status": "REVIEW_READY",
+  "version": 55,
+  "fencing_token": 1,
+  "contract_digest": "sha256:da495c02fc84cc731a1454f46bf92fcfa22b8ea9bba9f2925f176de452e281c7",
+  "target": "Update preprocessing for the pinned scikit-learn API.",
+  "event_seq": 32,
+  "cancel_requested": false,
+  "created_at": 1793375598.147115,
+  "engine": "v5",
+  "mode": "full",
+  "sample": "loan-scorer",
+  "source": "sample",
+  "repo_name": "loan-scorer",
+  "fail_to_pass": [
+    "tests/test_service.py::test_service"
+  ],
+  "ml_invariants": [
+    "train_serve_parity",
+    "holdout_non_inferior"
+  ],
+  "has_labels": true,
+  "decision": "VERIFIED",
+  "reasons": [],
+  "finalist": "eef0e1f5-c1",
+  "cost_usd": 0.006627,
+  "seconds": 131.5,
+  "error": null
+}

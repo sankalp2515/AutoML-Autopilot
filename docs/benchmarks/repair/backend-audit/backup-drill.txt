@@ -1,0 +1,33 @@
+{
+  "backup": "C:\\Users\\sanka\\.codex\\visualizations\\v5-operations-audit\\backup-final-1",
+  "checksums": {
+    "artifacts.tar": "afd118a0078f627b87df52fec55c5e52a152971c8e237f2f48b7573e47a028bf",
+    "packs.tar": "e2e289e822940adcf2bcd0383560d7181365545a88194a525e0bec0fae13bdef",
+    "postgres.dump": "8651ea16d5e0b8ffb8dbab60496721743a3b07d3fda8dc483e2ac5d5fd1a2df0",
+    "verifier-postgres.dump": "673d4a6298a118fbeaeef2621548a388f5b1b3bc1f684c2c766893f8c3d4ab8d",
+    "verifier-state.tar": "e70d87ac54eb8bcb4a89e6b8b7fe0e942b26a52b33edd2a764fffb6fecb3c5e5"
+  },
+  "snapshot": {
+    "tasks": 0,
+    "receipt_hashes": {},
+    "replay_receipt_hashes": {
+      "run-34429e95.json/0/code_receipt": "44b2ce8633188f347831e59f09e61fb365ce6c5254dc04d5a6a5d2b929e16ea0",
+      "run-34429e95.json/0/screen_receipt": "9e20adbc71107fe64fdbdf52d40c170e4152b681ac26e460741fd38b18e89f84",
+      "run-34429e95.json/1/code_receipt": "6ee0adc37964fe21125eeb0166babfae8faec9a9632f3a637be20ddc82618855",
+      "run-34429e95.json/1/screen_receipt": "f876db8219a51d3b9960dde453d948871ef36e372fb07b119cb57cea7c28e3eb",
+      "run-34429e95.json/final_ml_receipt": "be76eba43fcc218c5176d29d5f9d46ecf0470659ab04d21969d78faff266f330"
+    },
+    "replay_hashes": {
+      "run-34429e95.json": "5d97f6a23d539385701ff333b0aaaea40d93f7cc856cf897478cfc7567af7fb9"
+    },
+    "drill_marker": 429,
+    "active_tasks": 0,
+    "queue_db_superuser": false,
+    "ledger": {
+      "sha256": "a527fb99bb0b4fb302e75194e4e02a09efb5871134a40bc84bd9a720c35e2a1c",
+      "admissions": 1,
+      "openings": 1,
+      "database_superuser": false
+    }
+  }
+}
