@@ -7,7 +7,7 @@ Start with the [product overview and quick start](../README.md). v5 repository r
 | Understand the system and trust boundaries | [As-built architecture](V5_ARCHITECTURE.md) · [Original production target diagram](assets/production-architecture.png) |
 | Try the live demo and inspect genuine Nebius evidence | [Deployment validation](NEBIUS_DEPLOYMENT_VALIDATION.md) |
 | Use the API or connect a frontend | [v5 API reference](API_V5.md) |
-| Run, back up, restore or operate the stack | [Operations](V5_OPERATIONS.md) · [Cloud validation and limits](NEBIUS_DEPLOYMENT_VALIDATION.md) |
+| Run, back up, restore or operate the stack | [Operations](V5_OPERATIONS.md) · [Cloud setup](../deploy/gcp/README.md) · [Cloud validation and limits](NEBIUS_DEPLOYMENT_VALIDATION.md) |
 | Understand judge access and credit protection | [Deployment and cost plan](JUDGE_DEPLOYMENT_AND_COSTS.md) |
 | Review fixtures, methods and incomplete studies | [Evaluation guide](benchmarks/repair/LIVE_EVALUATION.md) · [Hosted UI evidence ledger](benchmarks/repair/nebius-ui-validation.json) |
 | Inspect the backend acceptance audit | [Backend operations audit](BACKEND_OPERATIONS_AUDIT.md) |

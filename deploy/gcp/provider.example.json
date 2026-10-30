@@ -1,0 +1,16 @@
+{
+  "PUBLIC_ORIGIN": "https://demo.example.com",
+  "NEBIUS_API_KEY": "",
+  "NEBIUS_PROJECT_ID": "",
+  "NEBIUS_PLANNER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+  "NEBIUS_CODER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+  "NEBIUS_FAST_MODEL": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "TAVILY_API_KEY": "",
+  "REPAIR_INVITE_CODES": "",
+  "REPAIR_TOTAL_USD_CAP": "20",
+  "REPAIR_DAILY_USD_CAP": "3",
+  "REPAIR_TASK_USD_CEILING": "0.60",
+  "REPAIR_DAILY_TASKS_PER_TENANT": "12",
+  "REPAIR_CREATE_COOLDOWN_S": "30",
+  "REPAIR_MAX_ACTIVE_TASKS": "2"
+}

@@ -474,8 +474,17 @@ test("runs filter, benchmark limitations, docs, runtime and missing-task recover
   await page.getByLabel("Run type").selectOption("replays");
   await page.getByLabel("Decision", { exact: true }).selectOption("REJECTED");
   await expect(
-    page.getByRole("link", { name: "Open recorded run" }),
-  ).toHaveCount(1);
+    page.locator('a[href="/repair/replay/churn_live_prompt_v1"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('a[href="/repair/replay/nebius_refund_rejected"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('a[href="/repair/replay/nebius_churn_verified"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('a[href="/repair/replay/churn_live_prompt_v2"]'),
+  ).toHaveCount(0);
   await page.goto("/repair/benchmark");
   await expect(
     page.getByText("The matched-budget comparison is not published yet"),

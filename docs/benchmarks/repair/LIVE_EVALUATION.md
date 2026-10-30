@@ -1,5 +1,7 @@
 # NVIDIA evaluation execution report — 30 October 2026
 
+This file preserves the original study. Later independent artifacts: [product-path A/D study (incomplete)](api-eval-2026-10-30/REPORT.md) · [genuine hosted Nebius UI integration](nebius-ui-validation.json) · [current deployment validation](../../NEBIUS_DEPLOYMENT_VALIDATION.md). Different protocols/providers are not pooled into a success rate.
+
 This is a local NVIDIA developer-endpoint evaluation, not Nebius Token Factory
 execution. The user authorized six pilots and a 72-slot comparison with four
 independently supplied credential slots. Credential values are never evidence.
