@@ -1926,3 +1926,81 @@ html.dark .repair {
 @media (max-width:800px) { .r-public-header { flex-wrap: wrap; gap: 20px; } .r-public-header nav { order: 3; width: 100%; justify-content: space-between; } .r-public-header .r-brand { font-size: 17px; } .r-public-header .r-brand > span > span { font-size: 15px; } .lp-hero { grid-template-columns: 1fr; gap: 42px; } .lp-hero-copy { max-width: 640px; } .repair .lp-hero h1 { font-size: clamp(37px,7vw,54px); } .lp-instrument { max-width: 600px; transform: none; width: 100%; } .lp-section { padding-block: 58px; } .lp-problem, .lp-control-grid, .lp-faq-section { grid-template-columns: 1fr; gap: 28px; } .lp-problem > div:last-child { padding: 0; } .lp-section-head { align-items: flex-start; flex-direction: column; gap: 20px; } .lp-case-grid { grid-template-columns: 1fr; } .lp-case > div { padding-top: 18px; } .lp-case > svg { margin-bottom: 16px; } .lp-workflow { grid-template-columns: 1fr; gap: 0; } .lp-workflow li { display: flex; gap: 20px; padding: 22px 0; border-top-width: 1px; } .lp-workflow li > span { flex-shrink: 0; margin: 0; } .lp-evidence-section, .lp-control-section { padding-block: 55px; } .lp-final { flex-direction: column; align-items: flex-start; margin-bottom: 55px; } .r-public-footer { padding: 30px; } }
 @media (max-width:520px) { .lp-container { width: calc(100% - 40px); } .r-public-header { padding: 18px 20px; gap: 18px; } .r-public-header-actions { gap: 6px; } .r-public-header-actions .r-button-primary { font-size: 12px; padding: 9px 12px; } .r-public-header nav { font-size: 13px; gap: 12px; } .lp-hero { padding-block: 42px; } .repair .lp-hero h1 { font-size: 39px; letter-spacing: -1.6px; } .lp-audience { font-size: 12px; margin-bottom: 22px !important; } .lp-hero .r-actions { align-items: stretch; flex-direction: column; } .lp-built-with > div { gap: 13px 24px; font-size: 15px; } .lp-proof-facts { grid-template-columns: 1fr; } .lp-proof-facts > div + div { border-left: 0; border-top: 1px solid var(--r-border); padding-left: 0; } .lp-proof-facts > div { padding-block: 20px; } .lp-proof-facts strong { font-size: 34px; } .lp-access-grid { grid-template-columns: 1fr; } .lp-access-grid article { padding: 26px; } .lp-instrument-top,.lp-instrument-foot { padding: 15px; } .lp-instrument-foot { flex-wrap: wrap; } .lp-file { margin: 18px; } .lp-gate-switch { margin-inline: 18px; } .lp-gate-result { padding: 22px 18px 16px; } .lp-observations { margin-left: 78px; margin-right: 18px; } .lp-final { padding: 28px; } .repair .lp-final h2 { font-size: 29px; } }
 @media (prefers-reduced-motion:reduce) { .lp-observations span,.lp-faqs summary svg { transition: none; } }
+
+/* Frosted studio: opaque evidence surfaces inside a softly lit glass shell. */
+.r-glass {
+  --r-bg: #edf3ef;
+  --r-surface: #fafcf9;
+  --r-soft: #e7efeb;
+  --r-ink: #173a35;
+  --r-muted: #4e6861;
+  --r-border: #cbdcd4;
+  --r-accent: #146555;
+  --r-accent-soft: #dceee5;
+  --r-glass-panel: #f5f9f4;
+  --r-glass-edge: #ffffff;
+  --r-glass-shadow: 0 16px 44px -28px #264f4255, inset 0 1px 0 #ffffffb3;
+  background: radial-gradient(ellipse at 4% 12%, #c5dcd7 0, transparent 42%), radial-gradient(ellipse at 94% 24%, #e9dfc9 0, transparent 40%), radial-gradient(ellipse at 65% 75%, #d9e7dd 0, transparent 48%), #f4f5ee;
+}
+html.dark .r-glass {
+  --r-bg: #102723;
+  --r-surface: #18352f;
+  --r-soft: #20443a;
+  --r-ink: #e8f2eb;
+  --r-muted: #b5cbc0;
+  --r-border: #3d6053;
+  --r-accent: #9bdec3;
+  --r-accent-soft: #244c40;
+  --r-on-accent: #102e26;
+  --r-glass-panel: #18352f;
+  --r-glass-edge: #416556;
+  --r-glass-shadow: 0 20px 50px -28px #020e0ba3, inset 0 1px 0 #aacdb21a;
+  background: radial-gradient(ellipse at 4% 12%, #244c43 0, transparent 42%), radial-gradient(ellipse at 94% 24%, #3c4030 0, transparent 40%), radial-gradient(ellipse at 65% 75%, #193a31 0, transparent 48%), #10231f;
+}
+.r-glass .r-public-header, .r-glass .r-sidebar, .r-glass .r-topbar,
+.r-glass .r-panel, .r-glass .lp-instrument, .r-glass .lp-case,
+.r-glass .lp-access-grid article, .r-glass .lp-final {
+  background: var(--r-glass-panel);
+  border: 1px solid var(--r-glass-edge);
+  box-shadow: var(--r-glass-shadow);
+}
+.r-glass .r-public-header {
+  width: min(1400px, calc(100% - 48px));
+  margin: 24px auto 0;
+  min-height: 84px;
+  padding: 16px 28px;
+  border-radius: 22px;
+}
+.r-glass .r-sidebar { border-radius: 0 24px 24px 0; }
+.r-glass .r-panel { border-radius: 18px; }
+.r-glass .r-topbar { border-width: 0 0 1px; }
+.r-glass .lp-instrument { border-radius: 24px; transform: none; box-shadow: 0 28px 70px -30px #244f4266, inset 0 1px 0 #ffffffaa; }
+.r-glass .lp-instrument-top { background: transparent; }
+.r-glass .lp-evidence-section { background: #f7faf440; }
+.r-glass .lp-control-section { background: #c8ded33b; border-block: 1px solid var(--r-border); }
+.r-glass .lp-case, .r-glass .lp-access-grid article { border-radius: 18px; }
+.r-glass .lp-final { border-radius: 24px; }
+.r-glass .r-button-primary { box-shadow: 0 5px 14px -7px #174f4373, inset 0 1px 0 #ffffff24; }
+.r-glass .lp-file, .r-glass pre { background: var(--r-code); }
+/* Blur only large surfaces: nested controls and evidence remain crisp. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .r-glass { --r-glass-panel: #ffffffa6; }
+  html.dark .r-glass { --r-glass-panel: #18352fcc; }
+  .r-glass .r-public-header, .r-glass .r-sidebar, .r-glass .r-topbar,
+  .r-glass .r-panel, .r-glass .lp-instrument, .r-glass .lp-case,
+  .r-glass .lp-access-grid article, .r-glass .lp-final {
+    -webkit-backdrop-filter: blur(18px) saturate(115%);
+    backdrop-filter: blur(18px) saturate(115%);
+  }
+}
+@media (max-width: 800px) {
+  .r-glass .r-public-header { padding: 18px 22px; }
+}
+@media (max-width: 520px) {
+  .r-glass .r-public-header { width: calc(100% - 24px); margin-top: 12px; padding: 18px 14px; border-radius: 18px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .r-glass { --r-glass-panel: #fafcf9; }
+  html.dark .r-glass { --r-glass-panel: #18352f; }
+  .r-glass :is(.r-public-header,.r-sidebar,.r-topbar,.r-panel,.lp-instrument,.lp-case,.lp-access-grid article,.lp-final) { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

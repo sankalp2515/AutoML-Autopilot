@@ -79,7 +79,7 @@ export default function RepairShell({
   const connected = status.data;
   if (pathname === "/" || pathname === "/repair")
     return (
-      <div className="repair r-public" ref={root}>
+      <div className="repair r-glass r-public" ref={root}>
         <a href="#repair-content" className="r-skip">
           Skip to main content
         </a>
@@ -143,7 +143,7 @@ export default function RepairShell({
     );
   return (
     <div
-      className="repair"
+      className="repair r-glass"
       ref={root}
       onKeyDown={(event) => {
         const target = event.target as HTMLElement;

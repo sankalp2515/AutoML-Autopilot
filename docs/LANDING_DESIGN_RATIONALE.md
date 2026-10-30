@@ -36,3 +36,12 @@ Use the established line icon library. No stock imagery, animated background, au
 Hypothesis 1: a direct ML-coding headline plus actual receipt preview will make the product easier to understand than the earlier slogan. Hypothesis 2: replay first reduces friction before asking for live access. Hypothesis 3: explicit limits/provenance improve reviewer confidence compared with ambiguous claims. No percentage improvement is asserted and no visitor tracking was added. During judging, observe whether reviewers can reach the verified receipt, interpret the rejection, find live access instructions and recover from a limit. Any later A/B or analytics work needs an explicit privacy/data plan and a real sample; judge clicks are not proof of market conversion.
 
 The CRO review applies clarity, one core outcome, message consistency, objections, hierarchy, cognitive load, trust, specificity, section justification, commitment-matched CTAs, scannability, progressive confidence and empirical claims. Large-customer tactics from generic CRO references were intentionally not adopted because this product has no verified customer base.
+
+
+## Glass visual refinement (October 30, 2026)
+
+The supplied Abide reference informs the material treatment: a softly lit sage/teal canvas, frosted navigation, translucent panels, bright edge highlights and restrained shadows. AutoML Autopilot retains its existing typography, content, navigation and evidence hierarchy.
+
+The palette uses mist #edf3ef, pine #173a35, teal #146555, warm reflected light #e9dfc9 and opaque reading surfaces #fafcf9. Dark mode uses deep forest #102723 and mint #9bdec3. Glass is applied to the landing instrument, major cards, navigation and workspace panels; code blocks, forms and verdict colors retain readable surfaces. There is no continuous background animation.
+
+Blur is feature-detected, with opaque fallback surfaces and a reduced-transparency preference. Mobile uses smaller header margins without changing target sizes. Existing keyboard, responsive and axe checks validate both themes; screenshots are reviewed separately because axe cannot fully evaluate blended glass contrast.
