@@ -28,7 +28,10 @@ const mono = localFont({
 export const metadata: Metadata = {
   title: 'AutoML Autopilot',
   description: 'The ML coding agent that doesn’t stop at green tests. Inspect repository repairs with independent software and ML evidence.',
-  icons: { icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%236366f1%22/></svg>' },
+  icons: {
+    icon: [{ url: '/autopilot-favicon.svg?v=1', type: 'image/svg+xml', sizes: 'any' }],
+    shortcut: '/autopilot-favicon.svg?v=1',
+  },
 };
 
 // Runs before paint — applies the saved theme so there is no flash of wrong theme.
