@@ -1,0 +1,2 @@
+# PostgreSQL sources init scripts inside a Linux container, including on Windows.
+deploy/postgres/*.sh text eol=lf

@@ -42,7 +42,7 @@ jobs:
       - name: "Test (no provider keys; every live call is a recorded fake)"
         env:
           DATABASE_URL: sqlite+aiosqlite:///./ci.db
-        run: python -m pytest tests/test_autopilot tests/test_repair -q -m "not slow"
+        run: python -m pytest tests/test_autopilot tests/test_repair -q -m "not slow and not docker"
 
 
   repair-slow:
@@ -96,7 +96,19 @@ jobs:
       - name: "Test against Postgres (types and lengths SQLite does not enforce)"
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:ci@localhost:5432/autopilot
-        run: python -m pytest tests/test_autopilot tests/test_repair -q -m "not slow"
+          REPAIR_TEST_POSTGRES_URL: postgresql+asyncpg://postgres:ci@localhost:5432/autopilot
+          REPAIR_TEST_LEDGER_URL: postgresql+asyncpg://postgres:ci@localhost:5432/autopilot
+        run: python -m pytest tests/test_autopilot tests/test_repair -q -m "not slow and not docker"
+
+  sandbox-boundary:
+    name: Real Docker sandbox and external verifier boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12",cache: pip}
+      - run: pip install -r backend/requirements-runtime.txt pytest==8.3.4 pytest-asyncio==0.24.0
+      - run: python -m pytest backend/tests/test_repair/test_sandbox_local.py -q
 
   frontend:
     name: Web typecheck
@@ -131,5 +143,13 @@ jobs:
       - name: Build all service images
         env:
           POSTGRES_PASSWORD: ci-only
+          POSTGRES_ADMIN_PASSWORD: ci-admin
+          REPAIR_LEDGER_ADMIN_PASSWORD: ci-ledger-admin
           AUTOPILOT_VERIFIER_TOKEN: ci-only
-        run: docker compose build
+          REPAIR_SANDBOX_TOKEN: ci-sandbox
+          REPAIR_VERIFIER_TOKEN: ci-verifier
+          REPAIR_ADMISSION_TOKEN: ci-admission
+          REPAIR_TRUSTED_SANDBOX_TOKEN: ci-trusted
+          REPAIR_SESSION_SECRET: ci-session
+          REPAIR_LEDGER_PASSWORD: ci-ledger
+        run: docker compose build api web

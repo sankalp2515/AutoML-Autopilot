@@ -1,0 +1,6 @@
+{
+  "existing_target_restore_refused": true,
+  "target_overwritten": false,
+  "exit_code": 1,
+  "tampered_dump_refused_before_restore": true
+}

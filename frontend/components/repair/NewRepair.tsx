@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -96,6 +96,7 @@ const validPath = (p: string) =>
   !!p && !p.startsWith("/") && !/[\\:]/.test(p) && !p.split("/").includes("..");
 
 export default function NewRepair() {
+  const creationKey=useRef<{fingerprint:string;key:string}|null>(null);
   const identity = useIdentity();
   const search = useSearchParams(),
     router = useRouter();
@@ -337,9 +338,7 @@ export default function NewRepair() {
     setBusy(true);
     setError(null);
     try {
-      const task = await api<Task>("/tasks", {
-        method: "POST",
-        body: JSON.stringify({
+      const body=JSON.stringify({
           repo_id: repo!.id,
           target,
           fail_to_pass: chosen,
@@ -347,7 +346,13 @@ export default function NewRepair() {
           mode,
           invite_code: invite || undefined,
           budget: { max_candidates: maxCandidates, coder_tokens: coderTokens },
-        }),
+        });
+      const fingerprint=JSON.stringify({...JSON.parse(body),invite_code:undefined});
+      if (!creationKey.current || creationKey.current.fingerprint!==fingerprint)
+        creationKey.current={fingerprint,key:crypto.randomUUID()};
+      const task = await api<Task>("/tasks", {
+        method: "POST",body,
+        headers:{"Idempotency-Key":creationKey.current.key},
       });
       router.push(`/repair/tasks/${task.id}`);
     } catch (e) {

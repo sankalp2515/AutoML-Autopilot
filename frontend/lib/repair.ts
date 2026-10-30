@@ -277,7 +277,7 @@ export async function api<T>(
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
-    path.endsWith("/discover") ? 180000 : 45000,
+    path === "/tasks" && init.method === "POST" ? 960000 : path.endsWith("/discover") ? 180000 : 45000,
   );
   try {
     const res = await fetch(`${API_BASE}/api/v1/v5${path}`, {

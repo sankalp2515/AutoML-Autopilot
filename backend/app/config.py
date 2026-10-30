@@ -161,17 +161,24 @@ class Settings(BaseSettings):
     REPAIR_VERIFIER_TOKEN: str = ""
     REPAIR_RUNNER: str = "docker"            # docker | process (process = unisolated, tests/dev only)
     REPAIR_ENV_ROOT: str = ""                # where environments live; must be the same path on the Docker host
+    REPAIR_SANDBOX_MAX_CONCURRENT: int = 2
+    REPAIR_SANDBOX_MAX_ENVIRONMENTS: int = 64
     REPAIR_FIXTURES_DIR: str = ""            # bundled sample repositories (api + verifier only)
     # Access and spend (BE-12). Live runs are off unless enabled; replays always work.
     REPAIR_LIVE_ENABLED: bool = False
     REPAIR_INVITE_CODES: str = ""            # comma-separated; empty = no code needed when live is enabled
     REPAIR_DAILY_USD_CAP: float = 5.0
+    REPAIR_DAILY_TOKEN_CAP: int = 2_000_000
+    REPAIR_LEDGER_DATABASE_URL: str = ""   # verifier-only PostgreSQL; never supplied to the worker
+    REPAIR_ADMISSION_TOKEN: str = ""       # API -> verifier registration; worker cannot register contracts
+    REPAIR_TRUSTED_SANDBOX_TOKEN: str = "" # verifier -> clean artifact evaluator capability
     REPAIR_TASK_USD_CEILING: float = 0.40    # worst-case estimate reserved per task against the daily cap
     REPAIR_DAILY_TASKS_PER_TENANT: int = 5
     REPAIR_MAX_REPO_MB: int = 50
     REPAIR_MAX_FILES: int = 5000
     REPAIR_ALLOWED_GIT_HOSTS: str = "github.com,gitlab.com,bitbucket.org"
     REPAIR_RETENTION_HOURS: int = 72
+    REPAIR_QUEUE_TTL_S: int = 3600
     REPAIR_PIP_INDEX_URL: str = ""           # optional allow-listed package index for installs
     REPAIR_VERIFIER_STATE_DIR: str = ""      # verifier-only writable state (ledger, admissions, caches)
     REPAIR_PACKS_DIR: str = ""               # holdout label packs: api writes, verifier reads, worker never mounts

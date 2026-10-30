@@ -12,10 +12,11 @@ import hashlib
 import time
 import uuid
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import or_, and_, select, update
 
 from app.database import AsyncSessionLocal
 from app.repair import contracts as c, models as m
+from app.repair import admission
 
 
 class NotFound(LookupError):
@@ -67,26 +68,65 @@ class RepairService:
         return task
 
     async def create(self, tenant, *, contract: c.RepoContract, base_commit_sha,
-                     repo_snapshot_digest, target, spec: dict | None = None, limits: c.Limits | None = None):
+                     repo_snapshot_digest, target, spec: dict | None = None, limits: c.Limits | None = None,
+                     admission_policy: dict | None = None, idempotency_key: str | None = None,
+                     environment: dict | None = None, request_digest: str | None = None):
         if not 1 <= len(tenant) <= 128:
             raise ValueError("invalid tenant identity")
         task_id = str(uuid.uuid4())
         ecc = c.ECC.build(task_id=task_id, base_commit_sha=base_commit_sha,
-                          repo_snapshot_digest=repo_snapshot_digest, contract=contract, target=target, limits=limits)
+                          repo_snapshot_digest=repo_snapshot_digest, contract=contract, target=target, limits=limits,environment=environment)
         async with self.sessions() as db, db.begin():
+            if admission_policy is not None or idempotency_key:
+                await admission.lock(db)
+            request_digest=request_digest or admission.digest_request(contract=contract,sha=base_commit_sha,
+                snapshot=repo_snapshot_digest,target=target,spec=spec,limits=limits or c.Limits())
+            key_hash=hashlib.sha256(idempotency_key.encode()).hexdigest() if idempotency_key else None
+            if key_hash:
+                prior=await db.get(m.CreateKey,(tenant,key_hash))
+                if prior:
+                    if prior.request_digest != request_digest:
+                        raise Conflict("Idempotency-Key was already used for a different task request")
+                    return task_json(await self._task(db,prior.task_id,tenant))
             task = m.Task(id=task_id, tenant_id=tenant, status=c.TaskStatus.CREATED.value,
                           version=0, fencing_token=0, ecc=ecc.model_dump(mode="json"),
                           event_seq=1, cancel_requested=False, created_at=self.clock(), spec=spec or {})
             db.add(task)
             await db.flush()
+            if admission_policy is not None:
+                await admission.reserve(db,task_id=task_id,tenant=tenant,now=self.clock(),policy=admission_policy)
+            if key_hash:
+                db.add(m.CreateKey(tenant_id=tenant,key=key_hash,request_digest=request_digest,task_id=task_id))
             event = c.Event(task_id=task_id, seq=1, type="task.created", actor="platform",
                             data={"engine": "v5", "contract_digest": ecc.contract_digest})
             db.add(m.Event(task_id=task_id, seq=1, payload=event.model_dump(mode="json")))
         return task_json(task)
 
+    async def lookup_create_key(self,tenant,key,digest):
+        async with self.sessions() as db:
+            found=await db.get(m.CreateKey,(tenant,hashlib.sha256(key.encode()).hexdigest()))
+            if found is None:return None
+            if found.request_digest!=digest:raise Conflict("Idempotency-Key was already used for a different task request")
+            return task_json(await self._task(db,found.task_id,tenant))
+
     async def get(self, task_id, tenant):
         async with self.sessions() as db:
             return task_json(await self._task(db, task_id, tenant))
+
+    async def mark_admitted(self,task_id,tenant):
+        async with self.sessions() as db, db.begin():
+            task=await self._task(db,task_id,tenant)
+            if not (task.spec or {}).get("needs_verifier_admission"):return
+            result=await db.execute(update(m.Task).where(m.Task.id==task_id,m.Task.tenant_id==tenant,
+                m.Task.version==task.version,m.Task.status==c.TaskStatus.CREATED.value,
+                m.Task.cancel_requested.is_(False)).values(version=m.Task.version+1,event_seq=m.Task.event_seq+1,
+                spec={**task.spec,"needs_verifier_admission":False}).execution_options(synchronize_session=False))
+            if result.rowcount!=1:
+                await db.refresh(task)
+                if not task.spec.get("needs_verifier_admission") and not task.cancel_requested:return
+                raise Conflict("task changed during verifier admission")
+            event=c.Event(task_id=task_id,seq=task.event_seq+1,type="diagnostic.executed",actor="platform",data={"kind":"verifier_admitted"})
+            db.add(m.Event(task_id=task_id,seq=event.seq,payload=event.model_dump(mode="json")))
 
     async def list_tasks(self, tenant, *, limit=100, offset=0):
         async with self.sessions() as db:
@@ -245,7 +285,20 @@ class RepairService:
                              fencing_token=lease.fencing_token, payload=payload))
             return next_lease
 
-    async def save_receipt(self, lease, receipt: c.CodeReceipt | c.MLReceipt | c.VerifiedChangeReceipt, *, emit=True):
+    async def checkpoint_candidate(self,lease,candidate,extra):
+        """Persist progress metadata while preserving the frozen code and its identity."""
+        async with self.sessions() as db,db.begin():
+            existing=await db.get(m.Candidate,candidate.candidate_id)
+            if existing is None or existing.task_id!=lease.task_id:raise NotFound("Candidate not found")
+            original={k:v for k,v in existing.payload.items() if k in c.Candidate.model_fields and k!="status"}
+            proposed=candidate.model_dump(mode="json");proposed.pop("status",None)
+            if original!=proposed or existing.diff!=candidate.diff:
+                raise Conflict("frozen candidate code cannot be changed")
+            authority=await self._write(db,lease)
+            existing.payload={**candidate.model_dump(mode="json"),**extra}
+            return authority
+
+    async def save_receipt(self, lease, receipt: c.CodeReceipt | c.MLReceipt | c.VerifiedChangeReceipt, *, emit=True, screen=False):
         if receipt.task_id != lease.task_id:
             raise ValueError("receipt task mismatch")
         async with self.sessions() as db, db.begin():
@@ -256,6 +309,9 @@ class RepairService:
             if receipt.contract_digest != task.ecc["contract_digest"] or receipt.diff_digest != candidate.payload["diff_digest"]:
                 raise ValueError("receipt provenance mismatch")
             kind = getattr(receipt, "kind", "combined")
+            if screen:
+                if kind!="ml":raise ValueError("only ML receipts have a screening phase")
+                kind="ml_screen"
             payload = receipt.model_dump(mode="json")
             if kind != "combined":
                 expected = c.canonical_digest({k: v for k, v in payload.items() if k != "receipt_digest"})
@@ -295,7 +351,10 @@ class RepairService:
 
     async def set_fields(self, lease, *, dst=None, event_type=None, data=None, **changes):
         async with self.sessions() as db, db.begin():
-            return await self._write(db, lease, dst=dst, event_type=event_type, data=data, changes=changes)
+            authority=await self._write(db, lease, dst=dst, event_type=event_type, data=data, changes=changes)
+            if changes.get("report"):
+                await admission.settle(db,lease.task_id,changes["report"])
+            return authority
 
     async def row(self, task_id, tenant):
         async with self.sessions() as db:
@@ -318,20 +377,23 @@ class RepairService:
         now = self.clock()
         live = [s.value for s in c.TaskStatus if s not in c.TERMINAL_TASK and s is not c.TaskStatus.CREATED]
         n = 0
+        from app.config import settings
         async with self.sessions() as db, db.begin():
             # Expired leases, and live tasks nobody holds (a worker released without a final state).
-            rows = (await db.execute(select(m.Task).where(m.Task.status.in_(live), or_(
-                m.Task.lease_owner.is_(None), m.Task.lease_until < now - grace_s)))).scalars().all()
+            rows = (await db.execute(select(m.Task).where(or_(
+                and_(m.Task.status.in_(live),or_(m.Task.lease_owner.is_(None),m.Task.lease_until<now-grace_s)),
+                and_(m.Task.status==c.TaskStatus.CREATED.value,m.Task.created_at<now-settings.REPAIR_QUEUE_TTL_S)
+            )))).scalars().all()
             for t in rows:
                 res = await db.execute(update(m.Task).where(m.Task.id == t.id, m.Task.version == t.version)
                                        .values(status=c.TaskStatus.FAILED.value, version=m.Task.version + 1,
                                                fencing_token=m.Task.fencing_token + 1, lease_owner=None,
                                                lease_until=None, event_seq=m.Task.event_seq + 1,
-                                               spec={**(t.spec or {}), "error": "worker stopped (lease expired)"})
+                                               spec={**(t.spec or {}), "error": "queue/admission wait expired" if t.status=="CREATED" else "worker stopped (lease expired)"})
                                        .execution_options(synchronize_session=False))
                 if res.rowcount == 1:
                     ev = c.Event(task_id=t.id, seq=t.event_seq + 1, type="task.failed", actor="platform",
-                                 data={"reason": "E_INTERRUPTED"})
+                                 data={"reason": "E_QUEUE_TIMEOUT" if t.status=="CREATED" else "E_INTERRUPTED"})
                     db.add(m.Event(task_id=t.id, seq=ev.seq, payload=ev.model_dump(mode="json")))
                     n += 1
         return n
@@ -392,6 +454,8 @@ class RepairService:
         async with self.sessions() as db:
             rows = (await db.execute(select(m.Task.id, m.Task.tenant_id).where(
                 m.Task.status.in_([c.TaskStatus.CREATED.value, c.TaskStatus.SNAPSHOTTING.value]),
+                or_(m.Task.spec["needs_verifier_admission"].as_boolean().is_(None),
+                    m.Task.spec["needs_verifier_admission"].as_boolean().is_(False)),
                 or_(m.Task.lease_owner.is_(None), m.Task.lease_until <= self.clock()),
                 m.Task.cancel_requested.is_(False)).order_by(m.Task.created_at).limit(10))).all()
         for task_id, tenant in rows:
@@ -412,20 +476,26 @@ class RepairService:
 default_service = RepairService()
 
 
-async def worker_loop(owner="repair-worker", poll_seconds=1.0):
+async def worker_loop(owner="repair-worker", poll_seconds=1.0, heartbeat_seconds=15):
     from app.repair import ops
-    last_clean = 0.0
-    while True:
-        await default_service.heartbeat(owner, {**ops.provider_config(), "tavily": bool(ops.settings.TAVILY_API_KEY)})
-        await default_service.reap_expired()
-        if time.time() - last_clean > 600:
-            last_clean = time.time()
-            try:
-                await ops.cleanup(default_service)
-            except Exception:  # noqa: BLE001 - cleanup must never stop the worker
-                pass
-        if not await default_service.work_once(owner=owner):
-            await asyncio.sleep(poll_seconds)
+    async def maintain():
+        last_clean=0.
+        while True:
+            await default_service.heartbeat(owner,{**ops.provider_config(),"tavily":bool(ops.settings.TAVILY_API_KEY)})
+            from app.repair.operations import heartbeat_path
+            heartbeat_path().touch()
+            await default_service.reap_expired()
+            await asyncio.sleep(heartbeat_seconds)
+    await default_service.heartbeat(owner,{**ops.provider_config(),"tavily":bool(ops.settings.TAVILY_API_KEY)})
+    maintenance=asyncio.create_task(maintain())
+    try:
+        while True:
+            if maintenance.done():maintenance.result()  # Never keep running with a dead heartbeat.
+            if not await default_service.work_once(owner=owner):await asyncio.sleep(poll_seconds)
+    finally:
+        maintenance.cancel()
+        try:await maintenance
+        except asyncio.CancelledError:pass
 
 
 if __name__ == "__main__":

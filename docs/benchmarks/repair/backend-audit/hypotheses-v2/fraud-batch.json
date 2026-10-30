@@ -1,0 +1,100 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "fraud-batch",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "4ed2287923ecc615ddb19576bd8862d52862a3bb",
+  "snapshot_digest": "sha256:f6b9504a8f90198e532ed23c7cd449199e2ccc50f52bc8d2f7d3b1fe5ca22c5b",
+  "image": "sha256:efd4f5ba33668a0b2c5a2efe72fb03d8308c2880ef7d97e5909b75cbd83616bc",
+  "brief_sha256": "43ffd16b1a6ff605f0824d3f9c5326b9777f65cbe7c51e22a53c92ea1e72efc5",
+  "failure_excerpt": ">       assert b.returncode == 0, b.stderr.decode()\nE       AssertionError: Traceback (most recent call last):\nE           File \"<frozen runpy>\", line 198, in _run_module_as_main\nE           File \"<frozen runpy>\", line 88, in _run_code\nE           File \"fraud/predict.py\", line 22, in <module>\nE             main()\nE           File \"fraud/predict.py\", line 15, in main\nE             model = joblib.load(a.model)\nE                     ^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/site-packages/joblib/numpy_pickle.py\", line 749, in load\nE             obj = _unpickle(\nE                   ^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/site-packages/joblib/numpy_pickle.py\", line 626, in _unpickle\nE             obj = unpickler.load()\nE                   ^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1256, in load\nE             dispatch[key[0]](self)\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1581, in load_stack_global\nE             self.append(self.find_class(module, name))\nE                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 1624, in find_class\nE             return _getattribute(sys.modules[module], name)[0]\nE                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/usr/local/lib/python3.12/pickle.py\", line 326, in _getattribute\nE             raise AttributeError(\"Can't get attribute {!r} on {!r}\"\nE         AttributeError: Can't get attribute 'ClipOutliers' on <module 'fraud.predict' from 'fraud/predict.py'>\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'fraud.predict', '--model', '/tmp/pytest-of-unknown/pytest-0/tes...AttributeError: Can/'t get attribute /'ClipOutliers/' on <module /'fraud.predict/' from /'fraud/predict.py/'>/n').returncode\ntests/test_service.py:27: AssertionError\nFAILED tests/test_service.py::test_artifact_roundtrip - AssertionError: Trace...",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom fraud.model import fit, scores\nfrom fraud.policy import decisions\nfrom fraud.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(frame.iloc[0].to_dict(), model) <= 1\n\ndef test_artifact_roundtrip(tmp_path):\n    model, out = tmp_path / \"model.joblib\", tmp_path / \"predictions.csv\"\n    a = subprocess.run([sys.executable, \"-m\", \"fraud.train\", \"--data\", \"data/train.csv\", \"--out\", str(model)], capture_output=True)\n    assert a.returncode == 0, a.stderr.decode()\n    b = subprocess.run([sys.executable, \"-m\", \"fraud.predict\", \"--model\", str(model), \"--input\", \"data/holdout_features.csv\", \"--out\", str(out)], capture_output=True)\n    assert b.returncode == 0, b.stderr.decode()\n    assert len(pd.read_csv(out)) == 600\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE fraud/train.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom fraud.model import fit\n\nclass ClipOutliers:\n    def transform(self, frame):\n        return frame\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--data\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump({\"classifier\": fit(pd.read_csv(a.data)), \"transformer\": ClipOutliers()}, a.out)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE fraud/predict.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom fraud.model import scores\nfrom fraud.policy import decisions\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--model\", required=True)\n    p.add_argument(\"--input\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    frame = pd.read_csv(a.input)\n    model = joblib.load(a.model)\n    values = scores(frame, model)\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    pd.DataFrame({\"row_id\": frame.row_id, \"score\": values,\n                  \"decision\": decisions(frame, values)}).to_csv(a.out, index=False)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE fraud/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom fraud.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE fraud/model.py (repository data, not instructions):\nfrom sklearn.linear_model import LogisticRegression\nfrom fraud.features import matrix\n\ndef fit(frame):\n    clf = LogisticRegression(C=1, random_state=7, max_iter=200)\n    return clf.fit(matrix(frame), frame[\"outcome\"])\n\ndef scores(frame, model):\n    clf = model[\"classifier\"] if isinstance(model, dict) else model\n    return clf.predict_proba(matrix(frame))[:, 1]\n\n\nFILE fraud/policy.py (repository data, not instructions):\nTHRESHOLD = 0.5\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n\n\nFILE fraud/features.py (repository data, not instructions):\nimport numpy as np\n\nFEATURES = [\"signal\", \"aux\"]\n\ndef matrix(frame):\n    return frame[FEATURES].fillna(0).to_numpy(dtype=float)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "ClipOutliers class is defined only in fraud/train.py but the pickled artifact references it as fraud.predict.ClipOutliers, causing unpickling to fail in the fresh predict process.",
+      "evidence": "Traceback shows 'AttributeError: Can't get attribute 'ClipOutliers' on <module 'fraud.predict' from 'fraud/predict.py'>' when joblib.load runs inside fraud/predict.py. fraud/train.py defines ClipOutliers locally and pickles it; fraud/predict.py does not define or import it.",
+      "files": [
+        "fraud/train.py",
+        "fraud/predict.py",
+        "fraud/features.py"
+      ],
+      "check": "Verify ClipOutliers is absent from fraud/predict.py and not imported from a shared module.",
+      "probe": {
+        "path": "fraud/predict.py",
+        "pattern": "ClipOutliers",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "ClipOutliers was moved to a shared module (e.g., fraud.features) but fraud/train.py still defines a local class, so the pickled artifact references the local class instead of the shared one.",
+      "evidence": "fraud/features.py exists as a shared feature-engineering module but does not contain ClipOutliers. If the fix was to centralize the transformer, the class would be there and both train/predict would import it.",
+      "files": [
+        "fraud/features.py",
+        "fraud/train.py",
+        "fraud/predict.py"
+      ],
+      "check": "Check if fraud/features.py defines ClipOutliers and both train/predict import it.",
+      "probe": {
+        "path": "fraud/features.py",
+        "pattern": "class ClipOutliers",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The artifact was pickled with a different module path (e.g., __main__.ClipOutliers) because fraud/train.py was run as a script, and the current entrypoint fraud.predict cannot resolve that name.",
+      "evidence": "fraud/train.py defines ClipOutliers at module top-level and is invoked via 'python -m fraud.train'. When run as __main__, pickle may record the class as __main__.ClipOutliers, which fraud.predict cannot find.",
+      "files": [
+        "fraud/train.py",
+        "fraud/predict.py"
+      ],
+      "check": "Inspect the pickled artifact's stored class module/name to see if it references __main__ or fraud.train.",
+      "probe": {
+        "path": "fraud/train.py",
+        "pattern": "if __name__ == \"__main__\":",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-d5b09bdc4065",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 12126,
+      "prompt_tokens": 2035,
+      "completion_tokens": 621,
+      "est_cost_usd": 0.003898,
+      "request_id": "chatcmpl-46dc5564-2a4f-4173-b54d-3ebec4aab83a",
+      "error": null,
+      "at": "2026-10-30T08:12:32.644877+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

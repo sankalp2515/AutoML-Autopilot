@@ -15,7 +15,8 @@ from app.database import Base
 from app.repair import contracts as c, models as m
 from app.repair.service import Conflict, NotFound, RepairService
 
-TABLES = [m.Task.__table__, m.Candidate.__table__, m.Attempt.__table__, m.Receipt.__table__, m.Event.__table__]
+TABLES = [m.Task.__table__, m.Candidate.__table__, m.Attempt.__table__, m.Receipt.__table__, m.Event.__table__,
+          m.AdmissionLock.__table__,m.Reservation.__table__,m.CreateKey.__table__]
 
 
 def repo_contract():

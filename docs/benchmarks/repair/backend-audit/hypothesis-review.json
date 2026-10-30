@@ -1,0 +1,60 @@
+{
+  "kind": "manual-fixture-rubric",
+  "runs": 6,
+  "seed": 47,
+  "provider": "nvidia_api",
+  "prompt_version": "repair-v5",
+  "precise_primary_mechanisms": 5,
+  "partial_primary_mechanisms": 1,
+  "complete_repair_success_claim": false,
+  "limitations": [
+    "One seed, authored fixtures, reviewer knows reference defects.",
+    "Literal source probes confirm text presence only, not causality.",
+    "Alternative hypotheses can overlap or assert unsupported possibilities.",
+    "One otherwise precise primary diagnosis contains a package-version factual error."
+  ],
+  "rows": [
+    {
+      "fixture": "churn-service",
+      "hypotheses": 3,
+      "leading_diagnosis": "precise",
+      "review": "Missing usage_gb in the online feature vector.",
+      "report_sha256": "dd6fdc11a1ad84ca2c77dd9515b8c35722e238615c9654be135d7666ddbd132b"
+    },
+    {
+      "fixture": "credit-approval",
+      "hypotheses": 3,
+      "leading_diagnosis": "precise",
+      "review": "The decision threshold is 0.99 rather than the intended operating point.",
+      "report_sha256": "d6ecab9cac8644eb4aad7b169c281a4bc85bd6ff58d04c25dd3669a8ac5ad0aa"
+    },
+    {
+      "fixture": "fraud-batch",
+      "hypotheses": 3,
+      "leading_diagnosis": "partial",
+      "review": "Identifies ClipOutliers serialization/importability; incorrectly describes the stored module identity instead of explaining __main__.",
+      "report_sha256": "95ccd717858a6ded0336acb8c26f14affe4db97894cd0914335a4f66a59405e1"
+    },
+    {
+      "fixture": "loan-scorer",
+      "hypotheses": 3,
+      "leading_diagnosis": "precise-with-factual-error",
+      "review": "Correct obsolete sparse argument; the claim about removal in scikit-learn 1.2 is inaccurate.",
+      "report_sha256": "954c5aeabeb12e9d88ff47908a510acb9ae3517eb9a1cb3171c310df8352d6ef"
+    },
+    {
+      "fixture": "pricing-model",
+      "hypotheses": 3,
+      "leading_diagnosis": "precise",
+      "review": "Division by a zero discount span causes non-finite values.",
+      "report_sha256": "be307c15d2c5ef39499a1e7e81eeb53d212317c76b13298b7136a4e1c84b8964"
+    },
+    {
+      "fixture": "refund-risk",
+      "hypotheses": 3,
+      "leading_diagnosis": "precise",
+      "review": "The 0.95 threshold suppresses recall.",
+      "report_sha256": "9c0f1541b22eec542c3f6768a4fcec2ef6c1024cf351cb84b572c9927393e3db"
+    }
+  ]
+}

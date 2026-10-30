@@ -73,6 +73,7 @@ def git(argv: list[str], *, cwd: Path | None = None, timeout_s: int = 120,
         result = subprocess.run(
             ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.autocrlf=false",
              "-c", "core.attributesFile=" + os.devnull, "-c", "core.fsmonitor=false",
+               "-c", "http.followRedirects=false", "-c", "protocol.ext.allow=never",
              "-c", "uploadpack.packObjectsHook=", *argv],
             cwd=cwd, env=env, capture_output=True, timeout=timeout_s, check=False,
         )
@@ -131,6 +132,25 @@ def _tracked(directory: Path, sha: str, timeout_s: int) -> list[tuple[str, str]]
     if len(paths) > 10_000:
         raise IntakeError("repository exceeds the 10000-file admission limit")
     return sorted(paths)
+
+
+def verify_snapshot(root: Path, sha: str, expected_digest: str | None = None) -> str:
+    """Recheck admitted bytes, including rejection of untracked executable additions."""
+    root=Path(root)
+    if any(p.is_symlink() for p in root.rglob("*") if ".git" not in p.relative_to(root).parts):
+        raise IntakeError("snapshot contains a symlink")
+    tracked=_tracked(root,sha,30)
+    wanted={path for path,_ in tracked}
+    actual={p.relative_to(root).as_posix() for p in root.rglob("*")
+            if p.is_file() and ".git" not in p.relative_to(root).parts}
+    if actual != wanted:
+        raise IntakeError("snapshot has missing or untracked files")
+    manifest=[{"path":path,"mode":mode,"sha256":hashlib.sha256(jailed_path(root,path).read_bytes()).hexdigest()}
+              for path,mode in tracked]
+    digest=canonical_digest(manifest)
+    if expected_digest is not None and digest!=expected_digest:
+        raise IntakeError("snapshot digest mismatch")
+    return digest
 
 
 def intake_repository(source: str, sha: str, snapshot_dir: str | Path, *, timeout_s: int = 120) -> RepoSnapshot:

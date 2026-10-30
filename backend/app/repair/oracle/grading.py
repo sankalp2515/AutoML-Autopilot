@@ -14,6 +14,8 @@ import io
 import json
 import os
 import re
+import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,6 +25,8 @@ from app.config import settings
 from app.repair import contracts as c
 from app.repair.oracle import code as code_oracle
 from app.repair.oracle import ml as ml_oracle
+from app.repair.oracle.ledger import DatabaseLedger, BoundLedger
+from app.repair.sandbox.pinned import pinned
 
 
 class GradingError(ValueError):
@@ -43,6 +47,29 @@ def _root(*parts: str) -> Path:
     return p
 
 
+def _publish_cache(path: Path, content: str) -> None:
+    fd, temporary = tempfile.mkstemp(prefix=".cache-", dir=path.parent)
+    try:
+        with os.fdopen(fd,"w",encoding="utf-8") as stream:
+            stream.write(content)
+        os.replace(temporary,path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def cleanup_cache(*, now=None) -> int:
+    # Cache is reproducible; durable admissions and holdout permits NEVER expire.
+    cutoff=(time.time() if now is None else now)-max(settings.REPAIR_RETENTION_HOURS*3600,
+                                                   settings.REPAIR_QUEUE_TTL_S+2400)
+    removed=0
+    for path in _root("cache").iterdir():
+        if path.is_symlink() or not path.is_file():continue
+        if path.stat().st_mtime>=cutoff:continue
+        if not re.fullmatch(r"[0-9a-f-]{8,64}\.(tests\.json|preds\.csv)",path.name):continue
+        path.unlink(missing_ok=True);removed+=1
+    return removed
+
+
 def snapshots_root() -> Path:
     return Path(settings.DATA_DIR, "repair", "snapshots").resolve()
 
@@ -58,10 +85,18 @@ def fixtures_root() -> Path:
 class Grader:
     def __init__(self, runner):
         self.runner = runner
-        self.ledger = ml_oracle.FileHoldoutLedger(str(_root("ledger")))
+        if settings.REPAIR_LEDGER_DATABASE_URL:
+            if not settings.REPAIR_LEDGER_DATABASE_URL.startswith("postgresql+asyncpg://") and not os.environ.get("PYTEST_CURRENT_TEST"):
+                raise GradingError("production verifier ledger requires PostgreSQL")
+            self.ledger=DatabaseLedger(settings.REPAIR_LEDGER_DATABASE_URL)
+            self.ledger.initialize()
+        elif runner.isolated and not os.environ.get("PYTEST_CURRENT_TEST"):
+            raise GradingError("configure the verifier-only PostgreSQL admission/holdout ledger")
+        else:
+            self.ledger = ml_oracle.FileHoldoutLedger(str(_root("ledger")))
 
     # ── resolution ────────────────────────────────────────────────────────────
-    def _load(self, ref: GradeRef):
+    def _load(self, ref: GradeRef, *, register=False):
         if not re.fullmatch(r"[0-9a-f-]{8,64}", ref.task_id):
             raise GradingError("bad task id")
         ecc = c.ECC.model_validate(ref.ecc)
@@ -74,9 +109,36 @@ class Grader:
         contract = c.RepoContract.from_yaml((base / "autopilot.yaml").read_text(encoding="utf-8"))
         if contract.digest() != ecc.repo_contract_digest:
             raise GradingError("repository contract changed since admission")
-        self._admit(ecc)
+        if self.runner.isolated:
+            from app.repair.intake import verify_snapshot
+            try:
+                verify_snapshot(base,ecc.base_commit_sha,ecc.repo_snapshot_digest)
+            except ValueError as exc:
+                raise GradingError("snapshot differs from admission") from exc
         sealed_dir, manifest = self._sealed(ref.sealed_ref)
+        binding=c.canonical_digest({"contract":ecc.contract_digest,"sealed_ref":ref.sealed_ref,
+                                    "sealed":self._sealed_digest(sealed_dir)})
+        if isinstance(self.ledger,DatabaseLedger):
+            if self.runner.isolated and not ecc.environment.get("image","").startswith("sha256:"):
+                raise GradingError("admission lacks the prepared dependency image digest")
+            try:
+                (self.ledger.admit if register else self.ledger.check)(ecc.task_id,binding)
+            except PermissionError as exc:
+                raise GradingError(str(exc)) from exc
+        else:
+            self._admit(ecc)
         return ecc, contract, str(base), sealed_dir, manifest
+
+    def register(self,ref):
+        self._load(ref,register=True)
+
+    @staticmethod
+    def _sealed_digest(directory):
+        import hashlib
+        if directory is None:return None
+        root=Path(directory)
+        return c.canonical_digest({p.relative_to(root).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(root.rglob("*")) if p.is_file() and "__pycache__" not in p.parts})
 
     def _admit(self, ecc: c.ECC) -> None:
         """First sighting records the contract digest; later requests must match it (W05)."""
@@ -106,30 +168,34 @@ class Grader:
         p = _root("cache") / f"{ref.task_id}.tests.json"
         if p.is_file():
             d = json.loads(p.read_text(encoding="utf-8"))
+            p.touch()
             return code_oracle.Baseline(d["outcomes"], d["parsed"])
-        b = code_oracle.measure_baseline(self.runner, base, contract)
-        p.write_text(json.dumps({"outcomes": b.outcomes, "parsed": b.parsed}), encoding="utf-8")
+        b = code_oracle.measure_baseline(pinned(self.runner,ecc), base, contract)
+        _publish_cache(p,json.dumps({"outcomes": b.outcomes, "parsed": b.parsed}))
         return b
 
-    def _base_predictions(self, ref: GradeRef, base: str, contract) -> pd.DataFrame | None:
+    def _base_predictions(self, ref: GradeRef, base: str, contract, runner=None) -> pd.DataFrame | None:
         p = _root("cache") / f"{ref.task_id}.preds.csv"
         if p.is_file():
             txt = p.read_text(encoding="utf-8")
+            p.touch()
             return None if txt == "NONE" else pd.read_csv(io.StringIO(txt), dtype={"id": str}).set_index("id")
-        df = ml_oracle.baseline_predictions(self.runner, base, contract)
-        p.write_text("NONE" if df is None else df.reset_index().to_csv(index=False), encoding="utf-8")
+        df = ml_oracle.baseline_predictions(runner or self.runner, base, contract)
+        _publish_cache(p,"NONE" if df is None else df.reset_index().to_csv(index=False))
         return df
 
     # ── verdicts ──────────────────────────────────────────────────────────────
     def code(self, ref: GradeRef, candidate_id: str, diff: str) -> c.CodeReceipt:
         ecc, contract, base, sealed_dir, manifest = self._load(ref)
-        return code_oracle.verify(self.runner, base_dir=base, contract=contract, ecc=ecc, task_id=ref.task_id,
+        return code_oracle.verify(pinned(self.runner,ecc), base_dir=base, contract=contract, ecc=ecc, task_id=ref.task_id,
                                   candidate_id=candidate_id, diff=diff, baseline=self.baseline(ref),
                                   sealed_dir=sealed_dir, manifest=manifest)
 
     def ml(self, ref: GradeRef, candidate_id: str, diff: str, *, final: bool) -> c.MLReceipt:
         ecc, contract, base, sealed_dir, manifest = self._load(ref)
-        base_preds = self._base_predictions(ref, base, contract) if final and manifest else None
-        return ml_oracle.verify(self.runner, base_dir=base, contract=contract, ecc=ecc, task_id=ref.task_id,
+        runner=pinned(self.runner,ecc)
+        base_preds = self._base_predictions(ref, base, contract,runner) if final and manifest else None
+        return ml_oracle.verify(runner, base_dir=base, contract=contract, ecc=ecc, task_id=ref.task_id,
                                 candidate_id=candidate_id, diff=diff, sealed_dir=sealed_dir, manifest=manifest,
-                                ledger=self.ledger if final else None, baseline=base_preds, open_holdout=final)
+                                ledger=BoundLedger(self.ledger,c.canonical_digest(diff)) if final else None,
+                                baseline=base_preds, open_holdout=final)

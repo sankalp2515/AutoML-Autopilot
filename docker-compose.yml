@@ -1,20 +1,20 @@
-# AutoML Autopilot: production stack (see docs/DEPLOYMENT.md).
+# AutoML Autopilot: v5 deployment topology (see docs/V5_OPERATIONS.md).
 #
-#   cp .env.example .env      # set POSTGRES_PASSWORD, AUTOPILOT_VERIFIER_TOKEN, provider keys
-#   docker compose up -d --build
-#   open http://localhost:3000
+#   python scripts/v5_stack.py up --project automl-v5-local --port 3133
+#   open http://localhost:3133/repair
 #
-# Five services, one private network. Only `web` publishes a port.
+# v5 control, repair, verification and sandbox services. Only `web` publishes a port.
 #
 #   web ──/api──► api ──(postgres: queue + state)◄── worker ──HTTP──► verifier
 #                                                     │
 #                                          Nebius / NVIDIA / Tavily (egress)
 #
 #   backplane  internal network (no internet): web, api, worker, verifier, postgres
-#   egress     outbound internet: worker only (model + search providers)
+#   verification internal: verifier and verifier-only PostgreSQL
+#   egress     workers (providers), API (public Git/OAuth/authorized delivery)
 #   edge       published port: web only
 #
-# Least privilege: provider keys reach the worker only; the verifier has no internet,
+# Least privilege: provider keys reach workers only; the verifier has no internet,
 # no provider keys and a read-only view of the artifacts; every container drops all
 # Linux capabilities (postgres adds back only what its entrypoint needs), cannot gain
 # privileges, runs as non-root (app images) and has CPU / memory / PID limits.
@@ -31,7 +31,7 @@ x-hardening: &hardening
 
 x-backend: &backend
   <<: *hardening
-  image: automl-autopilot-backend:latest
+  image: ${BACKEND_IMAGE:-automl-autopilot-backend:latest}
   build:
     context: ./backend
     dockerfile: Dockerfile.autopilot
@@ -50,11 +50,14 @@ services:
     image: postgres:16-alpine
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]   # entrypoint drops to the postgres user
     environment:
-      POSTGRES_USER: autopilot
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set a separate database admin password}
+      APP_ROLE: autopilot
+      APP_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: autopilot
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/10-app-role.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
     networks: [backplane]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U autopilot -d autopilot"]
@@ -64,6 +67,29 @@ services:
     deploy:
       resources:
         limits: { cpus: "1.0", memory: 512M, pids: 200 }
+
+  verifier-postgres:
+    <<: *hardening
+    image: postgres:16-alpine
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${REPAIR_LEDGER_ADMIN_PASSWORD:?set a separate ledger admin password}
+      APP_ROLE: verifier
+      APP_PASSWORD: ${REPAIR_LEDGER_PASSWORD:?set a distinct verifier ledger password}
+      POSTGRES_DB: verifier
+    volumes:
+      - ledger-pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/10-app-role.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
+    networks: [verification]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verifier -d verifier"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 256M, pids: 200 }
 
   api:
     <<: *backend
@@ -84,21 +110,28 @@ services:
       REPAIR_SANDBOX_URL: http://sandbox-runner:8200
       REPAIR_SANDBOX_TOKEN: ${REPAIR_SANDBOX_TOKEN:?set REPAIR_SANDBOX_TOKEN in .env}
       REPAIR_VERIFIER_URL: http://verifier:8100
+      REPAIR_ADMISSION_TOKEN: ${REPAIR_ADMISSION_TOKEN:?set a distinct admission token}
       REPAIR_PACKS_DIR: /packs
       REPAIR_FIXTURES_DIR: /fixtures/repos
       REPAIR_REPLAYS_DIR: /replays
       REPAIR_LIVE_ENABLED: ${REPAIR_LIVE_ENABLED:-false}
       REPAIR_INVITE_CODES: ${REPAIR_INVITE_CODES:-}
       REPAIR_DAILY_USD_CAP: ${REPAIR_DAILY_USD_CAP:-5}
+      REPAIR_DAILY_TOKEN_CAP: ${REPAIR_DAILY_TOKEN_CAP:-2000000}
+      REPAIR_SESSION_SECRET: ${REPAIR_SESSION_SECRET:?set a stable session signing secret}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:-}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:-}
+      GITHUB_OAUTH_REDIRECT_URL: ${GITHUB_OAUTH_REDIRECT_URL:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
     read_only: true
     tmpfs: ["/tmp"]
     volumes:
       - artifacts:/data                  # uploads, signing key and owner-authorized artifact deletion
       - packs:/packs                     # v5 holdout label packs (written here, read by the verifier)
-      - ./fixtures:/fixtures:ro          # v5 sample repositories (the api never runs them)
+      - ${REPAIR_SOURCE_FIXTURES_DIR:-./fixtures/sources}:/fixtures/repos:ro # source-only catalog; no sealed material
       - ./docs/benchmarks/repair:/replays:ro
       - ./docs/benchmarks:/docs/benchmarks:ro  # recorded showcase and benchmark evidence
-    networks: [backplane]
+    networks: [backplane, egress]         # public repository intake and GitHub OAuth/delivery need HTTPS
     depends_on:
       postgres: { condition: service_healthy }
     healthcheck:
@@ -161,6 +194,9 @@ services:
       DEBUG: "false"
       # v5 grading: the only service with holdout labels and sealed tests.
       REPAIR_VERIFIER_TOKEN: ${REPAIR_VERIFIER_TOKEN:?set REPAIR_VERIFIER_TOKEN in .env}
+      REPAIR_ADMISSION_TOKEN: ${REPAIR_ADMISSION_TOKEN:?set a distinct admission token}
+      REPAIR_TRUSTED_SANDBOX_TOKEN: ${REPAIR_TRUSTED_SANDBOX_TOKEN:?set a distinct trusted evaluator token}
+      REPAIR_LEDGER_DATABASE_URL: postgresql+asyncpg://verifier:${REPAIR_LEDGER_PASSWORD:?set a distinct verifier ledger password}@verifier-postgres:5432/verifier
       REPAIR_SANDBOX_URL: http://sandbox-runner:8200
       REPAIR_SANDBOX_TOKEN: ${REPAIR_SANDBOX_TOKEN:?set REPAIR_SANDBOX_TOKEN in .env}
       REPAIR_VERIFIER_STATE_DIR: /verifier-state
@@ -173,9 +209,11 @@ services:
       - verifier-state:/verifier-state   # holdout ledger, admission records, baseline caches
       - packs:/packs:ro                  # user holdout labels (never mounted in a worker)
       - ./fixtures:/fixtures:ro          # bundled sample repos and their sealed graders
-    networks: [backplane]                # no internet route
+    networks: [backplane, verification] # ledger database is unreachable from worker/API networks
+    depends_on:
+      verifier-postgres: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8100/health', timeout=4).status == 200 else 1)"]
+      test: ["CMD", "python", "-c", "import urllib.request,json,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://localhost:8100/v5/oracle/ready', timeout=4))['ready'] else 1)"]
       interval: 15s
       timeout: 6s
       retries: 5
@@ -197,7 +235,18 @@ services:
       # Provider credentials: only the worker receives them. No labels, no Docker socket.
       NEBIUS_API_KEY: ${NEBIUS_API_KEY:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_API_KEY_2: ${NVIDIA_API_KEY_2:-}
+      NVIDIA_API_KEY_3: ${NVIDIA_API_KEY_3:-}
+      NVIDIA_API_KEY_4: ${NVIDIA_API_KEY_4:-}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      NEBIUS_PLANNER_MODEL: ${NEBIUS_PLANNER_MODEL:-nvidia/Nemotron-3-Ultra-550b-a55b}
+      NEBIUS_CODER_MODEL: ${NEBIUS_CODER_MODEL:-nvidia/nemotron-3-super-120b-a12b}
+      NEBIUS_FAST_MODEL: ${NEBIUS_FAST_MODEL:-nvidia/Nemotron-3_5-Lightning}
+      NVIDIA_PLANNER_MODEL: ${NVIDIA_PLANNER_MODEL:-nvidia/nemotron-3-ultra-550b-a55b}
+      NVIDIA_CODER_MODEL: ${NVIDIA_CODER_MODEL:-nvidia/nemotron-3-ultra-550b-a55b}
+      NVIDIA_FAST_MODEL: ${NVIDIA_FAST_MODEL:-nvidia/nemotron-3.5-lightning-30b-a3b}
+      GITHUB_APP_ID: ${GITHUB_APP_ID:-}
+      GITHUB_APP_PRIVATE_KEY: ${GITHUB_APP_PRIVATE_KEY:-}
     read_only: true
     tmpfs: ["/tmp"]
     volumes:
@@ -207,6 +256,13 @@ services:
       postgres: { condition: service_healthy }
       verifier: { condition: service_healthy }
       sandbox-runner: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.repair.operations", "worker-health"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+    stop_grace_period: 60s
     deploy:
       resources:
         limits: { cpus: "2.0", memory: 2G, pids: 512 }
@@ -224,7 +280,11 @@ services:
     environment:
       DATA_DIR: /tmp
       REPAIR_RUNNER: docker
+      DOCKER_BUILDKIT: "1"
+      DOCKER_CONFIG: /tmp/docker-config
       REPAIR_SANDBOX_TOKEN: ${REPAIR_SANDBOX_TOKEN:?set REPAIR_SANDBOX_TOKEN in .env}
+      REPAIR_TRUSTED_SANDBOX_TOKEN: ${REPAIR_TRUSTED_SANDBOX_TOKEN:?set a distinct trusted evaluator token}
+      REPAIR_PIP_INDEX_URL: ${REPAIR_PIP_INDEX_URL:-https://pypi.org/simple}
       REPAIR_ENV_ROOT: ${REPAIR_ENV_HOST_DIR:-/tmp/autopilot-envs}
     read_only: true
     tmpfs: ["/tmp"]
@@ -244,7 +304,7 @@ services:
 
   web:
     <<: *hardening
-    image: automl-autopilot-web:latest
+    image: ${WEB_IMAGE:-automl-autopilot-web:latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
@@ -256,7 +316,7 @@ services:
     read_only: true
     tmpfs: ["/tmp", "/app/.next/cache:uid=10001,gid=10001"]
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:3000"
     networks: [edge, backplane]
     depends_on:
       api: { condition: service_healthy }
@@ -283,9 +343,14 @@ networks:
   edge:
     ipam:
       config: [{ subnet: "${EDGE_SUBNET:-10.88.12.0/24}" }]
+  verification:
+    internal: true
+    ipam:
+      config: [{ subnet: "${VERIFICATION_SUBNET:-10.88.13.0/24}" }]
 
 volumes:
   pgdata:
   artifacts:
   verifier-state:
   packs:
+  ledger-pgdata:

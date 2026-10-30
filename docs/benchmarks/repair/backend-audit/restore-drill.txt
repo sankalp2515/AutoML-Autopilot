@@ -1,0 +1,29 @@
+{
+  "restored": true,
+  "project": "codex-v5-restored",
+  "snapshot": {
+    "tasks": 0,
+    "receipt_hashes": {},
+    "replay_receipt_hashes": {
+      "run-34429e95.json/0/code_receipt": "44b2ce8633188f347831e59f09e61fb365ce6c5254dc04d5a6a5d2b929e16ea0",
+      "run-34429e95.json/0/screen_receipt": "9e20adbc71107fe64fdbdf52d40c170e4152b681ac26e460741fd38b18e89f84",
+      "run-34429e95.json/1/code_receipt": "6ee0adc37964fe21125eeb0166babfae8faec9a9632f3a637be20ddc82618855",
+      "run-34429e95.json/1/screen_receipt": "f876db8219a51d3b9960dde453d948871ef36e372fb07b119cb57cea7c28e3eb",
+      "run-34429e95.json/final_ml_receipt": "be76eba43fcc218c5176d29d5f9d46ecf0470659ab04d21969d78faff266f330"
+    },
+    "replay_hashes": {
+      "run-34429e95.json": "5d97f6a23d539385701ff333b0aaaea40d93f7cc856cf897478cfc7567af7fb9"
+    },
+    "drill_marker": 429,
+    "active_tasks": 0,
+    "queue_db_superuser": false,
+    "ledger": {
+      "sha256": "a527fb99bb0b4fb302e75194e4e02a09efb5871134a40bc84bd9a720c35e2a1c",
+      "admissions": 1,
+      "openings": 1,
+      "database_superuser": false
+    }
+  },
+  "identical_receipt_hashes": true,
+  "identical_replay_hashes": true
+}

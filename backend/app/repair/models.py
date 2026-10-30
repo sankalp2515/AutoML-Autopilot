@@ -67,6 +67,29 @@ class RepairWorker(Base):
     info: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
+class AdmissionLock(Base):
+    __tablename__ = "repair_admission_lock"
+    id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Reservation(Base):
+    __tablename__ = "repair_reservations"
+    task_id: Mapped[str] = mapped_column(ForeignKey("repair_tasks.id", ondelete="CASCADE"), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    created_at: Mapped[float] = mapped_column(Float, index=True)
+    dollars: Mapped[float] = mapped_column(Float)
+    tokens: Mapped[int] = mapped_column(Integer)
+
+
+class CreateKey(Base):
+    __tablename__ = "repair_create_keys"
+    tenant_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_digest: Mapped[str] = mapped_column(String(64))
+    task_id: Mapped[str] = mapped_column(ForeignKey("repair_tasks.id", ondelete="CASCADE"))
+
+
 # ── BE-23 accounts and teams ──────────────────────────────────────────────────
 class Account(Base):
     __tablename__ = "repair_accounts"

@@ -12,6 +12,7 @@ import asyncio
 import json
 import logging
 import threading
+import time
 
 from app.repair import contracts as c
 from app.repair.agent.llm import client_from_settings
@@ -78,6 +79,29 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
                 h.lost.set()
 
     persist_lock = asyncio.Lock()
+    saved_candidates=set()
+    saved_receipts=set()
+
+    async def checkpoint(run,final_ml=None,verdict=None):
+        async with persist_lock:
+            extra={"steps":[s.model_dump(mode="json") for s in run.steps],"stop_reason":run.stop_reason,
+                   "eligible":run.eligible,"diff_lines":run.diff_lines,"tokens":run.tokens,
+                   "skipped_files":run.skipped_files,
+                   "code_receipt":run.code_receipt.model_dump(mode="json") if run.code_receipt else None,
+                   "screen_receipt":run.screen_receipt.model_dump(mode="json") if run.screen_receipt else None}
+            cid=run.candidate.candidate_id
+            if cid not in saved_candidates:
+                await h.write(lambda le:svc.save_candidate(le,run.candidate,emit=False,extra=extra))
+                saved_candidates.add(cid)
+            else:
+                await h.write(lambda le:svc.checkpoint_candidate(le,run.candidate,extra))
+            for kind,receipt in [("code",run.code_receipt),("ml_screen",run.screen_receipt),("ml",final_ml),("combined",verdict)]:
+                if receipt is not None and (cid,kind) not in saved_receipts:
+                    await h.write(lambda le,r=receipt,k=kind:svc.save_receipt(le,r,emit=False,screen=k=="ml_screen"))
+                    saved_receipts.add((cid,kind))
+
+    def on_checkpoint(run,final_ml=None,verdict=None):
+        asyncio.run_coroutine_threadsafe(checkpoint(run,final_ml,verdict),loop).result(timeout=60)
 
     async def persist(ev: dict) -> None:
         typ = ev.get("type")
@@ -122,10 +146,17 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
         if llm is None:
             raise RuntimeError("no model provider configured")
         runner = make_runner()
+        from app.repair.sandbox.pinned import pinned
+        runner=pinned(runner,ecc)
         oracles = make_oracles(runner, GradeRef(task_id, row["ecc"], spec["snapshot_dir"], spec.get("sealed_ref")))
         contract = c.RepoContract.from_yaml(open(f"{spec['snapshot_dir']}/autopilot.yaml", encoding="utf-8").read())
+        deadline=time.monotonic()+ecc.limits.wall_seconds
+        def should_stop():
+            if time.monotonic()>deadline:raise TimeoutError("task wall-clock allowance exhausted")
+            return h.lost.is_set()
         agent = RepairAgent(runner, llm, oracles, base_dir=spec["snapshot_dir"], contract=contract, ecc=ecc,
-                            mode=spec.get("mode", "full"), on_event=on_event, should_stop=h.lost.is_set)
+                            mode=spec.get("mode", "full"), on_event=on_event, should_stop=should_stop,
+                            on_checkpoint=on_checkpoint)
         log.info("repair start task=%s mode=%s runner=%s", task_id, agent.report.mode, runner.name)
         report = await asyncio.to_thread(agent.run)
         log.info(json.dumps({"event": "repair.done", "task_id": task_id, "tenant": tenant,
@@ -134,18 +165,8 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
                              "candidates": len(report.candidates), "runner": report.runner, "image": report.image}))
 
         for run in report.candidates:
-            extra = {"steps": [s.model_dump(mode="json") for s in run.steps], "stop_reason": run.stop_reason,
-                     "eligible": run.eligible, "diff_lines": run.diff_lines, "tokens": run.tokens,
-                     "skipped_files": run.skipped_files,
-                     "screen_receipt": run.screen_receipt.model_dump(mode="json") if run.screen_receipt else None}
-            await h.write(lambda le, r=run, x=extra: svc.save_candidate(le, r.candidate, emit=False, extra=x))
-            if run.code_receipt:
-                await h.write(lambda le, r=run: svc.save_receipt(le, r.code_receipt, emit=False))
-            ml = report.final_ml_receipt if run.candidate.candidate_id == report.finalist else run.screen_receipt
-            if ml:
-                await h.write(lambda le, x=ml: svc.save_receipt(le, x, emit=False))
-        if report.verdict:
-            await h.write(lambda le: svc.save_receipt(le, report.verdict, emit=False))
+            await checkpoint(run,report.final_ml_receipt if run.candidate.candidate_id==report.finalist else None,
+                             report.verdict if run.candidate.candidate_id==report.finalist else None)
 
         await h.advance(S.SELECTING)
         dst = {c.Decision.VERIFIED: S.REVIEW_READY, c.Decision.REJECTED: S.REJECTED}.get(report.decision, S.INCONCLUSIVE)
@@ -156,6 +177,9 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
         h.status = dst
     except Cancelled:
         log.info("repair cancelled task=%s", task_id)
+    except asyncio.CancelledError:
+        h.lost.set()
+        raise
     except Conflict:
         log.info("repair lost authority task=%s", task_id)
     except Exception as e:  # noqa: BLE001 - every failure is recorded, never hidden

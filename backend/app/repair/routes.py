@@ -20,17 +20,19 @@ import asyncio
 
 import hashlib
 import json
+import httpx
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.repair import budgets
+from app.repair import budgets, admission, contracts as c
 from app.repair import accounts, delivery, github_app, ops, service, snapshots
 from app.autopilot.routes import autopilot_tenant  # noqa: F401 - re-exported for dependency overrides
 from app.repair.accounts import Actor, get_service
 from app.repair.intake import IntakeError
 from app.repair.sandbox.factory import make_runner
+from app.repair.sandbox.base import SandboxError
 from app.repair.security import UnsafeSource
 
 router = APIRouter(prefix="/api/v1/v5", tags=["repair"])
@@ -43,6 +45,8 @@ async def call(awaitable):
         raise HTTPException(404, str(exc)) from exc
     except service.Conflict as exc:
         raise HTTPException(409, str(exc)) from exc
+    except admission.AdmissionDenied as exc:
+        raise HTTPException(403,str(exc)) from exc
 
 
 async def blocking(fn, *a, **kw):
@@ -50,6 +54,8 @@ async def blocking(fn, *a, **kw):
         return await asyncio.to_thread(fn, *a, **kw)
     except (snapshots.StageError, IntakeError, UnsafeSource) as exc:
         raise HTTPException(422, str(exc)) from exc
+    except SandboxError as exc:
+        raise HTTPException(503,str(exc)) from exc
 
 
 # ── models ────────────────────────────────────────────────────────────────────
@@ -155,6 +161,14 @@ async def repo(repo_id: str, tenant=Depends(accounts.reader)):
     return await blocking(snapshots.describe, repo_id, tenant)
 
 
+@router.delete("/repos/{repo_id}",status_code=204)
+async def delete_repo(repo_id:str,tenant=Depends(accounts.writer),db=Depends(get_service)):
+    await blocking(snapshots.meta,repo_id,tenant)
+    if any(sp.get("staging_id")==repo_id for sp in await db.active_specs()):
+        raise HTTPException(409,"repository is referenced by an unfinished task")
+    await blocking(snapshots.delete_repo,repo_id,tenant)
+
+
 @router.put("/repos/{repo_id}/contract")
 async def save_contract(repo_id: str, body: SaveContract, tenant=Depends(accounts.writer)):
     return await blocking(snapshots.save_contract, repo_id, tenant, body.yaml, body.fail_to_pass)
@@ -176,7 +190,10 @@ async def create_pack(file: UploadFile = File(...), id_column: str = Form(...), 
 
 
 @router.delete("/packs/{pack_id}", status_code=204)
-async def delete_pack(pack_id: str, tenant=Depends(accounts.writer)):
+async def delete_pack(pack_id: str, tenant=Depends(accounts.writer),db=Depends(get_service)):
+    if snapshots.pack_owner(pack_id)!=tenant:raise HTTPException(404,"evaluation pack not found")
+    if any(sp.get("sealed_ref")=="pack:"+pack_id for sp in await db.active_specs()):
+        raise HTTPException(409,"evaluation pack is referenced by an unfinished task")
     await blocking(snapshots.delete_pack, pack_id, tenant)
 
 
@@ -188,7 +205,13 @@ async def budget_estimate(body: budgets.TaskBudget, tenant=Depends(accounts.writ
 
 # ── tasks ─────────────────────────────────────────────────────────────────────
 async def _create_task(db, tenant: str, repo_id: str, target: str, *, budget: dict, mode: str = "full",
-                       fail_to_pass: list[str] | None = None, pack_id: str | None = None, extra: dict | None = None, requested_budget: budgets.TaskBudget | None = None):
+                       fail_to_pass: list[str] | None = None, pack_id: str | None = None, extra: dict | None = None, requested_budget: budgets.TaskBudget | None = None,
+                       idempotency_key: str | None = None):
+    fingerprint=c.canonical_digest({"repo_id":repo_id,"target":target,"mode":mode,"fail_to_pass":fail_to_pass,
+        "pack_id":pack_id,"budget":requested_budget.model_dump() if requested_budget else None,"extra":extra})[7:]
+    if idempotency_key:
+        cached=await call(db.lookup_create_key(tenant,idempotency_key,fingerprint))
+        if cached:return await _register_task(db,tenant,cached)
     info = await blocking(snapshots.describe, repo_id, tenant)
     if fail_to_pass:
         await blocking(snapshots.save_contract, repo_id, tenant, info["contract_yaml"], fail_to_pass)
@@ -199,23 +222,63 @@ async def _create_task(db, tenant: str, repo_id: str, target: str, *, budget: di
             raise HTTPException(404, "evaluation pack not found")
         sealed = f"pack:{pack_id}"
     src = frozen["source"]
+    environment={}
+    if ops.settings.REPAIR_VERIFIER_URL:
+        runner=make_runner()
+        rc=frozen["contract"]
+        prepared=await blocking(runner.prepare,frozen["snapshot_dir"],python=rc.python,install=rc.install,timeout_s=900)
+        try:
+            method=getattr(runner,"environment_image",None)
+            image=method(prepared) if callable(method) else getattr(runner,"image",None)
+            if not image or not image.startswith("sha256:"):raise HTTPException(503,"dependency image digest unavailable")
+            environment={"image":image,"python":rc.python,"install_digest":c.canonical_digest(rc.install)}
+        finally:await asyncio.to_thread(runner.discard,prepared)
     spec = {"snapshot_dir": frozen["snapshot_dir"], "staging_id": repo_id, "sealed_ref": sealed,
+            "needs_verifier_admission":bool(ops.settings.REPAIR_VERIFIER_URL),
             "mode": mode, "sample": frozen["sample"], "source": src.get("kind"),
             "repo_name": src.get("url") or src.get("sample") or src.get("name"),
             "upstream_sha": frozen["upstream_sha"], "budget": budget, **(extra or {})}
-    return await call(db.create(tenant, contract=frozen["contract"], base_commit_sha=frozen["sha"],
-                                repo_snapshot_digest=frozen["digest"], target=target, spec=spec, limits=budgets.limits_for(requested_budget)))
+    task=await call(db.create(tenant, contract=frozen["contract"], base_commit_sha=frozen["sha"],
+                                repo_snapshot_digest=frozen["digest"], target=target, spec=spec, limits=budgets.limits_for(requested_budget),
+                                admission_policy=ops.reservation_policy(requested_budget),idempotency_key=idempotency_key,
+                                environment=environment,request_digest=fingerprint))
+    return await _register_task(db,tenant,task)
+
+
+async def _register_task(db,tenant,task):
+    row=await db.row(task["id"],tenant)
+    if row["spec"].get("needs_verifier_admission"):
+        if not ops.settings.REPAIR_ADMISSION_TOKEN:
+            raise HTTPException(503,"verifier admission is not configured; retry with the same Idempotency-Key")
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response=await client.post(ops.settings.REPAIR_VERIFIER_URL.rstrip("/")+"/v5/oracle/admit",
+                    headers={"Authorization":"Bearer "+ops.settings.REPAIR_ADMISSION_TOKEN},
+                    json={"task_id":task["id"],"ecc":row["ecc"],"snapshot_dir":row["spec"]["snapshot_dir"],
+                          "sealed_ref":row["spec"].get("sealed_ref")})
+            if response.status_code!=200:raise HTTPException(503,"verifier refused admission; task remains unqueued")
+        except httpx.HTTPError:
+            raise HTTPException(503,"verifier admission unavailable; retry with the same Idempotency-Key") from None
+        await call(db.mark_admitted(task["id"],tenant))
+    return await db.get(task["id"],tenant)
 
 
 @router.post("/tasks", status_code=201)
-async def create(body: CreateTask, actor: Actor = Depends(accounts.actor), db=Depends(get_service)):
+async def create(body: CreateTask, actor: Actor = Depends(accounts.actor), db=Depends(get_service),
+                 idempotency_key: str | None = Header(None,min_length=1,max_length=128)):
     actor.need("member")
+    source=await blocking(snapshots.meta,body.repo_id,actor.tenant)
+    if not source.get("sample") and not actor.account_id and not ops.settings.REPAIR_INVITE_CODES.strip():
+        raise HTTPException(403,"Sign in to repair your own repository, or ask the operator for invite access. Anonymous live runs are limited to samples.")
     try:
-        budget = await ops.admit_live_run(db, actor.tenant, body.invite_code, trusted=actor.account_id is not None)
+        budget = await ops.admit_live_run(db, actor.tenant, body.invite_code, trusted=actor.account_id is not None,
+                                         requested_budget=body.budget,skip_capacity=True)
     except ops.Denied as e:
         raise HTTPException(403, str(e)) from e
-    return await _create_task(db, actor.tenant, body.repo_id, body.target, budget=budget, mode=body.mode,
-                              fail_to_pass=body.fail_to_pass, pack_id=body.pack_id, requested_budget=body.budget)
+    async with admission.request_lock(actor.tenant,idempotency_key):
+        return await _create_task(db, actor.tenant, body.repo_id, body.target, budget=budget, mode=body.mode,
+                                  fail_to_pass=body.fail_to_pass, pack_id=body.pack_id, requested_budget=body.budget,
+                                  idempotency_key=idempotency_key)
 
 
 @router.get("/tasks")

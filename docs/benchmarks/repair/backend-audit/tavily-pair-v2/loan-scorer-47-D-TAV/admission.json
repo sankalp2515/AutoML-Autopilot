@@ -1,0 +1,63 @@
+{
+  "schema_version": "5.0",
+  "task_id": "6ed5398c-233d-4235-8fd1-902ac734fc43",
+  "created_at": "2026-10-30T08:39:15.656+00:00",
+  "base_commit_sha": "1c5afd905f70d6e2ad554f49edaf00627e21eee2",
+  "repo_snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+  "repo_contract_digest": "sha256:33085ac841c4f8ea463f51cd6ef8f63fe3a69971c1338206f575d297f56546c7",
+  "target": "Update preprocessing for the pinned scikit-learn API.",
+  "allowed_edit_roots": [
+    "scorer/",
+    "tests/"
+  ],
+  "immutable": [
+    "**/conftest.py",
+    ".github/",
+    "autopilot.yaml",
+    "conftest.py",
+    "data/",
+    "pyproject.toml",
+    "pytest.ini",
+    "requirements.txt",
+    "setup.cfg",
+    "tox.ini"
+  ],
+  "immutable_existing_tests": true,
+  "success": {
+    "task_type": "restore",
+    "metric": "roc_auc",
+    "fail_to_pass": [
+      "tests/test_service.py::test_service"
+    ],
+    "pass_to_pass": "all_existing",
+    "ml_invariants": [
+      "train_serve_parity",
+      "holdout_non_inferior"
+    ],
+    "non_inferiority_margin": 0.02,
+    "parity_tolerance": 1e-6
+  },
+  "dataset_digests": {},
+  "sealed_digest": null,
+  "environment": {
+    "image": "sha256:f0267bac6e74d2950704a16f7ff5e3621739d08dad5ae4d35efadb55289f4d6b",
+    "python": "3.12",
+    "install_digest": "sha256:f8647b9d5bca116c7c9f24b420493d30e78169ca9c55dd65ad47948f84be7e41"
+  },
+  "limits": {
+    "wall_seconds": 1800,
+    "sandbox_seconds": 900,
+    "max_candidates": 2,
+    "max_iterations": 8,
+    "max_tool_calls": 60,
+    "max_diff_lines": 200,
+    "model_tokens": {
+      "ultra": 12000,
+      "super": 160000,
+      "nano": 20000
+    },
+    "tavily_calls": 3
+  },
+  "approval_policy": "draft_pr_only",
+  "contract_digest": "sha256:c7a55f4a238d200b159ce564c852616557311228cac8462a263a96b266040cd9"
+}

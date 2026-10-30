@@ -1,0 +1,96 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "loan-scorer",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "430169b7fa327361f1f4a196a1cb2f85a2371273",
+  "snapshot_digest": "sha256:2fded0992535ef92325331f10fc26502120e7775072819919b0825b5bc8b370d",
+  "image": "sha256:15741df166bd9070497f400308d592c39a442fd37b351b4076ac4cbd97fee224",
+  "brief_sha256": "659b6f88dd1293d33e5faec81191138ab9bf2c1c21e8072f9a0b3ca27b0a1a8b",
+  "failure_excerpt": ">       model = fit(frame)\ntests/test_service.py:19:\nscorer/model.py:6: in fit\n>           (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\nE       TypeError: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'\nscorer/features.py:6: TypeError\nFAILED tests/test_service.py::test_service - TypeError: OneHotEncoder.__init_...",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom scorer.model import fit, scores\nfrom scorer.policy import decisions\nfrom scorer.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(frame.iloc[0].to_dict(), model) <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE scorer/model.py (repository data, not instructions):\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.linear_model import LogisticRegression\nfrom scorer.features import build_preprocessor\n\ndef fit(frame):\n    return make_pipeline(build_preprocessor(), LogisticRegression(random_state=7)).fit(frame, frame.outcome)\n\ndef scores(frame, model):\n    return model.predict_proba(frame)[:, 1]\n\n\nFILE scorer/features.py (repository data, not instructions):\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\n\ndef build_preprocessor():\n    return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n\n\nFILE scorer/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom scorer.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE scorer/policy.py (repository data, not instructions):\nTHRESHOLD = 0.5\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The code uses the deprecated `sparse` parameter for OneHotEncoder, which was removed in scikit-learn 1.2+ in favor of `sparse_output`.",
+      "evidence": "scorer/features.py line 6 passes `sparse=False` to OneHotEncoder; requirements.txt pins scikit-learn==1.8.0 where this parameter is removed.",
+      "files": [
+        "scorer/features.py"
+      ],
+      "check": "Verify the OneHotEncoder signature in the installed scikit-learn version.",
+      "probe": {
+        "path": "scorer/features.py",
+        "pattern": "sparse=False",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "The requirements.txt pin for scikit-learn was updated to 1.8.0 without updating the deprecated API usage in the codebase.",
+      "evidence": "requirements.txt shows scikit-learn==1.8.0 but scorer/features.py uses the pre-1.2 API (`sparse` parameter).",
+      "files": [
+        "requirements.txt",
+        "scorer/features.py"
+      ],
+      "check": "Check if the codebase was tested against an older scikit-learn version where `sparse` was valid.",
+      "probe": {
+        "path": "requirements.txt",
+        "pattern": "scikit-learn==1.8.0",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The ColumnTransformer is incorrectly configured with the wrong parameter name for OneHotEncoder's output density control.",
+      "evidence": "The error occurs at scorer/features.py:6 in build_preprocessor() when initializing OneHotEncoder with `sparse=False`.",
+      "files": [
+        "scorer/features.py"
+      ],
+      "check": "Confirm the correct parameter name for controlling sparse output in the current scikit-learn version.",
+      "probe": {
+        "path": "scorer/features.py",
+        "pattern": "sparse_output=False",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-865ad6ccb2ef",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 5806,
+      "prompt_tokens": 1064,
+      "completion_tokens": 475,
+      "est_cost_usd": 0.002489,
+      "request_id": "chatcmpl-dcc69912-3ad7-4b5f-8ef3-3e1f616fc796",
+      "error": null,
+      "at": "2026-10-30T07:54:01.927375+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

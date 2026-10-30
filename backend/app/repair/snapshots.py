@@ -16,6 +16,8 @@ import re
 import shutil
 import uuid
 import zipfile
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +26,7 @@ import yaml
 
 from app.config import settings
 from app.repair import contracts as c
-from app.repair.intake import IntakeError, git, intake_repository
+from app.repair.intake import IntakeError, git, intake_repository, verify_snapshot
 from app.repair.oracle.grading import fixtures_root, packs_root, snapshots_root
 from app.repair.security import check_repo_url, unpinned_requirements
 
@@ -59,7 +61,11 @@ def meta(sid: str, tenant: str) -> dict[str, Any]:
 
 
 def _save(sid: str, m: dict) -> None:
-    _meta_path(sid).write_text(json.dumps(m, indent=1), encoding="utf-8")
+    path=_meta_path(sid)
+    with tempfile.NamedTemporaryFile(mode="w",encoding="utf-8",dir=path.parent,delete=False) as stream:
+        json.dump(m,stream,indent=1);temporary=Path(stream.name)
+    try:os.replace(temporary,path)
+    finally:temporary.unlink(missing_ok=True)
 
 
 def _limits(repo: Path) -> None:
@@ -143,7 +149,7 @@ def samples() -> list[dict]:
     out = []
     root = fixtures_root()
     for d in sorted(root.iterdir()) if root.is_dir() else []:
-        if (d / "repo" / "autopilot.yaml").is_file() and (d / "sealed" / "manifest.yaml").is_file():
+        if (d / "repo" / "autopilot.yaml").is_file() and ((d / "sealed" / "manifest.yaml").is_file() or (d / "sample.json").is_file()):
             rc = c.RepoContract.from_yaml((d / "repo" / "autopilot.yaml").read_text(encoding="utf-8"))
             readme = (d / "repo" / "README.md").read_text(encoding="utf-8").strip().splitlines() if (d / "repo" / "README.md").is_file() else []
             task = (d / "TASK.txt").read_text(encoding="utf-8").strip() if (d / "TASK.txt").is_file() else \
@@ -312,12 +318,14 @@ def freeze(sid: str, tenant: str) -> dict:
     if errs:
         raise StageError("; ".join(errs))
     dest = snapshots_root() / f"{sid}-{m['sha'][:12]}"
-    digests = m.setdefault("snapshot_digests", {})
     if not dest.exists():
         snapshots_root().mkdir(parents=True, exist_ok=True)
-        digests[m["sha"]] = intake_repository(str(repo), m["sha"], dest).digest
-        _save(sid, m)
-    digest = digests[m["sha"]]
+        try:intake_repository(str(repo), m["sha"], dest)
+        except (IntakeError,OSError):
+            if not dest.is_dir():raise
+            # Another request may have completed the same immutable snapshot.
+    digest=verify_snapshot(dest,m["sha"])
+    os.utime(dest,None)  # A new task refreshes retention without changing admitted bytes.
     rc = c.RepoContract.from_yaml((dest / "autopilot.yaml").read_text(encoding="utf-8"))
     if not rc.task.fail_to_pass and not rc.task.ml_invariants:
         raise StageError("pick at least one failing test (task.fail_to_pass), or declare ML invariants "
@@ -365,3 +373,10 @@ def delete_pack(pid: str, tenant: str) -> None:
     if pack_owner(pid) != tenant:
         raise StageError("unknown evaluation pack")
     shutil.rmtree(packs_root() / pid, ignore_errors=True)
+
+
+def delete_repo(sid,tenant):
+    meta(sid,tenant)
+    path=staging_root()/sid
+    if path.is_symlink() or path.resolve().parent!=staging_root().resolve():raise StageError("invalid staged repository")
+    shutil.rmtree(path)

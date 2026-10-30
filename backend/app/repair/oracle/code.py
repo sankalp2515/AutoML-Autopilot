@@ -160,8 +160,11 @@ def verify(runner: SandboxRunner, *, base_dir: str, contract: RepoContract, ecc:
 def _sealed(runner: SandboxRunner, env: str, contract: RepoContract, sealed: Path, m: SealedManifest):
     """Sealed tests run against the candidate after the oracle builds its own artifacts.
     Only test files are uploaded; labels never are."""
-    if not os.environ.get("PYTEST_CURRENT_TEST"):
-        return cm.check("sealed_tests", INCON, "legacy in-process sealed pytest is disabled in production; use verifier-owned prediction probes")
+    if runner is None or sealed is None or m is None:
+        return cm.check("sealed_tests",INCON,"legacy in-process sealed pytest is disabled; configure the external artifact protocol")
+    if runner.isolated or not os.environ.get("PYTEST_CURRENT_TEST"):
+        from app.repair.oracle.external import sealed_tests
+        return sealed_tests(runner,env,contract,sealed,m)
     ph = cm.placeholders(contract)
     for kind in ("train", "predict"):
         cmd = getattr(contract.commands, kind)

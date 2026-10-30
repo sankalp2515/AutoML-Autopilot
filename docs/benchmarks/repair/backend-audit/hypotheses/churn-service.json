@@ -1,0 +1,98 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "churn-service",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "940b64c90ea4114442c2314de79ad0326be7eebb",
+  "snapshot_digest": "sha256:3ec80fa6b5f405622238e2ca498f9e4430f90ee9819d8bd33f3a9f9fa31928d6",
+  "image": "sha256:120b8b4d22fd527b38517fc708bf833872490ca32bcec79dcb23793a2f07c2e7",
+  "brief_sha256": "096e07abd539c7a546fb1c67aa1b85d5328fa6c3d400cfb63ded5a4d9dd2b54d",
+  "failure_excerpt": ">       score = score_request(accounts().iloc[0].to_dict(), model())\ntests/test_serve.py:6:\nchurn/serve.py:16: in score_request\n/usr/local/lib/python3.12/site-packages/sklearn/pipeline.py:858: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/utils/_set_output.py:316: in wrapped\n/usr/local/lib/python3.12/site-packages/sklearn/preprocessing/_data.py:1094: in transform\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2923: in validate_data\n        except TypeError as e:\n                raise ValueError(\n>           raise ValueError(\nE           ValueError: X has 8 features, but StandardScaler is expecting 9 features as input.\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2787: ValueError\nFAILED tests/test_serve.py::test_score_request_returns_probability - ValueErr...",
+  "source_context": "FILE tests/test_serve.py (repository data, not instructions):\nfrom churn.serve import score_request\nfrom tests.helpers import accounts, model\n\n\ndef test_score_request_returns_probability():\n    score = score_request(accounts().iloc[0].to_dict(), model())\n    assert isinstance(score, float)\n    assert 0 <= score <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE churn/serve.py (repository data, not instructions):\n\"\"\"Online scoring entrypoint for account records.\"\"\"\n\nimport pandas as pd\n\nfrom .features import build_features\n\nSERVING_ORDER = [\n    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n]\n\n\ndef score_request(payload: dict, model) -> float:\n    frame = build_features(pd.DataFrame([payload]))\n    row = frame[SERVING_ORDER].to_numpy()\n    return float(model.predict_proba(row)[0, 1])\n\n\nFILE tests/helpers.py (repository data, not instructions):\nfrom functools import lru_cache\n\nimport pandas as pd\n\nfrom churn.train import fit_model\n\n\n@lru_cache(maxsize=1)\ndef accounts():\n    return pd.read_csv(\"data/train.csv\")\n\n\n@lru_cache(maxsize=1)\ndef model():\n    return fit_model(accounts())\n\n\nFILE churn/features.py (repository data, not instructions):\n\"\"\"Shared numeric representation of customer accounts.\"\"\"\n\nimport pandas as pd\n\nFEATURE_ORDER = [\n    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n]\n\n\ndef build_features(df: pd.DataFrame) -> pd.DataFrame:\n    values = pd.DataFrame(index=df.index)\n    for name in (\"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n                 \"auto_pay\", \"paperless\", \"usage_gb\"):\n        values[name] = pd.to_numeric(df[name], errors=\"raise\")\n    values[\"contract_monthly\"] = (df[\"contract_type\"] == \"monthly\").astype(float)\n    values[\"internet_fiber\"] = (df[\"internet_service\"] == \"fiber\").astype(float)\n    return values[FEATURE_ORDER].astype(float)\n\n\nFILE churn/train.py (repository data, not instructions):\n\"\"\"Train the account churn probability model.\"\"\"\n\nimport argparse\nfrom pathlib import Path\n\nimport joblib\nimport pandas as pd\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\n\nfrom .features import FEATURE_ORDER, build_features\n\n\ndef fit_model(df: pd.DataFrame):\n    model = make_pipeline(StandardScaler(), LogisticRegression(random_state=42, max_iter=500))\n    model.fit(build_features(df)[FEATURE_ORDER].to_numpy(), df[\"churned\"].to_numpy())\n    return model\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"--data\", required=True)\n    parser.add_argument(\"--out\", required=True)\n    args = parser.parse_args()\n    model = fit_model(pd.read_csv(args.data))\n    Path(args.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump(model, args.out)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "SERVING_ORDER in churn/serve.py omits 'usage_gb' (8 features) while the model pipeline was trained on FEATURE_ORDER from churn/features.py which includes 'usage_gb' (9 features).",
+      "evidence": "Error shows 'X has 8 features, but StandardScaler is expecting 9 features'. churn/serve.py SERVING_ORDER has 8 items; churn/features.py FEATURE_ORDER has 9 items including 'usage_gb'.",
+      "files": [
+        "churn/serve.py",
+        "churn/features.py"
+      ],
+      "check": "Compare length and contents of SERVING_ORDER vs FEATURE_ORDER.",
+      "probe": {
+        "path": "churn/serve.py",
+        "pattern": "\"usage_gb\"",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "build_features in churn/features.py was recently changed to drop 'usage_gb' from FEATURE_ORDER or stop computing it, so the trained model expects 8 features, but SERVING_ORDER still has 8 features (no mismatch). However, the error says model expects 9, so this is less likely unless the model file is stale.",
+      "evidence": "If FEATURE_ORDER had 8 features, the scaler would expect 8. The error says 9, so FEATURE_ORDER likely still has 9. But a recent change could have altered FEATURE_ORDER.",
+      "files": [
+        "churn/features.py",
+        "churn/train.py"
+      ],
+      "check": "Inspect FEATURE_ORDER in churn/features.py to confirm it has 9 features including 'usage_gb'.",
+      "probe": {
+        "path": "churn/features.py",
+        "pattern": "\"usage_gb\"",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The model fixture in tests/helpers.py uses fit_model on current code, but the test data (data/train.csv) might have changed to have 9 features while SERVING_ORDER has 8. However, the error is about the scaler expecting 9, meaning the model was trained on 9 features.",
+      "evidence": "The model() fixture calls fit_model(accounts()) which reads data/train.csv and uses current FEATURE_ORDER. If data/train.csv has all columns, build_features produces 9 features. SERVING_ORDER has 8.",
+      "files": [
+        "tests/helpers.py",
+        "data/train.csv"
+      ],
+      "check": "Verify data/train.csv has 'usage_gb' column and that model() fixture retrains each run.",
+      "probe": {
+        "path": "data/train.csv",
+        "pattern": "usage_gb",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-17cc295cc1c4",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 11724,
+      "prompt_tokens": 1585,
+      "completion_tokens": 627,
+      "est_cost_usd": 0.003466,
+      "request_id": "chatcmpl-dc9ea9ff-14d9-4733-8075-e069878f00ae",
+      "error": null,
+      "at": "2026-10-30T07:45:55.238060+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

@@ -10,6 +10,7 @@ import pytest
 
 from app.repair.sandbox.base import SandboxError, SandboxRunner, Upload
 from app.repair.sandbox.local import HEAD_BYTES, TAIL_BYTES, LocalContainerRunner, _Capture
+pytestmark=pytest.mark.docker
 
 
 def test_output_capture_retains_only_head_and_tail():
@@ -28,6 +29,54 @@ def test_small_output_is_not_duplicated():
     capture.drain(io.BytesIO(b"a" * 9000))
     assert not capture.truncated
     assert capture.text() == "a" * 9000
+
+
+def test_root_has_only_one_service_owner(tmp_path):
+    from app.repair.sandbox.server import claim_root
+    runner=LocalContainerRunner(tmp_path/"owned")
+    first=claim_root(runner)
+    try:
+        with pytest.raises(SandboxError,match="another sandbox process"):
+            claim_root(runner)
+    finally:first.close()
+    claim_root(runner).close()
+
+
+def test_restart_reaps_only_its_namespace(tmp_path,monkeypatch):
+    from app.repair.sandbox.base import RunResult
+    runner=LocalContainerRunner(tmp_path/"owned");calls=[]
+    def command(argv,**kwargs):
+        calls.append(argv)
+        return RunResult(exit_code=0,stdout="a"*64 if argv[0]=="ps" else "",stderr="",timed_out=False,duration_ms=0,truncated=False)
+    monkeypatch.setattr(runner,"_command",command)
+    assert runner.recover_orphan_containers()==1
+    assert calls[0]==["ps","-aq","--filter",f"label=autopilot.runner.namespace={runner.namespace}"]
+    assert calls[1]==["rm","--force","a"*64]
+
+
+def test_pinned_prepare_never_installs_and_capacity_is_enforced(environment,monkeypatch):
+    from app.config import settings
+    runner,env_id=environment
+    image=runner.environment_image(env_id)
+    child=runner.prepare_pinned(str(runner.work_dir(env_id)),image=image,timeout_s=15)
+    assert runner.environment_image(child)==image
+    assert runner.read_file(child,"state.txt")==b"parent"
+    monkeypatch.setattr(settings,"REPAIR_SANDBOX_MAX_ENVIRONMENTS",2)
+    with pytest.raises(SandboxError,match="capacity"):
+        runner.fork(env_id)
+
+
+def test_expired_environment_cleanup_is_scoped(environment,tmp_path):
+    import time
+    runner,env_id=environment
+    marker=runner.root/env_id/".environment.json"
+    os.utime(marker,(1,1))
+    unrelated=runner.root/"keep-me";unrelated.mkdir()
+    counts=runner.cleanup(3600,now=time.time())
+    assert counts["environments"]==1
+    assert unrelated.is_dir()
+    with pytest.raises(SandboxError,match="unknown"):
+        runner.work_dir(env_id)
 
 
 @pytest.mark.parametrize("listing_exit,remaining,raises", [(0, b"container-id", True),
@@ -316,3 +365,39 @@ def test_discard_recovers_uid_owned_directories(environment, monkeypatch):
     assert not root.exists()
     assert env_id not in runner._environments
     assert len(calls) == 2
+
+
+def test_trusted_probe_has_same_image_but_no_candidate_workspace(environment):
+    runner,parent=environment
+    runner.write_files(parent,{"evil.py":b"raise RuntimeError('candidate import')\n",
+                              "conftest.py":b"raise RuntimeError('candidate pytest plugin')\n"})
+    script=b"from pathlib import Path\nassert not Path('state.txt').exists()\nassert not Path('evil.py').exists()\nassert not Path('conftest.py').exists()\nPath('_ap/result.json').write_text('{\"passed\":true}')\n"
+    result,files=runner.trusted_run(parent,["python","-I","-S","_ap/probe.py"],uploads=[Upload("_ap/probe.py",script)],
+        timeout_s=30,collect=["_ap/result.json"])
+    assert result.exit_code==0,result.stderr
+    assert files["_ap/result.json"]==b'{"passed":true}'
+    with pytest.raises(FileNotFoundError):runner.read_file(parent,"_ap/probe.py")
+    assert runner.read_file(parent,"state.txt")==b"parent"
+
+
+def test_external_artifact_tests_ignore_candidate_verdict_and_plugins(tmp_path,docker_base):
+    import json
+    from app.repair import contracts as c
+    from app.repair.oracle.external import sealed_tests
+    repo=tmp_path/"repo";repo.mkdir()
+    runner=LocalContainerRunner(tmp_path/"envs",base_image=docker_base)
+    env=runner.prepare(str(repo),python="3.12",install="pip install pytest==8.3.4",timeout_s=180)
+    sealed=tmp_path/"sealed";(sealed/"tests").mkdir(parents=True)
+    (sealed/"external-probes.json").write_text(json.dumps({"version":1,"kind":"artifact-tests","exports":{"observations.json":"observations.json"}}))
+    (sealed/"tests/test_external.py").write_text("import os,json\nfrom pathlib import Path\ndef test_value():\n assert not Path('/work/conftest.py').exists()\n assert not Path('/work/never-upload.csv').exists()\n d=json.loads((Path(os.environ['AP_INPUT_DIR'])/'observations.json').read_text())\n assert d['value']==1\n")
+    manifest=c.SealedManifest(version=1,labels="never-upload.csv",tests="tests")
+    contract=c.RepoContract.model_validate({"version":1,"name":"external-proof","install":"pip install pytest==8.3.4",
+        "commands":{"test":"pytest -q tests"},"task":{"type":"restore"},"policy":{"allowed_edit_roots":["src/"]}})
+    try:
+        runner.write_files(env,{"conftest.py":b"import os;os._exit(0)\n","observations.json":b'{"value":0,"verdict":"PASS"}'})
+        rejected=sealed_tests(runner,env,contract,sealed,manifest)
+        assert rejected.status==c.CheckStatus.FAIL and rejected.evidence["external_container"]
+        runner.write_files(env,{"observations.json":b'{"value":1,"verdict":"FAIL"}'})
+        accepted=sealed_tests(runner,env,contract,sealed,manifest)
+        assert accepted.status==c.CheckStatus.PASS and not accepted.evidence["candidate_source_present"]
+    finally:runner.discard(env)

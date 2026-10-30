@@ -1,0 +1,18 @@
+{
+  "replay_id": "run-34429e95",
+  "new_model_calls": 0,
+  "tasks": 0,
+  "receipt_hashes": {},
+  "replay_hashes": {
+    "run-34429e95.json": "5d97f6a23d539385701ff333b0aaaea40d93f7cc856cf897478cfc7567af7fb9"
+  },
+  "drill_marker": 429,
+  "active_tasks": 0,
+  "queue_db_superuser": false,
+  "ledger": {
+    "sha256": "a527fb99bb0b4fb302e75194e4e02a09efb5871134a40bc84bd9a720c35e2a1c",
+    "admissions": 1,
+    "openings": 1,
+    "database_superuser": false
+  }
+}

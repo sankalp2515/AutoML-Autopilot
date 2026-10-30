@@ -20,10 +20,20 @@ import tempfile
 import threading
 import time
 import uuid
+from weakref import WeakValueDictionary
 
 from .base import RunResult, SandboxError, Upload
 
 HEAD_BYTES, TAIL_BYTES = 4096, 12288
+_IMAGE_LOCKS=WeakValueDictionary()
+_IMAGE_LOCK_GUARD=threading.Lock()
+
+
+def _image_lock(key):
+    with _IMAGE_LOCK_GUARD:
+        lock=_IMAGE_LOCKS.get(key)
+        if lock is None:lock=threading.RLock();_IMAGE_LOCKS[key]=lock
+        return lock
 
 
 class _Capture:
@@ -157,8 +167,26 @@ class LocalContainerRunner:
         self.root.chmod(0o700)
         self.docker = docker
         self.base_image = base_image
+        self.namespace=hashlib.sha256(str(self.root).encode()).hexdigest()[:12]
         self._environments: dict[str, _Environment] = {}
         self._guard = threading.RLock()
+        from app.config import settings
+        self._execution_slots=threading.BoundedSemaphore(max(1,settings.REPAIR_SANDBOX_MAX_CONCURRENT))
+
+    def recover_orphan_containers(self):
+        result=self._command(["ps","-aq","--filter",f"label=autopilot.runner.namespace={self.namespace}"],timeout_s=15)
+        if result.exit_code:raise SandboxError("cannot inspect previous sandbox containers")
+        identifiers=result.stdout.split()
+        if any(not re.fullmatch(r"[0-9a-f]{12,64}",ident) for ident in identifiers):raise SandboxError("invalid daemon container inventory")
+        if identifiers:
+            removed=self._command(["rm","--force",*identifiers],timeout_s=30)
+            if removed.exit_code:raise SandboxError("cannot stop orphan sandbox containers")
+        return len(identifiers)
+
+    def _capacity(self):
+        from app.config import settings
+        if sum(1 for p in self.root.iterdir() if p.is_dir() and re.fullmatch(r"[0-9a-f]{32}",p.name))>=settings.REPAIR_SANDBOX_MAX_ENVIRONMENTS:
+            raise SandboxError("sandbox environment capacity reached; retry after cleanup")
 
     def _environment(self, env_id: str) -> _Environment:
         with self._guard:
@@ -222,6 +250,7 @@ class LocalContainerRunner:
                          runner=self.name)
 
     def prepare(self, repo_dir: str, *, python: str, install: str, timeout_s: int) -> str:
+        self._capacity()
         if not re.fullmatch(r"3\.\d{1,2}", python):
             raise SandboxError("unsupported Python version")
         try:
@@ -235,38 +264,70 @@ class LocalContainerRunner:
             raise SandboxError("timeout must be positive")
         env_id = uuid.uuid4().hex
         environment = _Environment(self.root / env_id, "", threading.RLock())
-        environment.root.mkdir(mode=0o700)
+        with self._guard:
+            self._capacity()
+            environment.root.mkdir(mode=0o700)
         try:
             work = environment.root / "work"
             _copy_tree(Path(repo_dir).absolute(), work)
+            from .install_policy import install_argv as checked_install
+            install_argv,index=checked_install(work,install)
             out = environment.root / "out"
             out.mkdir(mode=0o777)
             out.chmod(0o777)
             base = self.base_image or f"python:{python}-slim"
+            resolved=self._command(["image","inspect",base,"--format","{{.Id}}"],timeout_s=15)
+            if resolved.exit_code:
+                pulled=self._command(["pull",base],timeout_s=timeout_s)
+                if pulled.exit_code:raise SandboxError("cannot obtain the configured Python base image")
+                resolved=self._command(["image","inspect",base,"--format","{{.Id}}"],timeout_s=15)
+            base_digest=resolved.stdout.strip()
+            if not base_digest.startswith("sha256:"):raise SandboxError("base image content digest unavailable")
+            # BuildKit treats a bare config id in FROM as a registry image name.
+            base_ref="automl-python-base:"+base_digest.split(":",1)[1]
+            tagged=self._command(["image","tag",base_digest,base_ref],timeout_s=15)
+            if tagged.exit_code:raise SandboxError("cannot pin the prepared Python base")
             key = hashlib.sha256(json.dumps([_snapshot_digest(work), python, install, base,
-                                             "local-runner-v2"], separators=(",", ":")).encode()).hexdigest()
-            image = f"automl-repair:{key}"
-            inspected = self._command(["image", "inspect", image, "--format", "{{.Id}}"], timeout_s=15)
-            if inspected.exit_code != 0:
-                # Build context is platform-created; a repository Dockerfile or
-                # .dockerignore can neither inject instructions nor hide inputs.
-                with tempfile.TemporaryDirectory(prefix="build-", dir=self.root) as build_root:
-                    build = Path(build_root)
-                    _copy_tree(work, build / "repo")
-                    recipe = (
-                        f"FROM {base}\nUSER 0\nWORKDIR /build\nCOPY repo/ /build/\n"
-                        f"RUN {json.dumps(install_argv)}\n"
-                        'RUN ["python", "-I", "-S", "-c", "import shutil; shutil.rmtree(\'/build\')"]\n'
-                        "WORKDIR /work\nUSER 10001\n"
-                    )
-                    (build / "Dockerfile").write_text(recipe, encoding="utf-8")
-                    built = self._command(["build", "--tag", image, "--file", str(build / "Dockerfile"),
-                                           str(build)], timeout_s=timeout_s)
-                    if built.exit_code != 0:
-                        raise SandboxError(f"dependency image preparation failed: {built.stderr[-2000:]}")
-            environment.image = image
-            ident = self._command(["image", "inspect", image, "--format", "{{.Id}}"], timeout_s=15)
-            self.image = (ident.stdout or "").strip() or image     # content digest, recorded in the report
+                                             base_digest,index,"local-runner-v5"], separators=(",", ":")).encode()).hexdigest()
+            image = f"automl-repair-{self.namespace}:{key}"
+            with _image_lock(key):
+                inspected = self._command(["image", "inspect", image, "--format", "{{.Id}}"], timeout_s=15)
+                if inspected.exit_code != 0:
+                    # Build context is platform-created; a repository Dockerfile or
+                    # .dockerignore can neither inject instructions nor hide inputs.
+                    with tempfile.TemporaryDirectory(prefix="build-", dir=self.root) as build_root:
+                        build = Path(build_root)
+                        # Installer policy forbids local source installs. Copy only the
+                        # pinned requirements, so private source/data never enters an image layer.
+                        (build/"repo").mkdir()
+                        tokens=shlex.split(install)
+                        flag=next((f for f in ("-r","--requirement") if f in tokens),None)
+                        if flag:
+                            name=tokens[tokens.index(flag)+1]
+                            destination=build/"repo"/name;destination.parent.mkdir(parents=True,exist_ok=True)
+                            shutil.copyfile(_path(work,name),destination)
+                        else:(build/"repo/.empty").write_bytes(b"")
+                        recipe = (
+                            f"FROM {base_ref}\nUSER 0\nWORKDIR /build\nCOPY repo/ /build/\n"
+                            "ENV PIP_CONFIG_FILE=/dev/null\n"
+                            f"RUN {json.dumps(install_argv)}\n"
+                            'RUN ["python", "-I", "-S", "-c", "import shutil; shutil.rmtree(\'/build\')"]\n'
+                            f'LABEL autopilot.repair.key="{key}"\n'
+                            "WORKDIR /work\nUSER 10001\n"
+                        )
+                        (build / "Dockerfile").write_text(recipe, encoding="utf-8")
+                        built = self._command(["build", "--pull=false", "--tag", image, "--file", str(build / "Dockerfile"),
+                                               str(build)], timeout_s=timeout_s)
+                        if built.exit_code != 0:
+                            raise SandboxError(f"dependency image preparation failed: {built.stderr[-2000:]}")
+                ident = self._command(["image", "inspect", image, "--format", "{{.Id}}"], timeout_s=15)
+                resolved_image = (ident.stdout or "").strip()
+                if not resolved_image.startswith("sha256:"):raise SandboxError("dependency image digest unavailable")
+                self.image = resolved_image
+                environment.image = resolved_image  # Run by immutable content id, never by a mutable tag.
+                (environment.root/".environment.json").write_text(json.dumps({"image":resolved_image,"tag":image}))
+                usage=self.root/".image-usage";usage.mkdir(exist_ok=True)
+                (usage/key).write_text(image)
             with self._guard:
                 self._environments[env_id] = environment
             return env_id
@@ -274,21 +335,108 @@ class LocalContainerRunner:
             self._remove(environment.root)
             raise
 
+    def environment_image(self,env_id):
+        return self._environment(env_id).image
+
+    def prepare_pinned(self,repo_dir,*,image,timeout_s):
+        """Prepare from an already admitted image; never resolve tags or install again."""
+        self._capacity()
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}",image):raise SandboxError("invalid admitted image id")
+        found=self._command(["image","inspect",image,"--format","{{.Id}}"],timeout_s=min(15,timeout_s))
+        if found.exit_code or found.stdout.strip()!=image:raise SandboxError("admitted dependency image unavailable; restore it or create a new task")
+        ident=uuid.uuid4().hex
+        environment=_Environment(self.root/ident,image,threading.RLock())
+        with self._guard:
+            self._capacity()
+            environment.root.mkdir(mode=0o700)
+        try:
+            _copy_tree(Path(repo_dir).absolute(),environment.root/"work")
+            (environment.root/"out").mkdir(mode=0o777);(environment.root/"out").chmod(0o777)
+            (environment.root/".environment.json").write_text(json.dumps({"image":image}))
+            with self._guard:self._environments[ident]=environment
+            self.image=image
+            return ident
+        except Exception:
+            self._remove(environment.root);raise
+
+    def cleanup(self,ttl_s,*,now=None):
+        """Only this runner namespace; no global prune or arbitrary directory deletion."""
+        cutoff=(time.time() if now is None else now)-ttl_s
+        removed={"environments":0,"image_tags":0}
+        with self._guard:
+            active_roots={e.root for e in self._environments.values()}
+            active_images={e.image for e in self._environments.values()}
+        for folder in self.root.iterdir():
+            marker=folder/".environment.json"
+            if folder.is_symlink() or not re.fullmatch(r"[0-9a-f]{32}",folder.name):continue
+            if marker.is_file() and marker.stat().st_mtime<cutoff:
+                if folder in active_roots:
+                    environment=self._environments.get(folder.name)
+                    if environment is None or not environment.lock.acquire(blocking=False):continue
+                    try:self.discard(folder.name)
+                    finally:environment.lock.release()
+                else:self._remove(folder)
+                removed["environments"]+=1
+        with self._guard:active_images={e.image for e in self._environments.values()}
+        for marker in (self.root/".image-usage").glob("*"):
+            if marker.is_symlink() or not re.fullmatch(r"[0-9a-f]{64}",marker.name):continue
+            with _image_lock(marker.name):
+                if marker.stat().st_mtime>=cutoff:continue
+                tag=marker.read_text().strip()
+                if tag!=f"automl-repair-{self.namespace}:{marker.name}":continue
+                found=self._command(["image","inspect",tag,"--format","{{.Id}}"],timeout_s=15)
+                if found.stdout.strip() in active_images:continue
+                result=self._command(["image","rm",tag],timeout_s=15)
+                if result.exit_code==0 or found.exit_code:
+                    marker.unlink(missing_ok=True);removed["image_tags"]+=1
+        return removed
+
     def fork(self, env_id: str) -> str:
+        self._capacity()
         parent = self._environment(env_id)
         with parent.lock:
             child_id = uuid.uuid4().hex
             child = _Environment(self.root / child_id, parent.image, threading.RLock())
             try:
-                child.root.mkdir(mode=0o700)
+                with self._guard:
+                    self._capacity()
+                    child.root.mkdir(mode=0o700)
                 _copy_tree(parent.root / "work", child.root / "work")
                 _copy_tree(parent.root / "out", child.root / "out")
+                marker=parent.root/".environment.json"
+                if marker.is_file():(child.root/".environment.json").write_bytes(marker.read_bytes())
                 with self._guard:
                     self._environments[child_id] = child
                 return child_id
             except Exception:
                 self._remove(child.root)
                 raise
+
+    def trusted_run(self,env_id,argv,*,uploads,timeout_s,collect=None,env=None):
+        """Verifier capability: same immutable image, EMPTY workspace, no candidate files.
+
+        Only explicit trusted scripts and data cross this boundary. In particular,
+        never copy candidate source, pickles, pytest config or batch work state.
+        """
+        self._capacity()
+        parent=self._environment(env_id)
+        ident=uuid.uuid4().hex
+        child=_Environment(self.root/ident,parent.image,threading.RLock())
+        with self._guard:
+            self._capacity()
+            child.root.mkdir(mode=0o700)
+        (child.root/".environment.json").write_text(json.dumps({"image":parent.image,"trusted":True}))
+        for name in ("work","out"):
+            (child.root/name).mkdir(mode=0o777);(child.root/name).chmod(0o777)
+        with self._guard:self._environments[ident]=child
+        try:
+            result=self.run(ident,argv,uploads=uploads,timeout_s=timeout_s,collect=collect,
+                            env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD":"1",**(env or {})})
+            files={name:self.read_file(ident,name,max_bytes=2_000_001) for name in collect or []
+                   if name in result.artifacts}
+            if any(len(raw)>2_000_000 for raw in files.values()):raise SandboxError("trusted output too large")
+            return result,files
+        finally:self.discard(ident)
 
     def write_files(self, env_id: str, files: dict[str, bytes | None]) -> None:
         environment = self._environment(env_id)
@@ -343,6 +491,13 @@ class LocalContainerRunner:
 
     def run(self, env_id: str, argv: list[str], *, timeout_s: int, uploads: list[Upload] | None = None,
             collect: list[str] | None = None, env: dict[str, str] | None = None) -> RunResult:
+        if not self._execution_slots.acquire(timeout=min(max(timeout_s,0),30)):
+            raise SandboxError("sandbox execution capacity busy; retry later")
+        try:return self._run(env_id,argv,timeout_s=timeout_s,uploads=uploads,collect=collect,env=env)
+        finally:self._execution_slots.release()
+
+    def _run(self, env_id: str, argv: list[str], *, timeout_s: int, uploads: list[Upload] | None = None,
+            collect: list[str] | None = None, env: dict[str, str] | None = None) -> RunResult:
         environment = self._environment(env_id)
         if not argv or not all(isinstance(arg, str) and "\x00" not in arg for arg in argv) or timeout_s <= 0:
             raise SandboxError("run requires a nonempty argv and positive timeout")
@@ -350,10 +505,13 @@ class LocalContainerRunner:
                        for key, value in env.items()):
             raise SandboxError("invalid execution environment")
         with environment.lock:
+            marker=environment.root/".environment.json"
+            if marker.is_file():marker.touch()
             self.write_files(env_id, {upload.dest: upload.content for upload in uploads or []})
             name = f"ap-repair-{uuid.uuid4().hex}"
             cidfile = environment.root / f"{name}.cid"
             command = ["run", "--rm", "--pull", "never", "--name", name, "--cidfile", str(cidfile),
+                       "--label",f"autopilot.runner.namespace={self.namespace}","--label",f"autopilot.environment={env_id}",
                        "--network", "none", "--user", "10001",
                        "--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=256m", "--cap-drop", "ALL",
                        "--security-opt", "no-new-privileges", "--pids-limit", "256", "--memory", "2g",

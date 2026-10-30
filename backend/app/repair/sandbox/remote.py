@@ -34,6 +34,7 @@ class RemoteRunner:
         self.base_url, self.token, self.timeout_s = base_url.rstrip("/"), token, timeout_s
         self._transport = transport
         self.name = "sandbox-service"
+        self._images={}
 
     def _post(self, endpoint: str, **body):
         try:
@@ -58,7 +59,15 @@ class RemoteRunner:
                          install=install, timeout_s=timeout_s)
         self.name = res.get("runner", self.name)
         self.image = res.get("image")
+        self._images[res["env_id"]]=self.image
         return res["env_id"]
+
+    def environment_image(self,env_id):return self._images[env_id]
+
+    def prepare_pinned(self,repo_dir,*,image,timeout_s):
+        response=self._post("/prepare-pinned",archive=base64.b64encode(tar_dir(repo_dir)).decode(),image=image,timeout_s=timeout_s)
+        self.image=response["image"];self._images[response["env_id"]]=self.image
+        return response["env_id"]
 
     def fork(self, env_id: str) -> str:
         return self._post("/fork", env_id=env_id)["env_id"]
@@ -81,3 +90,12 @@ class RemoteRunner:
             self._post("/discard", env_id=env_id)
         except SandboxError:
             pass
+
+    def trusted_run(self,env_id,argv,*,uploads,timeout_s,collect=None,env=None):
+        from app.config import settings
+        if not settings.REPAIR_TRUSTED_SANDBOX_TOKEN:raise SandboxError("trusted evaluator capability not configured")
+        verifier=RemoteRunner(self.base_url,settings.REPAIR_TRUSTED_SANDBOX_TOKEN,
+                              timeout_s=self.timeout_s,transport=self._transport)
+        response=verifier._post("/trusted-run",env_id=env_id,argv=argv,timeout_s=timeout_s,
+            collect=collect or [],env=env or {},uploads=[{"dest":u.dest,"content":base64.b64encode(u.content).decode()} for u in uploads])
+        return RunResult(**response["result"]),{k:base64.b64decode(v) for k,v in response["files"].items()}

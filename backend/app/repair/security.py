@@ -27,8 +27,11 @@ class UnsafeSource(ValueError):
 
 def check_repo_url(url: str) -> str:
     """HTTPS only, allow-listed hosts, no credentials, no private or local addresses (SSRF)."""
-    u = urlsplit(url.strip())
-    if u.scheme != "https" or not u.hostname or u.username or u.password or u.port not in (None, 443):
+    try:
+        u = urlsplit(url.strip());port=u.port
+    except ValueError as exc:
+        raise UnsafeSource("use a valid public HTTPS repository URL") from exc
+    if u.scheme != "https" or not u.hostname or u.username or u.password or port not in (None, 443) or u.query or u.fragment:
         raise UnsafeSource("use a public https:// repository URL without credentials")
     host = u.hostname.lower()
     allowed = {h.strip().lower() for h in settings.REPAIR_ALLOWED_GIT_HOSTS.split(",") if h.strip()}

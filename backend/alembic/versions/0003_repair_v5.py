@@ -22,7 +22,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def _tables():
     from app.database import Base
     from app.repair import models  # noqa: F401
-    return [t for name, t in Base.metadata.tables.items() if name.startswith("repair_")]
+    original={"repair_tasks","repair_candidates","repair_attempts","repair_receipts","repair_events",
+              "repair_workers","repair_accounts","repair_workspaces","repair_memberships",
+              "repair_github_links","repair_webhook_deliveries"}
+    return [t for name, t in Base.metadata.tables.items() if name in original]
 
 
 def upgrade() -> None:

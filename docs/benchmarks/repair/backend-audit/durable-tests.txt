@@ -1,0 +1,8 @@
+.                                                                        [100%]
+============================== warnings summary ===============================
+tests/test_repair/test_backend_v5.py::test_durable_run_end_to_end
+  C:\Users\sanka\.codex\worktrees\fixtures-bug-hardening\automl-orchestrator\backend\app\repair\intake.py:216: DeprecationWarning: onerror argument is deprecated, use onexc instead
+    shutil.rmtree(temporary, onerror=writable)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 196.52s (0:03:16)

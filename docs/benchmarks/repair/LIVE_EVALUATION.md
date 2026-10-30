@@ -56,7 +56,10 @@ leave aggregate costs unknown when call accounting is incomplete. Recorded dolla
 amounts are Nebius-rate equivalents, not NVIDIA invoices. No paid-provider switch
 was made. The public benchmark excludes the incomplete comparison.
 
-## Resume
+## Resume the historical study only
+
+This study is frozen to commit `b8d6f94` and prompt `repair-v4`. Use an isolated checkout of that commit for the commands below. The current engine uses `repair-v5`, trusted verifier registration and immutable image admission, and deliberately refuses to mix configurations in an existing study directory. Start a new directory for current-engine measurements. The October 30 backend-audit planner and Tavily pair are separate studies; provider availability has since recovered, so the old outage is historical, not a current blanket blocker.
+
 
 Use the same configured isolated runner, independent verifier, NVIDIA model mapping,
 seeds and plan directory. The operator bootstrap used local credentials in memory

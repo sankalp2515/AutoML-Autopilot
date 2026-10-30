@@ -12,10 +12,11 @@ import time
 import threading
 from email.utils import parsedate_to_datetime
 import uuid
+from datetime import datetime,timezone
 from typing import Any, Literal
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 from app.autopilot.pricing import est_cost_usd
 from app.config import settings
@@ -43,6 +44,8 @@ class CallRecord(BaseModel):
     est_cost_usd: float | None = None
     request_id: str | None = None
     error: str | None = None
+    at: str = Field(default_factory=lambda:datetime.now(timezone.utc).isoformat())
+    usage_reported: bool = False
 
 
 class _Credentials:
@@ -97,8 +100,9 @@ class ChatClient:
 
     # ── ledger ────────────────────────────────────────────────────────────────
     def used(self, tier: str) -> int:
-        return sum(c.prompt_tokens + c.completion_tokens for c in self.calls if c.tier == tier
-                   and (self._purpose_scope is None or c.purpose == self._purpose_scope))
+        calls=[c for c in self.calls if c.tier==tier and (self._purpose_scope is None or c.purpose==self._purpose_scope)]
+        if any(c.ok and not c.usage_reported for c in calls):return getattr(self.budget,tier)
+        return sum(c.prompt_tokens+c.completion_tokens for c in calls)
 
     def remaining(self, tier: str) -> int:
         return getattr(self.budget, tier) - self.used(tier)
@@ -110,9 +114,11 @@ class ChatClient:
             if cs:
                 out[t] = {"calls": len(cs), "model": cs[-1].model, "prompt_tokens": sum(c.prompt_tokens for c in cs),
                           "completion_tokens": sum(c.completion_tokens for c in cs),
-                          "est_cost_usd": round(sum(c.est_cost_usd or 0 for c in cs), 6),
+                          "est_cost_usd": round(sum(c.est_cost_usd or 0 for c in cs), 6) if all(c.est_cost_usd is not None for c in cs) else None,
                           "budget": getattr(self.budget, t)}
-        out["total_est_cost_usd"] = round(sum(c.est_cost_usd or 0 for c in self.calls), 6)
+        complete=all(c.est_cost_usd is not None for c in self.calls)
+        out["accounting_complete"]=complete
+        out["total_est_cost_usd"] = round(sum(c.est_cost_usd or 0 for c in self.calls), 6) if complete else None
         return out
 
     # ── calls ─────────────────────────────────────────────────────────────────
@@ -171,11 +177,12 @@ class ChatClient:
             data = r.json()
             u = data.get("usage") or {}
             pt, ct = int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0)
+            reported=all(isinstance(u.get(k),int) and u[k]>=0 for k in ("prompt_tokens","completion_tokens"))
             ch = data["choices"][0]
             return ch["message"].get("content") or "", CallRecord(
                 **rec, ok=True, status_code=200, finish_reason=ch.get("finish_reason"), latency_ms=ms,
                 prompt_tokens=pt, completion_tokens=ct, request_id=data.get("id"),
-                est_cost_usd=est_cost_usd(data.get("model") or model, pt, ct))
+                usage_reported=reported,est_cost_usd=est_cost_usd(data.get("model") or model, pt, ct) if reported else None)
         except (httpx.HTTPError, KeyError, ValueError, IndexError) as e:
             ms = int((time.perf_counter() - t0) * 1000)
             return None, CallRecord(**rec, ok=False, latency_ms=ms, error=type(e).__name__)

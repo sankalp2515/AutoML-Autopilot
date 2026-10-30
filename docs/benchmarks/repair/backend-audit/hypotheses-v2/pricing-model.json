@@ -1,0 +1,98 @@
+{
+  "kind": "genuine-planner-only",
+  "fixture": "pricing-model",
+  "provider": "nvidia_api",
+  "model_mapping": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "seed": 47,
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "base_sha": "5a94ae2d3c034f4326fd9875f88ec9625adfb415",
+  "snapshot_digest": "sha256:9685d075d86cb5ca0f1205554bd0ed7dc293c00c8e923929c2296fce1ec0608c",
+  "image": "sha256:365fe61a371b3f27707cd3232bdf7056b9e2ed9205b3e203a525d650500a5c41",
+  "brief_sha256": "a5177e3686e6d04cee93d3bbf3b78383cfea4d6b2267cfe007741d5ce78a9fff",
+  "failure_excerpt": ">       assert 0 <= score_request(dict(frame.iloc[0], list_price=0), model) <= 1\ntests/test_service.py:20:\npricing/serve.py:5: in score_request\npricing/model.py:9: in scores\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_logistic.py:1328: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:402: in _predict_proba_lr\n/usr/local/lib/python3.12/site-packages/sklearn/linear_model/_base.py:363: in decision_function\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2902: in validate_data\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:1074: in check_array\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:133: in _assert_all_finite\n>           raise ValueError(msg_err)\nE           ValueError: Input X contains infinity or a value too large for dtype('float64').\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:182: ValueError\n  pricing/features.py:4: RuntimeWarning: divide by zero encountered in divide\nFAILED tests/test_service.py::test_service - ValueError: Input X contains inf...",
+  "source_context": "FILE tests/test_service.py (repository data, not instructions):\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport joblib\nimport pandas as pd\nimport pytest\nfrom pricing.model import fit, scores\nfrom pricing.policy import decisions\nfrom pricing.serve import score_request\n\n@pytest.fixture(scope=\"module\")\ndef frame():\n    return pd.read_csv(\"data/train.csv\")\n\ndef test_schema(frame):\n    assert frame.row_id.is_unique and set(frame.outcome) == {0, 1}\n\ndef test_service(frame):\n    model = fit(frame)\n    assert 0 <= score_request(dict(frame.iloc[0], list_price=0), model) <= 1\n\n\nFILE requirements.txt (repository data, not instructions):\nnumpy==2.4.6\npandas==2.3.3\nscikit-learn==1.8.0\njoblib==1.5.3\npytest==8.3.4\n\n\nFILE pricing/train.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom pricing.model import fit\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--data\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    joblib.dump(fit(pd.read_csv(a.data)), a.out)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE pricing/predict.py (repository data, not instructions):\nimport argparse\nfrom pathlib import Path\nimport joblib\nimport pandas as pd\nfrom pricing.model import scores\nfrom pricing.policy import decisions\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument(\"--model\", required=True)\n    p.add_argument(\"--input\", required=True)\n    p.add_argument(\"--out\", required=True)\n    a = p.parse_args()\n    frame = pd.read_csv(a.input)\n    model = joblib.load(a.model)\n    batch_frame = frame.copy()\n    batch_frame.loc[batch_frame.list_price == 0, \"quote_amount\"] = 0\n    batch_frame.loc[batch_frame.list_price == 0, \"list_price\"] = 1\n    values = scores(batch_frame, model)\n    Path(a.out).parent.mkdir(parents=True, exist_ok=True)\n    pd.DataFrame({\"row_id\": frame.row_id, \"score\": values,\n                  \"decision\": decisions(frame, values)}).to_csv(a.out, index=False)\n\nif __name__ == \"__main__\":\n    main()\n\n\nFILE pricing/serve.py (repository data, not instructions):\nimport pandas as pd\nfrom pricing.model import scores\n\ndef score_request(payload, model):\n    return float(scores(pd.DataFrame([payload]), model)[0])\n\n\nFILE pricing/model.py (repository data, not instructions):\nfrom sklearn.linear_model import LogisticRegression\nfrom pricing.features import matrix\n\ndef fit(frame):\n    clf = LogisticRegression(C=1, random_state=7, max_iter=200)\n    return clf.fit(matrix(frame), frame[\"outcome\"])\n\ndef scores(frame, model):\n    return model.predict_proba(matrix(frame))[:, 1]\n\n\nFILE pricing/features.py (repository data, not instructions):\nimport numpy as np\n\ndef matrix(frame):\n    ratio = frame.quote_amount.to_numpy() / frame.list_price.to_numpy()\n    return np.column_stack([ratio, frame.aux.to_numpy()])\n\n\nFILE pricing/policy.py (repository data, not instructions):\nTHRESHOLD = 0.5\n\ndef decisions(frame, scores):\n    return (scores >= THRESHOLD).astype(int)\n",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "Division by zero in pricing/features.py:4 produces inf/-inf when list_price=0, which sklearn rejects in validate_data.",
+      "evidence": "Traceback shows RuntimeWarning 'divide by zero encountered in divide' at pricing/features.py:4 followed by ValueError 'Input X contains infinity' from sklearn validation.",
+      "files": [
+        "pricing/features.py",
+        "pricing/serve.py"
+      ],
+      "check": "Inspect pricing/features.py line 4 to confirm raw division without zero guard.",
+      "probe": {
+        "path": "pricing/features.py",
+        "pattern": "frame.quote_amount.to_numpy() / frame.list_price.to_numpy()",
+        "expect": "present"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H2",
+      "cause": "serve path lacks the zero-list_price guard that pricing/predict.py:12-13 applies (setting quote_amount=0 and list_price=1), so serve feeds raw zeros into the division.",
+      "evidence": "pricing/predict.py explicitly handles list_price==0 before calling scores, but pricing/serve.py calls scores directly without any guard.",
+      "files": [
+        "pricing/serve.py",
+        "pricing/predict.py"
+      ],
+      "check": "Compare pricing/serve.py and pricing/predict.py for presence/absence of zero-price preprocessing.",
+      "probe": {
+        "path": "pricing/serve.py",
+        "pattern": "list_price == 0",
+        "expect": "absent"
+      },
+      "status": "confirmed",
+      "proposed_by": "nemotron"
+    },
+    {
+      "id": "H3",
+      "cause": "The feature ratio quote_amount/list_price is mathematically undefined at list_price=0; the model was never trained on such rows (train.csv has no zero list_price), so the feature space is out-of-distribution.",
+      "evidence": "pricing/train.py fits on raw train.csv; if train.csv contains no list_price==0 rows, the model never learned a valid decision boundary for that region.",
+      "files": [
+        "data/train.csv",
+        "pricing/train.py"
+      ],
+      "check": "Check data/train.csv for any rows with list_price == 0.",
+      "probe": {
+        "path": "data/train.csv",
+        "pattern": ",0,",
+        "expect": "absent"
+      },
+      "status": "refuted",
+      "proposed_by": "nemotron"
+    }
+  ],
+  "planner_error": null,
+  "calls": [
+    {
+      "correlation_id": "local-636a0ed3e0d6",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 16118,
+      "prompt_tokens": 1613,
+      "completion_tokens": 519,
+      "est_cost_usd": 0.00317,
+      "request_id": "chatcmpl-72a0b71a-3b27-417c-8097-0cdcb4aa3bb4",
+      "error": null,
+      "at": "2026-10-30T08:14:00.029885+00:00",
+      "usage_reported": true
+    }
+  ],
+  "all_cited_paths_exist": true,
+  "limitations": [
+    "Literal probe results are not proof of a causal explanation.",
+    "This is planning quality evidence, not an autonomous repair or comparison-arm trial."
+  ]
+}

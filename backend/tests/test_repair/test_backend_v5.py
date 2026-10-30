@@ -212,4 +212,5 @@ async def test_durable_run_end_to_end(svc, tmp_path, monkeypatch):
     cands = await svc.candidates(task["id"], "t1")
     assert len(cands) == 2 and any(x["eligible"] for x in cands) and all("steps" in x for x in cands)
     rec = await svc.receipts(t["finalist"], "t1", task_id=task["id"])
-    assert set(rec) == {"code", "ml", "combined"} and rec["ml"]["holdout_opened"]
+    assert set(rec) == {"code", "ml_screen", "ml", "combined"} and rec["ml"]["holdout_opened"]
+    assert not rec["ml_screen"]["holdout_opened"]

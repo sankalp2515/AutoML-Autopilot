@@ -38,6 +38,9 @@ async def lifespan(app: FastAPI):
             detail="SECRET_KEY is the default placeholder — set a real value in production.",
         )
     await init_db()
+    if settings.REPAIR_VERIFIER_URL and not settings.DEBUG:
+        from app.repair.ops import validate_secrets
+        validate_secrets("REPAIR_ADMISSION_TOKEN","REPAIR_SESSION_SECRET","REPAIR_SANDBOX_TOKEN")
     try:
         from app.autopilot.service import recover_orphans
         await recover_orphans()
@@ -64,8 +67,11 @@ async def lifespan(app: FastAPI):
     import asyncio as _asyncio
     from app.core.drift_monitor import drift_monitor_loop
     _drift_task = _asyncio.create_task(drift_monitor_loop())
+    from app.repair.ops import retention_loop
+    _retention_task=_asyncio.create_task(retention_loop())
     yield
     _drift_task.cancel()
+    _retention_task.cancel()
     await close_redis()
 
 

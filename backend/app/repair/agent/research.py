@@ -24,6 +24,9 @@ _SYMBOL = re.compile(r"\b([A-Z][A-Za-z0-9]+)\.(?:__init__|\w+)\(\)|got an unexpe
 # merely passes through sklearn is a local bug and must not trigger research.
 _API_CHANGE = re.compile(r"unexpected keyword argument|has no attribute|cannot import name|No module named|"
                          r"[Dd]eprecat|removed in|was renamed|got an unexpected")
+_SYMBOL_PACKAGE={"OneHotEncoder":"scikit-learn","StandardScaler":"scikit-learn",
+                 "ColumnTransformer":"scikit-learn","LogisticRegression":"scikit-learn",
+                 "DataFrame":"pandas","XGBClassifier":"xgboost","LGBMClassifier":"lightgbm"}
 
 
 def library_signal(excerpt: str) -> dict[str, Any] | None:
@@ -31,10 +34,11 @@ def library_signal(excerpt: str) -> dict[str, Any] | None:
         return None
     pkg = next((ALIASES[m] for m in re.findall(r"\b(sklearn|scikit_learn|pandas|numpy|scipy|xgboost|lightgbm|joblib)\b",
                                                 excerpt) if m in ALIASES), None)
+    syms = [g for m in _SYMBOL.finditer(excerpt) for g in m.groups() if g]
+    if not pkg:pkg=next((_SYMBOL_PACKAGE[s] for s in syms if s in _SYMBOL_PACKAGE),None)
     if not pkg:
         return None
     exc = _EXC.search(excerpt)
-    syms = [g for m in _SYMBOL.finditer(excerpt) for g in m.groups() if g]
     return {"package": pkg, "exception": exc.group(1) if exc else "", "symbols": list(dict.fromkeys(syms))[:3]}
 
 

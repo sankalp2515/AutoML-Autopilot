@@ -43,9 +43,9 @@ Signed-in users need no invite code for live runs; anonymous users may (see `/st
 
 | GET | Returns |
 |---|---|
-| `/status` | `{provider, models, configured, live_runs, invite_required, runner, isolated, verifier, tavily, daily_cap_usd, successful_calls_7d, failed_calls_7d, last_model_used, worker_seen_s_ago}` |
+| `/status` | `{provider, models, configured, live_runs, invite_required, runner, isolated, verifier, tavily, daily_cap_usd, successful_calls_7d, failed_calls_7d, last_model_used, last_successful_call_at, worker_seen_s_ago}` |
 | `/ready` | `{database, worker, verifier, sandbox, ready}`; values `ok` / `stale` / `down` / `in-process` |
-| `/metrics` | `{window_hours, tasks, queue_depth, oldest_queued_s, finished, decisions: {VERIFIED: n, ...}, run_seconds_p50, run_seconds_p95, model_tokens, cost_usd}` (last 24 h; `?format=prometheus` for text) |
+| `/metrics` | `{window_hours, tasks, queue_depth, oldest_queued_s, finished, decisions: {VERIFIED: n, ...}, run_seconds_p50, run_seconds_p95, model_tokens, cost_usd, known_cost_usd, unknown_cost_runs}` (last 24 h; `?format=prometheus` for text) |
 
 ## 4. Repositories and contracts
 
@@ -111,7 +111,7 @@ Status:
 | GET | `/tasks/{id}/events?after=<seq>&limit=200` | poll every 1–2 s with the last `seq` you saw; append |
 | GET | `/tasks/{id}/candidates` | candidates with steps, stop_reason, eligible, tokens |
 | GET | `/tasks/{id}/candidates/{cid}/diff` | text diff |
-| GET | `/tasks/{id}/candidates/{cid}/receipt` | code / ml / combined receipts |
+| GET | `/tasks/{id}/candidates/{cid}/receipt` | code / ml_screen / ml / combined receipts |
 | GET | `/tasks/{id}/report` | full report; **409** until the run finishes |
 | POST | `/tasks/{id}/cancel` | `{version?}`; 409 on a stale version |
 
@@ -174,3 +174,13 @@ use `type: diagnostic.executed` with `data.kind: telemetry`, `data.telemetry_ver
 and `data.telemetry_type: candidate.progress | usage.updated`. The other payload fields
 are in `data`. The frontend normalizes that envelope. Direct event types in recorded
 agent reports remain supported. Final candidates/receipts stay immutable and separate.
+
+## October 30 admission and operations additions
+
+- `POST /tasks` accepts an optional `Idempotency-Key` header (1–128 characters). Keep it across transport/admission retries of the same semantic body. Same tenant/key/body returns the existing task; a different body returns 409. Change the key when the user's intended task changes. The frontend implements this automatically. Cold dependency preparation can take minutes; a timeout is not evidence the task was never created.
+- Task admission binds the prepared dependency image in ECC before verifier registration. A task awaiting registration is not claimable by workers; retry the same key if registration is unavailable. Queue/admission waits expire with `E_QUEUE_TIMEOUT`.
+- Anonymous custom-repository live tasks require configured invite access or sign-in; anonymous sample access remains subject to the global live switch and caps.
+- Global daily estimated dollar/token admission uses atomic reservations. Missing provider usage keeps its reservation and closes the affected tier to more calls. `cost_usd` is null when a finished report lacks complete cost accounting; `known_cost_usd` is the known subtotal, and `unknown_cost_runs` its missing-accounting denominator. Never present null as zero/free.
+- `ml_screen` and final `ml` are distinct persisted receipt entries. Final holdout permits and verifier admissions never expire. A worker token cannot register admissions or call the trusted evaluator.
+- Dependency preparation now requires exact top-level pins and an operator-approved HTTPS package index. URLs, version ranges, nested requirement includes, local/source installations and arbitrary pip flags are refused. Readable infrastructure errors must not be presented as a code rejection.
+- `DELETE /repos/{repo_id}` and `DELETE /packs/{pack_id}` require the owning tenant and refuse active task references. TTL and hard-disk-quota limitations are described in [V5_OPERATIONS.md](V5_OPERATIONS.md).

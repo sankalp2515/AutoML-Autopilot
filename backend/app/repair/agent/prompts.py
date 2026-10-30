@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 
-PROMPT_VERSION = "repair-v4"
+PROMPT_VERSION = "repair-v5"
 
 HYPOTHESES_SYSTEM = """You diagnose failures in machine-learning repositories.
 Given failing tests, a compact traceback and a file list, propose 2 or 3 COMPETING root-cause
@@ -20,7 +20,11 @@ Reply with one JSON object only:
 The probe is a falsifiable prediction the platform checks in the unmodified code before any
 coding starts: if the hypothesis is right, that text is present (or absent) in that file.
 Choose probes that come out differently for different hypotheses.
-Use only file paths from the list. Do not propose fixes yet."""
+Use only file paths from the list. Do not propose fixes yet.
+Ground each hypothesis in an exact supplied error or source observation. Requirements
+pins describe the requested environment; do not invent a different installed version.
+Do not rephrase one root cause as two competing hypotheses. Distinguish a plausible
+alternative from an observed fact, and do not claim a literal probe proves causality."""
 
 CODER_SYSTEM = """You are the coding engineer of AutoML Autopilot. You repair an ML repository inside a
 sandbox by calling tools, one per reply. Reply with ONE JSON object only:

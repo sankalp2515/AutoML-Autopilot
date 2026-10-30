@@ -6,6 +6,20 @@
 > The information-gain selector described below belongs to the earlier data-incident mode.
 > See [the v5 backlog](docs/V5_BACKLOG_FINAL.md) for exact completion status and limitations.
 
+### Start the v5 stack locally
+
+With Python and Linux Docker running, execute from this directory:
+
+```powershell
+python scripts/v5_stack.py up --project automl-v5-local --port 3133
+```
+
+Open [the repair workspace](http://localhost:3133/repair). Eight services start with
+sample sources and recorded runs; model calls are disabled by default and no `.env`
+is read or written. See [v5 operations](docs/V5_OPERATIONS.md) for optional image
+warm-up, credentials, health checks, backup/restore and production limitations.
+The product walkthrough below describes the earlier data-incident mode.
+
 <div align="center">
 
 # AutoML Autopilot

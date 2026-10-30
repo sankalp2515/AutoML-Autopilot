@@ -1,0 +1,71 @@
+{
+  "base_versions": [
+    "3.11",
+    "3.12"
+  ],
+  "first_prepare": [
+    {
+      "sample": "churn-service",
+      "image": "sha256:bbc95b026a90f73f9978b826958c40bd1e1ffdae0ce289a2f3b1eb947a26c6bc",
+      "seconds": 149.71
+    },
+    {
+      "sample": "credit-approval",
+      "image": "sha256:bb34e8394d1a10c19cf5562c9f31e3912eea8b29acc1fcc12c835606f90f3d74",
+      "seconds": 10.1
+    },
+    {
+      "sample": "fraud-batch",
+      "image": "sha256:f6fdd1ff7b718d87e0f389b7b734a1a62e788035cd1ebed683f78393616d435a",
+      "seconds": 6.98
+    },
+    {
+      "sample": "loan-scorer",
+      "image": "sha256:50e1da304c172af945cffb1d96c19c34166b207b837b8f19d436bbea6e2ea76b",
+      "seconds": 10.1
+    },
+    {
+      "sample": "pricing-model",
+      "image": "sha256:a46de45411d997cf4bc121f26a89247b889bc98b611aa0e487c3949033ece9b3",
+      "seconds": 19.45
+    },
+    {
+      "sample": "refund-risk",
+      "image": "sha256:8333a2618ea4be5512f47d5a90e231a7eae4276703db443a2f245a1022835396",
+      "seconds": 5.03
+    }
+  ],
+  "cached_prepare": [
+    {
+      "sample": "churn-service",
+      "image": "sha256:bbc95b026a90f73f9978b826958c40bd1e1ffdae0ce289a2f3b1eb947a26c6bc",
+      "seconds": 2.13
+    },
+    {
+      "sample": "credit-approval",
+      "image": "sha256:bb34e8394d1a10c19cf5562c9f31e3912eea8b29acc1fcc12c835606f90f3d74",
+      "seconds": 1.85
+    },
+    {
+      "sample": "fraud-batch",
+      "image": "sha256:f6fdd1ff7b718d87e0f389b7b734a1a62e788035cd1ebed683f78393616d435a",
+      "seconds": 1.49
+    },
+    {
+      "sample": "loan-scorer",
+      "image": "sha256:50e1da304c172af945cffb1d96c19c34166b207b837b8f19d436bbea6e2ea76b",
+      "seconds": 1.42
+    },
+    {
+      "sample": "pricing-model",
+      "image": "sha256:a46de45411d997cf4bc121f26a89247b889bc98b611aa0e487c3949033ece9b3",
+      "seconds": 1.77
+    },
+    {
+      "sample": "refund-risk",
+      "image": "sha256:8333a2618ea4be5512f47d5a90e231a7eae4276703db443a2f245a1022835396",
+      "seconds": 2.24
+    }
+  ],
+  "model_calls": 0
+}

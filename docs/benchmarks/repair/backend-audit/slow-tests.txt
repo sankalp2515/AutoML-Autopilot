@@ -1,0 +1,12 @@
+.......................                                                  [100%]
+============================== warnings summary ===============================
+tests/test_repair/test_fixture_suite.py::test_unpatched_wrong_and_reference[loan-scorer]
+tests/test_repair/test_fixture_suite.py::test_unpatched_wrong_and_reference[refund-risk]
+tests/test_repair/test_fixture_suite.py::test_unpatched_wrong_and_reference[credit-approval]
+tests/test_repair/test_fixture_suite.py::test_unpatched_wrong_and_reference[fraud-batch]
+tests/test_repair/test_fixture_suite.py::test_unpatched_wrong_and_reference[pricing-model]
+  C:\Users\sanka\.codex\worktrees\fixtures-bug-hardening\automl-orchestrator\backend\app\repair\intake.py:216: DeprecationWarning: onerror argument is deprecated, use onexc instead
+    shutil.rmtree(temporary, onerror=writable)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+23 passed, 257 deselected, 5 warnings in 786.94s (0:13:06)

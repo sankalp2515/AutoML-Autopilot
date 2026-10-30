@@ -1,0 +1,20 @@
+........................................................................ [ 21%]
+...s.................................................................... [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+.....................................................                    [100%]
+============================== warnings summary ===============================
+tests/test_repair/test_backend_v5.py::test_sample_staging_contract_and_freeze
+tests/test_repair/test_intake.py::test_pinned_sha_digest_map_and_untracked_exclusion
+tests/test_repair/test_intake.py::test_pinned_sha_digest_map_and_untracked_exclusion
+tests/test_repair/test_intake.py::test_missing_entrypoint_cleans_temporary_clone
+tests/test_repair/test_intake.py::test_malformed_contract_rejected
+tests/test_repair/test_intake.py::test_git_diff_includes_created_file
+tests/test_repair/test_intake.py::test_diff_uses_external_metadata_without_mutating_snapshot_index
+tests/test_repair/test_production_hardening.py::test_http_retries_do_not_restage_or_double_reserve
+tests/test_repair/test_production_hardening.py::test_verifier_admission_binds_original_snapshot_and_sealed_reference
+  C:\Users\sanka\.codex\worktrees\fixtures-bug-hardening\automl-orchestrator\backend\app\repair\intake.py:216: DeprecationWarning: onerror argument is deprecated, use onexc instead
+    shutil.rmtree(temporary, onerror=writable)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+340 passed, 1 skipped, 59 deselected, 9 warnings in 245.81s (0:04:05)

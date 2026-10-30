@@ -48,3 +48,5 @@ output/
 .playwright-cli/
 frontend/.playwright-cli/
 /runs/
+/.local/
+/fixtures/sources/
