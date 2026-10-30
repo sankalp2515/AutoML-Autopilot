@@ -11,6 +11,7 @@ import {
   Task,
   useResource,
   VERIFIED_REPLAY,
+  REPLAYS,
 } from "@/lib/repair";
 import {
   Action,
@@ -128,6 +129,14 @@ export default function NewRepair() {
     [invite, setInvite] = useState("");
   const samples = useResource<{ samples: Sample[] }>("/samples"),
     status = useResource<Status>("/status");
+  // A saved execution is evidence for its original snapshot, never a cache hit
+  // for the current editable contract, task, or evaluation pack.
+  const cachedSample = repo?.sample
+    ? Object.values(REPLAYS)
+        .filter((r) => r.sample === repo.sample &&
+          ["local-container", "tokenfactory-sandbox"].includes(r.runner) && r.decision === "VERIFIED")
+        .sort((a, b) => Number(b.provider === "nebius_token_factory") - Number(a.provider === "nebius_token_factory"))[0]
+    : undefined;
   useEffect(() => {
     if (
       samples.data?.samples.length &&
@@ -392,6 +401,13 @@ export default function NewRepair() {
           </li>
         ))}
       </ol>
+      <div style={{ marginBottom: 20 }}>
+        <Notice title="Public demo data only">
+          Use public code and synthetic or non-sensitive data. The hosted demo
+          uses Nebius Sandboxes beta; do not submit personal data, private
+          datasets or secrets. Outcome labels remain on the verifier side.
+        </Notice>
+      </div>
       {error && (
         <div style={{ marginBottom: 20 }}>
           <Notice
@@ -534,15 +550,6 @@ export default function NewRepair() {
               </Button>
             </div>
           </Panel>
-          <Notice
-            title="No failing test, but your model’s metric dropped?"
-            action={
-              <Action href="/autopilot/new">Investigate a data incident</Action>
-            }
-          >
-            Use the data investigator to compare reference and current data
-            windows.
-          </Notice>
         </div>
       )}
       {step === 1 && repo && (
@@ -961,6 +968,21 @@ export default function NewRepair() {
               </div>
             </Panel>
           </div>
+          {cachedSample && (
+            <Notice
+              title="Cached sample execution available"
+              action={
+                <Action href={`/repair/replay/${cachedSample.replay_id}`}>
+                  Open cached sample run
+                </Action>
+              }
+            >
+              Inspect a genuine completed execution for this sample, including its
+              code edits, tool results and verification receipt. Playback makes no
+              model calls. It uses the original run&apos;s snapshot and settings;
+              changes in this form are not executed or evaluated by the recording.
+            </Notice>
+          )}
           {!status.data?.live_runs && (
             <Notice
               title={

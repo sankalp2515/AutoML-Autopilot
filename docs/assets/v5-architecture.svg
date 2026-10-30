@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1190" viewBox="0 0 1800 1190" role="img" aria-labelledby="title desc">
-<title id="title">AutoML Autopilot v5 as-built architecture</title><desc id="desc">Three trust zones show untrusted inputs, repair control and independent verification. Teal means built and locally tested; amber means integration pending; violet means roadmap. Hosting remains provider-neutral, with Google Cloud proposed for judge hosting.</desc>
+<title id="title">AutoML Autopilot v5 as-built architecture</title><desc id="desc">Three trust zones show untrusted inputs, repair control and independent verification. Teal means implemented and tested; amber means integration pending; violet means roadmap. Hosting remains provider-neutral, with Google Cloud deployed for judge hosting.</desc>
 <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#617785"/></marker></defs>
 <rect width="1800" height="1190" fill="#f4f7fa"/>
 <text x="30" y="43" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#183042">AutoML Autopilot | Coding &amp; Agentic Engineering</text>
@@ -72,15 +72,15 @@
 <text x="441" y="623" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Transactional admission</text>
 <text x="441" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Application PostgreSQL · tenant idempotency</text>
 <text x="441" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Lifetime/daily allowance · cooldown · live slots</text>
-<rect x="840" y="595" width="395" height="100" rx="8" fill="#fff4dc" stroke="#906016"/>
+<rect x="840" y="595" width="395" height="100" rx="8" fill="#e9f6f4" stroke="#066e77"/>
 <text x="856" y="623" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Nebius Sandboxes adapter</text>
-<text x="856" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Beta access obtained by owner</text>
-<text x="856" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Not implemented or validated in this checkout</text>
+<text x="856" y="648" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Immutable UUID checkpoints; no guest credentials</text>
+<text x="856" y="669" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Real boundary probes and hosted UI repairs</text>
 <rect x="425" y="730" width="390" height="110" rx="8" fill="#e9f6f4" stroke="#066e77"/>
 <text x="441" y="758" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Recorded evidence &amp; artifacts</text>
 <text x="441" y="783" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Read-only playback without model calls</text>
 <text x="441" y="804" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Diffs · logs · hashes · explicit publication</text>
-<text x="441" y="825" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">TTL cleanup; hard host disk quotas pending</text>
+<text x="441" y="825" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">TTL cleanup; aggregate 20-GiB data filesystem</text>
 <rect x="840" y="730" width="395" height="110" rx="8" fill="#f1edff" stroke="#69509a"/>
 <text x="856" y="758" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Distributed runtime / registry</text>
 <text x="856" y="783" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Multi-host sandbox routing · hosted metrics</text>
@@ -112,25 +112,25 @@
 <path d="M1522 695L1522 727" stroke="#617785" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
 <rect x="30" y="905" width="1740" height="150" rx="14" fill="white" stroke="#dbe4ea"/>
 <text x="48" y="933" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#586c7b">Services &amp; deployment target</text>
-<rect x="50" y="955" width="405" height="80" rx="8" fill="#fff4dc" stroke="#906016"/>
+<rect x="50" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
 <text x="66" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Token Factory inference</text>
-<text x="66" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Client implemented; genuine Nebius validation pending</text>
+<text x="66" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Super + Nano called; genuine repair receipts</text>
 <rect x="480" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
 <text x="496" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Tavily</text>
 <text x="496" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Conditional official docs; provenance in receipts</text>
-<rect x="910" y="955" width="405" height="80" rx="8" fill="#fff4dc" stroke="#906016"/>
-<text x="926" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Google Cloud hosting target</text>
-<text x="926" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Web/API/workers/DBs on CPU VM; not deployed</text>
+<rect x="910" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
+<text x="926" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Google Cloud judge deployment</text>
+<text x="926" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">HTTPS CPU VM; separate DBs; daily snapshots</text>
 <rect x="1340" y="955" width="405" height="80" rx="8" fill="#e9f6f4" stroke="#066e77"/>
 <text x="1356" y="983" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#183042">Evidence storage &amp; backup</text>
 <text x="1356" y="1008" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#425969">Postgres + volumes · hashes verified on restore</text>
 <text x="35" y="1095" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#183042">Legend:</text>
 <circle cx="120" cy="1090" r="6" fill="#066e77"/>
-<text x="135" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#066e77">Built / tested locally</text>
+<text x="135" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#066e77">Implemented / tested</text>
 <circle cx="380" cy="1090" r="6" fill="#906016"/>
 <text x="395" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#906016">Integration / external check pending</text>
 <circle cx="770" cy="1090" r="6" fill="#69509a"/>
 <text x="785" y="1095" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#69509a">Roadmap</text>
 <text x="35" y="1130" font-family="Arial,sans-serif" font-size="15" font-weight="400" fill="#425969">Cross-cutting: redaction · tenant scoping · immutable provenance · measured budgets · bounded retries · replay access</text>
-<text x="35" y="1160" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#586c7b">Scope: a verified patch proposal, not automatic production model deployment. No cloud hosting, Nebius runtime or remote CI claim.</text>
+<text x="35" y="1160" font-family="Arial,sans-serif" font-size="14" font-weight="400" fill="#586c7b">Scope: a verified patch proposal, not automatic production model deployment. Google Cloud + Nebius validated; remote CI acceptance remains separate.</text>
 </svg>

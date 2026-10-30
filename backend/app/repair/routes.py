@@ -232,7 +232,9 @@ async def _create_task(db, tenant: str, repo_id: str, target: str, *, budget: di
         try:
             method=getattr(runner,"environment_image",None)
             image=method(prepared) if callable(method) else getattr(runner,"image",None)
-            if not image or not image.startswith("sha256:"):raise HTTPException(503,"dependency image digest unavailable")
+            from app.repair.sandbox.pinned import immutable_image
+            if not immutable_image(image):
+                raise HTTPException(503,"immutable dependency image identity unavailable")
             environment={"image":image,"python":rc.python,"install_digest":c.canonical_digest(rc.install)}
         finally:await asyncio.to_thread(runner.discard,prepared)
     spec = {"snapshot_dir": frozen["snapshot_dir"], "staging_id": repo_id, "sealed_ref": sealed,

@@ -1,0 +1,32 @@
+{
+  "id": "da83a491-9a9c-489c-8b2d-f4afecbf97e6",
+  "status": "INCONCLUSIVE",
+  "version": 34,
+  "fencing_token": 1,
+  "contract_digest": "sha256:dc55a93422e7553e11f71a2c15a2c76d01e951ca8c2858d1c397bd040ad346ff",
+  "target": "Improve F1 while preserving recall for every region.",
+  "event_seq": 22,
+  "cancel_requested": false,
+  "created_at": 1793376066.840008,
+  "engine": "v5",
+  "mode": "full",
+  "sample": "credit-approval",
+  "source": "sample",
+  "repo_name": "credit-approval",
+  "fail_to_pass": [
+    "tests/test_service.py::test_quality"
+  ],
+  "ml_invariants": [
+    "segment_guardrail",
+    "holdout_non_inferior"
+  ],
+  "has_labels": true,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "finalist": null,
+  "cost_usd": 0.0125,
+  "seconds": 77.5,
+  "error": null
+}

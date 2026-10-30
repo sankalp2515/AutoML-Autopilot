@@ -1,5 +1,11 @@
 """Bind every prepared environment to the admission's immutable dependency image."""
 from app.repair.sandbox.base import SandboxError
+import re
+
+
+def immutable_image(image):
+    return isinstance(image,str) and re.fullmatch(
+        r"(?:sha256:[0-9a-f]{64}|nebius:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})",image) is not None
 
 
 class PinnedRunner:

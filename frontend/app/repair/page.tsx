@@ -72,7 +72,7 @@ const faqs = [
   ],
   [
     "What can I upload?",
-    "Use public code and synthetic or non-sensitive data for the hackathon demonstration. Labels are supplied separately to the verifier. Nebius Sandboxes beta currently prohibits personal or sensitive files; its integration is still pending in this build.",
+    "Use public code and synthetic or non-sensitive data for the hackathon demonstration. Labels are supplied separately to the verifier. Nebius Sandboxes beta prohibits personal or sensitive files. The hosted demo executes repairs in Nebius Sandboxes.",
   ],
 ];
 
@@ -190,8 +190,9 @@ export default function RepairHome() {
           <span>Reviewable Git diffs</span>
         </div>
         <p>
-          Current genuine inference evidence uses NVIDIA developer endpoints.
-          Nebius runtime validation is pending.
+          Genuine hosted repairs use Nemotron through Nebius Token Factory,
+          with isolated execution in Nebius Sandboxes. Historical recordings
+          retain their original provider labels.
         </p>
       </div>
       <section

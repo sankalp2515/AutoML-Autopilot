@@ -1,0 +1,40 @@
+{
+  "restored": true,
+  "project": "automl-cloud-restore-drill",
+  "snapshot": {
+    "tasks": 5,
+    "receipt_hashes": {
+      "129a45e4-9d7d-4ab9-9240-cab0574be962": "8e22472830742a06e397dbf126e4a1a89a317d3fdf0e5c28dda92396883b484e",
+      "166b60af-c56a-4253-a6b0-3d70cb89e718": "ebb32881cc52033d900db88d72fc2fd48a266eeefe8079dd79b29170d5d4d9cf",
+      "347e4c71-c560-4967-8307-3e7b32cbde7c": "7b200adf8e7731f592915a098d2abb36bdc35ea709c6e1d164a8b070413581d8",
+      "47ef0f4f-4aa1-4f43-b04b-c3c2f7e2791a": "6c3015ee17de7c4e3403c6307ef906bfc9cb45dce3df2b55328fae1d56c0521f",
+      "54a40446-5b08-4a0a-92c6-033908417a88": "8848b93bf0e2261e94886e486caf9596c7e8ee4f134aee601d1d5c5483df47d9",
+      "8eb9499e-bf52-4b18-98ae-4df6904af316": "8de4c17264b04139ac1075e817e0f0d83f040c326b747ea81fc5487646b7d35c",
+      "91dff6f7-36a2-4587-9ffc-1fea4e7d27a9": "96033125b9dc5f17c039e1e5711b9d61bf81e2fab080a46ac612e2d4cc563367",
+      "96c6cf5f-25fe-4653-a805-450a9a8b03df": "b1c6aec512aaf5e63d02296f62a9cbec1f79006e6ac365fc193041845bf9ff0b",
+      "9c4950ca-d789-4432-8753-cf026ab9a915": "d6dc922dd3c9a8709ea77ca7c71659b068e5fccb090f53a51b3bf01a90621baf",
+      "c7493d60-993c-4426-83ff-4edfab4da366": "98536bebad7c5d427307e46c3a22bc81861cbcef466c47ffd395dd55f5392a92",
+      "e041e0d1-53ba-43f5-9c22-4008acf4d44f": "0179fced74fb73409de763f487ad64208327ca790536d7870a624e68737bebef",
+      "eeeb0368-f28f-4f65-a6fc-4132ca43d46c": "1fe1abff532467e648cf92fc3d5967afd5f46be80594ad7bad3492ceba704b2b",
+      "f8507ca9-3471-449f-960d-e7102223af05": "00ab6a8e800f435065ebf81324e7c2ac1811941aa0a751cfef88b895b341d4ce"
+    },
+    "replay_receipt_hashes": {},
+    "replay_hashes": {},
+    "drill_marker": null,
+    "active_tasks": 0,
+    "queue_db_superuser": false,
+    "ledger": {
+      "sha256": "553f77d3a12cb2b64e50573f9edf87e4387b619648fe68e948e2c3844432b0d8",
+      "admissions": 5,
+      "openings": 3,
+      "database_superuser": false
+    },
+    "replay_count": 0
+  },
+  "identical_receipt_hashes": true,
+  "identical_replay_hashes": true,
+  "new_model_calls": 0,
+  "cloud_state_checksums_valid": true,
+  "provider_image_rehydration_tested": false,
+  "note": "Real persisted task/receipt and verifier-ledger restoration. No published API replay files existed at backup time; bundled frontend replay bytes are source assets, not database restore evidence."
+}

@@ -201,6 +201,7 @@ def client_from_settings(budget: TierTokens, transport: httpx.BaseTransport | No
     if settings.NEBIUS_API_KEY:
         return ChatClient(provider="nebius_token_factory", base_url=settings.NEBIUS_BASE_URL,
                           api_key=settings.NEBIUS_API_KEY, budget=budget, timeout_s=settings.NEBIUS_TIMEOUT_S,
+                          extra_body={"chat_template_kwargs": {"enable_thinking": False}},
                           models={"ultra": settings.NEBIUS_PLANNER_MODEL, "super": settings.NEBIUS_CODER_MODEL,
                                   "nano": settings.NEBIUS_FAST_MODEL}, transport=transport)
     if settings.NVIDIA_API_KEY:

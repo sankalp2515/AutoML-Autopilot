@@ -129,6 +129,9 @@ class Settings(BaseSettings):
     # deterministic mode and every receipt says so; there is no silent fallback
     # to another vendor's model.
     NEBIUS_API_KEY: str = ""
+    NEBIUS_PROJECT_ID: str = ""
+    NEBIUS_SANDBOX_URL: str = "https://api.tokenfactory.nebius.com/sandboxes/v1"
+    NEBIUS_SANDBOX_LAYER_BYTES: int = 2 * 1024 * 1024 * 1024
     NEBIUS_BASE_URL: str = "https://api.tokenfactory.nebius.com/v1/"
     NEBIUS_PLANNER_MODEL: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     # Small model for the stakeholder summary (cheap, fast; output is number-checked).

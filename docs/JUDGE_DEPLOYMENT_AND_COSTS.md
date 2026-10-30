@@ -1,6 +1,6 @@
 # Judge deployment, credit protection and cost plan
 
-Verified against official public documentation on 2026-10-30. Balance supplied by the owner: **$29.50 Token Factory credit**. No second promo redemption is assumed. No cloud resources were provisioned and no Nebius model calls were made for this change.
+Verified against official public documentation on 2026-10-30. Balance supplied by the owner: **$29.50 Token Factory credit**. No second promo redemption is assumed. The planning tables below predate deployment. **Deployment update:** the public Google Cloud host and genuine Nebius inference/execution are now operational; see [current validation and actual run costs](NEBIUS_DEPLOYMENT_VALIDATION.md).
 
 ## Hosting on Google Cloud meets the platform rule
 

@@ -66,6 +66,7 @@ class RemoteRunner:
 
     def prepare_pinned(self,repo_dir,*,image,timeout_s):
         response=self._post("/prepare-pinned",archive=base64.b64encode(tar_dir(repo_dir)).decode(),image=image,timeout_s=timeout_s)
+        self.name=response.get("runner",self.name)
         self.image=response["image"];self._images[response["env_id"]]=self.image
         return response["env_id"]
 

@@ -65,7 +65,7 @@ test("landing explains evidence, switches checks, discloses access and opens the
     .getByRole("link", { name: "Watch a verified repair", exact: true })
     .first()
     .click();
-  await expect(page).toHaveURL(/repair\/replay\/churn_live_prompt_v2/);
+  await expect(page).toHaveURL(/repair\/replay\/nebius_churn_verified/);
   await page.getByRole("tab", { name: "Verdict & receipt" }).click();
   await expect(
     page.getByRole("heading", { name: "A repair with evidence behind it." }),

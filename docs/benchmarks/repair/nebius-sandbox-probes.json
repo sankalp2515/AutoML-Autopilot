@@ -1,0 +1,18 @@
+{
+  "runner": "tokenfactory-sandbox",
+  "checks": {
+    "fork_isolated": true,
+    "non_root": true,
+    "network_disabled": true,
+    "no_credentials_in_guest": true,
+    "timeout_killed": true,
+    "output_head_tail_capped": true,
+    "symlink_read_denied": true,
+    "symlink_write_denied": true,
+    "trusted_empty_workspace": true,
+    "trusted_artifact_hash": true,
+    "parent_unchanged_after_trusted": true
+  },
+  "all_passed": true,
+  "new_model_calls": 0
+}

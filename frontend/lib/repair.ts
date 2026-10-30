@@ -207,7 +207,7 @@ export const REPLAYS: Record<string, Report> = {
   churn_live_prompt_v1: rejected as unknown as Report,
   churn_live_prompt_v2: verified as unknown as Report,
 };
-export const VERIFIED_REPLAY = "/repair/replay/churn_live_prompt_v2";
+export const VERIFIED_REPLAY = "/repair/replay/nebius_churn_verified";
 export const REJECTED_REPLAY = "/repair/replay/churn_live_prompt_v1";
 export const terminal = (s: string) =>
   [

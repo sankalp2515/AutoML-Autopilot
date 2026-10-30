@@ -1,0 +1,22 @@
+{
+  "cached_run": "nvidia_churn_verified",
+  "provider": "nvidia_api",
+  "runner": "local-container",
+  "decision": "VERIFIED",
+  "original_successful_model_calls": 23,
+  "original_source_sha256": "85f0c0ea79d750c6ba2d4cee2ec1756e3ec826acdfbfa4b978014009400bf885",
+  "source_hash_verified": true,
+  "new_model_calls": 0,
+  "new_task_creations": 0,
+  "fresh_sandbox_discovery_ms": 52499,
+  "recording_route_browser_test_seconds": 35.7,
+  "cached_navigation_playback_ms": 19168,
+  "browser_checks": {
+    "existing_workspace": 22,
+    "connected_flow_and_alignment": 3,
+    "exact_recording_route_repeat": 1
+  },
+  "recording_url": "http://localhost:3140/repair",
+  "video_recorded": false,
+  "clueso_project_created": false
+}

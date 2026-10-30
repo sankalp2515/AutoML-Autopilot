@@ -75,9 +75,10 @@ def runner():
         with _runner_lock:
             if _runner is None:
                 candidate=local_runner()
-                if callable(getattr(candidate,"recover_orphan_containers",None)):
+                recovery = getattr(candidate,"recover_orphan_containers",None) or getattr(candidate,"recover_orphan_operations",None)
+                if callable(recovery):
                     handle=claim_root(candidate)
-                    try:candidate.recover_orphan_containers()
+                    try:recovery()
                     except Exception:handle.close();raise
                     _ownership_file=handle
                 _runner=candidate
@@ -105,7 +106,7 @@ class Prepare(BaseModel):
 
 class PreparePinned(BaseModel):
     archive:str
-    image:str=Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    image:str=Field(pattern=r"^(?:sha256:[0-9a-f]{64}|nebius:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$")
     timeout_s:int=Field(ge=10,le=1800)
 
 
@@ -169,6 +170,9 @@ def health() -> dict:
         try:validate_secrets("REPAIR_SANDBOX_TOKEN","REPAIR_TRUSTED_SANDBOX_TOKEN")
         except ValueError:raise HTTPException(503,"sandbox credentials require operator configuration") from None
     r = runner()
+    check = getattr(r,"health_check",None)
+    if callable(check) and not check():
+        raise HTTPException(503,"sandbox provider control plane is unavailable or access is missing")
     return {"ok": True, "runner": r.name, "isolated": r.isolated}
 
 
@@ -185,7 +189,7 @@ def prepare(body: Prepare) -> dict:
 def prepare_pinned(body:PreparePinned):
     with unpacked(body.archive) as temporary:
         ident=_err(lambda:runner().prepare_pinned(temporary,image=body.image,timeout_s=body.timeout_s))
-    return {"env_id":ident,"image":runner().environment_image(ident)}
+    return {"env_id":ident,"image":runner().environment_image(ident),"runner":runner().name}
 
 
 @app.post("/fork", dependencies=[Depends(auth)])

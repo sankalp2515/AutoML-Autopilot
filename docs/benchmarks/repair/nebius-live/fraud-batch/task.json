@@ -1,0 +1,30 @@
+{
+  "id": "52a50af1-33d9-430e-99d5-ee67bdc0b74b",
+  "status": "REVIEW_READY",
+  "version": 84,
+  "fencing_token": 1,
+  "contract_digest": "sha256:0b64b98ac11edb422deb1a0feba43aeed15158dd94b81b490b2acf9fa4e2a014",
+  "target": "Restore fresh-process loading of the trained artifact.",
+  "event_seq": 56,
+  "cancel_requested": false,
+  "created_at": 1793376582.6733892,
+  "engine": "v5",
+  "mode": "full",
+  "sample": "fraud-batch",
+  "source": "sample",
+  "repo_name": "fraud-batch",
+  "fail_to_pass": [
+    "tests/test_service.py::test_artifact_roundtrip"
+  ],
+  "ml_invariants": [
+    "train_serve_parity",
+    "holdout_non_inferior"
+  ],
+  "has_labels": true,
+  "decision": "VERIFIED",
+  "reasons": [],
+  "finalist": "52a50af1-c1",
+  "cost_usd": 0.021861,
+  "seconds": 234,
+  "error": null
+}

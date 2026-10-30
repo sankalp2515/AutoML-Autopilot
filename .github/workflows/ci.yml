@@ -133,7 +133,7 @@ jobs:
         run: |
           npm run build
           npx playwright install --with-deps chromium
-          npx playwright test e2e/autopilot.spec.ts e2e/repair.spec.ts e2e/repair-handoff.spec.ts
+          npx playwright test e2e/autopilot.spec.ts e2e/repair.spec.ts e2e/repair-handoff.spec.ts e2e/landing.spec.ts
 
   images:
     name: Build images

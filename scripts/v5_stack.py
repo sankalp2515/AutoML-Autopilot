@@ -132,7 +132,7 @@ class Stack:
         cold=self.operator("warm");warm=self.operator("warm")
         return {"base_versions":["3.11","3.12"],"first_prepare":cold,"cached_prepare":warm,"model_calls":0}
 
-    def backup(self,directory):
+    def backup(self,directory,*,extra_backup=None):
         out=Path(directory).resolve()
         out.mkdir(mode=0o700,parents=True,exist_ok=False)
         paused=False;stopped=False
@@ -157,6 +157,7 @@ class Stack:
                 "images":{name:json.loads(command(["docker","image","inspect",self.env[name]]))[0]["Id"] for name in ("BACKEND_IMAGE","WEB_IMAGE")}}
             for path in out.iterdir():path.chmod(0o600)
             (out/"manifest.json").write_text(json.dumps(manifest,indent=2));(out/"manifest.json").chmod(0o600)
+            if extra_backup is not None:extra_backup(out)
         finally:
             if stopped:self.compose("start",*APP_SERVICES)
             if paused:

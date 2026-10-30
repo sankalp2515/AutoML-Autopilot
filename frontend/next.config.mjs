@@ -15,7 +15,10 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  experimental: {},
+  // Cold sandbox setup and task admission can outlast Next's 30-second proxy
+  // default. Match the client's bounded admission timeout; the backend still
+  // enforces command and task deadlines.
+  experimental: { proxyTimeout: 960000 },
   async rewrites() {
     return API_INTERNAL_URL
       ? [{ source: '/api/:path*', destination: `${API_INTERNAL_URL}/api/:path*` }]

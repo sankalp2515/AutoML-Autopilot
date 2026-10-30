@@ -601,6 +601,7 @@ class RepairAgent:
         base_env = self.runner.prepare(self.base_dir, python=self.contract.python, install=self.contract.install,
                                        timeout_s=900)
         rep.image = getattr(self.runner, "image", None)
+        rep.runner, rep.isolated = self.runner.name, self.runner.isolated
         try:
             baseline, excerpt, listing = self._reproduce(base_env)
             self._check_stop()

@@ -1,17 +1,48 @@
-# AutoML Autopilot
+<p align="center">
+  <img src="frontend/public/autopilot-mark.svg" width="64" height="64" alt="AutoML Autopilot mark">
+</p>
 
-**The ML coding agent that checks beyond green tests.**
+<h1 align="center">AutoML Autopilot</h1>
 
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[Product docs](docs/API_V5.md) · [Architecture](docs/V5_ARCHITECTURE.md) · [Evidence](docs/benchmarks/repair/LIVE_EVALUATION.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md)
+<p align="center"><strong>The ML coding agent that checks beyond green tests.</strong></p>
+<p align="center">A broken ML repository. A reviewable patch. Independent evidence for the code and the model.</p>
+
+<p align="center">
+  <a href="https://github.com/sankalp2515/AutoML-Autopilot/actions/workflows/ci.yml"><img src="https://github.com/sankalp2515/AutoML-Autopilot/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI on main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-17695B" alt="License: GPL-3.0"></a>
+  <a href="backend/requirements-runtime.txt"><img src="https://img.shields.io/badge/Python-3.12-17695B?logo=python&amp;logoColor=white" alt="Python 3.12"></a>
+  <a href="docs/NEBIUS_DEPLOYMENT_VALIDATION.md"><img src="https://img.shields.io/badge/Nemotron-Nebius%20Token%20Factory-76B900" alt="Nemotron on Nebius Token Factory"></a>
+  <a href="https://136-112-7-18.sslip.io/repair"><img src="https://img.shields.io/badge/live-Google%20Cloud-4285F4?logo=googlecloud&amp;logoColor=white" alt="Live demo on Google Cloud"></a>
+</p>
+
+<p align="center">
+  <a href="https://136-112-7-18.sslip.io/repair"><strong>Try it live</strong></a> ·
+  <a href="https://136-112-7-18.sslip.io/repair/replay/nebius_churn_verified">Watch a verified repair</a> ·
+  <a href="#local-start">Quick start</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#results-and-honest-limits">Evidence</a> ·
+  <a href="docs/README.md">Documentation</a>
+</p>
+
+[![AutoML Autopilot: repository repair, source evidence and independent ML verification](docs/assets/landing/hero-light-1440.png)](https://136-112-7-18.sslip.io/repair)
+
+## Why AutoML Autopilot
 
 AutoML Autopilot repairs Python ML repositories and produces a patch with independent software and ML verification. It is for engineers debugging broken serving code, preprocessing changes, leakage, serialization failures and quality regressions. Passing a test suite is useful evidence; it is not enough to prove a model still behaves correctly.
 
 The agent investigates competing causes, writes source edits and regression tests in isolated candidate workspaces, and submits the result to a separate verifier. The reviewer sees the diff, checks, missing evidence and verdict before downloading a patch or requesting a draft PR. **Nothing merges automatically.**
 
+| An engineer needs to know | The product exposes |
+|---|---|
+| What caused the failure? | Competing hypotheses, source references and diagnostic observations |
+| What did the agent change? | Exact Git diff, added regression tests and recorded tool/terminal activity |
+| Did it repair the software? | Reproduced baseline, fail-to-pass and pass-to-pass checks |
+| Does the ML behavior still hold? | Declared checks for parity, leakage, quality and protected groups |
+| Who approves delivery? | A patch or draft PR with independent receipts; the human controls the merge |
+
 ## See it in two minutes
 
-1. Start the local stack below and open `/repair`.
+1. Open the [hosted product](https://136-112-7-18.sslip.io/repair), or start the local stack below.
 2. Choose **Watch a verified repair**. This is a labelled genuine recording, not a new inference call. No account or model key is required to watch.
 3. Open the candidate diff, then **Verdict & receipt**. Inspect the code and ML checks, their recorded runtime and provenance.
 4. Return to the landing page and inspect the rejected churn example. Software checks passed while the online/batch comparison failed. That historical recording used an unisolated test runner and says so.
@@ -65,29 +96,54 @@ policy:
 
 This software-only example does **not** establish model quality. ML tasks also declare train/predict commands, data paths, serving/load entrypoints and the desired invariants. See the [six sample contracts](fixtures/repos) and in-app contract documentation at `/repair/docs`. Installs require exact top-level dependency pins and wheels from the operator-approved HTTPS index. Existing tests and protected files remain immutable; added regression tests are allowed by policy.
 
-## What is running, and where
+## Architecture
 
-![As-built v5 architecture](docs/assets/v5-architecture.svg)
+[![AutoML Autopilot production architecture: frozen admission, control and reasoning, isolated execution, independent verification and human delivery authority](docs/assets/production-architecture.png)](docs/assets/production-architecture.png)
+
+*The supplied production target diagram, reproduced unchanged. Click to view at full resolution. Optional registry, serving, monitoring and rollback boxes describe the broader vision; they are not shipped v5 repair-delivery features. The [as-built architecture](docs/V5_ARCHITECTURE.md) distinguishes the deployed inventory and remaining integrations.*
+
+### What is running, and where
 
 - **Frontend and API:** Next.js workspace and FastAPI control plane; tenant-scoped tasks, contracts, packs, events and delivery.
 - **Repair worker:** Nemotron hypothesis/planning and candidate generation; bounded calls, tools, source edits and checkpoints.
-- **Execution boundary:** tested Docker CLI sandbox service; network disabled during runs, immutable prepared images and independent workspaces.
+- **Execution boundary:** Nebius Sandboxes on the hosted demo; Docker CLI runner for local use. Network-disabled commands, immutable prepared images and independent workspaces.
 - **Verifier:** separate authority for code/ML receipts, sealed data and a separate transactional PostgreSQL admission/holdout ledger.
 - **Storage:** application PostgreSQL plus artifact/pack/verifier volumes. Backups and replay receipt hashes were checked in an empty-target restore drill.
 
-**Nebius status:** the inference client is OpenAI-compatible with Token Factory. Current genuine evidence is from NVIDIA developer endpoints. A direct Nebius Sandboxes adapter is **not implemented**; it is the next runtime integration, not a key-only configuration change. No Nebius validation is claimed yet. [As-built versus target](docs/V5_ARCHITECTURE.md).
+**Nebius status:** Super and Nano have both completed genuine Token Factory calls. Hosted churn, loan and fraud repairs independently VERIFIED using the new Nebius Sandboxes adapter. Reports preserve provider, model, usage and immutable image UUID. [Validation, limits and cost controls](docs/NEBIUS_DEPLOYMENT_VALIDATION.md).
+
+### Inside the workspace
+
+| Investigate and inspect | Review and hand off |
+|---|---|
+| [![Sample repositories and explicit repair contracts](docs/assets/repair/source-six-repositories.png)](docs/assets/repair/source-six-repositories.png)<br>**Six repositories with explicit repair contracts** | [![Candidate diff and independent verification evidence](docs/assets/repair/candidate-evidence.png)](docs/assets/repair/candidate-evidence.png)<br>**Source changes and evidence behind the verdict** |
+
+Screenshots show the product interface. Genuine run outcomes and provider provenance are linked below; historical examples retain their original runtime labels.
 
 ## How Nemotron and Tavily are used
 
-Nemotron proposes explanations and edits; it cannot issue the final trusted verdict. The intended Token Factory mapping is Ultra for diagnosis, Super for patching and Nano/Lightning for fast work. The current client records actual provider/model/usage per call. Missing accounting stays unknown.
+Nemotron proposes explanations and edits; it cannot issue the final trusted verdict. The hosted judge mapping uses Super for diagnosis and patching, with Nano configured for fast work. Both models were directly probed; a repair need not call every tier. The current client records actual provider/model/usage per call. Missing accounting stays unknown.
 
 Tavily is conditional: relevant library/API failures trigger official-documentation retrieval. Sources and excerpts remain attributed external data. One matched current-engine B01 pair with Tavily enabled/disabled independently verified both patches; the enabled arm actually retrieved official documentation. That one pair demonstrates integration, not a general benefit estimate.
 
 ## Results and honest limits
 
+The hosted integration was exercised through the public browser flow, from the landing page to terminal verdict. Six genuine attempts covered five distinct fixtures; churn was repeated after a runtime-label correction.
+
+| Hosted fixture | Outcome | What the recorded result establishes |
+|---|---|---|
+| [Churn service](docs/benchmarks/repair/nebius-live/churn-service/report.json) | **VERIFIED** | Serving repair passed the admitted code and ML checks |
+| [Loan scorer](docs/benchmarks/repair/nebius-live/loan-scorer/report.json) | **VERIFIED** | Preprocessing repair independently accepted |
+| [Fraud batch](docs/benchmarks/repair/nebius-live/fraud-batch/report.json) | **VERIFIED** | Serialization repair independently accepted |
+| [Refund risk](docs/benchmarks/repair/nebius-live/refund-risk/report.json) | **REJECTED** | Declared failing test remained broken; ML grading was not reached |
+| [Credit approval](docs/benchmarks/repair/nebius-live/credit-approval/report.json) | **INCONCLUSIVE** | Invalid model tool actions produced no patch; no success claimed |
+
+**$0.080805 estimated inference** across the six hosted attempts, plus the two tiny model probes. This small integration sample is not a benchmark success rate or a provider invoice guarantee. [Hosted UI ledger](docs/benchmarks/repair/nebius-ui-validation.json) · [Cloud recovery proof](docs/benchmarks/repair/nebius-cloud-restore.json)
+
 | Evidence | What it establishes |
 |---|---|
 | Six fixture proof stories | Unpatched failure, an authored wrong-green rejection and reference acceptance under the declared protocol |
+| Genuine hosted Nebius recordings | Specific code/ML verdicts using Token Factory and Nebius Sandboxes; small integration sample |
 | Genuine NVIDIA recordings | Specific model-generated repair outcomes with provider/runtime provenance |
 | Six planner measurements | Five precise leading mechanisms, one partial diagnosis; single seed, reference-aware manual review |
 | Partial historical four-arm study | Six pilots and 15/72 comparison slots; insufficient for a comparative marketing headline |
@@ -95,7 +151,7 @@ Tavily is conditional: relevant library/API failures trigger official-documentat
 
 [Evidence artifacts](docs/benchmarks/repair) · [Backend audit](docs/BACKEND_OPERATIONS_AUDIT.md) · [Current backlog](docs/V5_BACKLOG_FINAL.md)
 
-A VERIFIED receipt means the declared checks passed for the admitted snapshot, patch and evaluation data. It is not a guarantee over all future inputs. Legacy sealed tests importing candidate Python are unsupported in production; use the clean inert-artifact protocol. Arbitrary frameworks, multi-host sandbox routing, hard host disk quotas and public production deployment remain outside proven acceptance. Nebius beta forbids personal/sensitive data; use public code and synthetic inputs for that demonstration.
+A VERIFIED receipt means the declared checks passed for the admitted snapshot, patch and evaluation data. It is not a guarantee over all future inputs. Legacy sealed tests importing candidate Python are unsupported in production; use the clean inert-artifact protocol. Arbitrary frameworks, multi-host sandbox routing, per-tenant disk quotas and production SLOs remain outside proven acceptance. The judge VM has an aggregate 20-GiB data filesystem. Nebius beta forbids personal/sensitive data; use public code and synthetic inputs for that demonstration.
 
 ## Develop and verify
 
@@ -118,3 +174,18 @@ PostgreSQL tests require disposable URLs through `REPAIR_TEST_POSTGRES_URL` and 
 The earlier data-incident mode remains reachable at `/autopilot`. The original dataset-to-model orchestrator source is retained for reproducibility and future extraction; it is not the v5 repair engine or a supported dependency of the hackathon product. See [legacy scope and maintenance policy](docs/LEGACY_SCOPE.md) and the [historical v4 README](docs/LEGACY_V4_README.md).
 
 Repository code is licensed under [GNU GPL version 3](LICENSE). Existing third-party code/data retains its own notices; the pinned public MLOps subset includes upstream licenses and provenance under [fixtures/external](fixtures/external). NVIDIA models, Nebius and Tavily are separate services with their own terms. Their use does not imply endorsement, partnership or a hackathon award.
+
+Bundled fonts retain their [SIL Open Font License notices](frontend/public/fonts/README.md).
+
+## Repository guide
+
+| Path | Purpose |
+|---|---|
+| [`backend/app/repair`](backend/app/repair) | Intake, policy tools, agent, runner adapters, independent grading and durable tasks |
+| [`frontend`](frontend) | Landing page, engineering workspace, replay player and browser tests |
+| [`fixtures`](fixtures) | Synthetic repair repositories, public patterns, proof inputs and upstream notices |
+| [`scripts`](scripts) | Startup, backup/recovery, evaluation and cloud operations |
+| [`deploy`](deploy) | Service images, database initialization and Google Cloud/Nebius deployment |
+| [`docs`](docs/README.md) | Architecture, API, operations, evidence, backlog and submission notes |
+
+[Documentation index](docs/README.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md)

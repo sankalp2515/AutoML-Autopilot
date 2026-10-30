@@ -1,0 +1,37 @@
+{
+  "channel": {
+    "enabled": true,
+    "type": "email",
+    "recipient_matches": true
+  },
+  "outage": {
+    "enabled": true,
+    "channel_linked": true,
+    "location_threshold": 2
+  },
+  "uptime": {
+    "validates_tls": true,
+    "path": "/api/v1/v5/ready",
+    "period": "300s",
+    "regions": [
+      "USA",
+      "EUROPE",
+      "ASIA_PACIFIC"
+    ]
+  },
+  "budget": {
+    "amount": {
+      "specifiedAmount": {
+        "currencyCode": "INR",
+        "units": "23000"
+      }
+    },
+    "thresholds": [
+      0.5,
+      0.8,
+      1
+    ],
+    "credits_excluded": true,
+    "channel_linked": true
+  }
+}

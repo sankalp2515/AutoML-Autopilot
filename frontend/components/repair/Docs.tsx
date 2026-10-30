@@ -286,6 +286,13 @@ export default function Docs() {
             <>
               <h2>Your code is sensitive input.</h2>
               <p>
+                The hosted hackathon demo uses Nebius Sandboxes beta. Use only
+                public code and synthetic or non-sensitive data. Do not upload
+                personal data, private datasets or secrets. Sandbox filesystem
+                snapshots follow the provider&apos;s retention policy; removing a
+                local task does not guarantee immediate provider-side deletion.
+              </p>
+              <p>
                 The repair service receives admitted source code, commands and
                 task context. Configured inference providers may receive
                 selected code excerpts and diagnostic context. Research services

@@ -122,7 +122,6 @@ export default function RepairShell({
             <a href="https://github.com/sankalp2515/AutoML-Autopilot">
               Source · GPL-3.0
             </a>
-            <Link href="/autopilot">Data incident mode</Link>
           </nav>
           <Link href="/repair/how-it-works#runtime" className="r-runtime">
             <span
@@ -192,10 +191,6 @@ export default function RepairShell({
               Every repair comes with evidence. Every release stays yours.
             </span>
           </div>
-          <Link href="/autopilot" className="r-nav-link">
-            <Icon name="chart" />
-            Data incident mode
-          </Link>
           <Link href="/repair/settings" className="r-nav-link">
             <Icon name="settings" />
             Workspace settings

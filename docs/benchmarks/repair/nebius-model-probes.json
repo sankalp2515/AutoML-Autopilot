@@ -1,0 +1,47 @@
+{
+  "purpose": "bounded tiny inference probes",
+  "calls": [
+    {
+      "requested_model": "nvidia/nemotron-3-super-120b-a12b",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "http_status": 200,
+      "seconds": 1.17,
+      "content": "READY",
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 3,
+        "prompt_tokens": 22,
+        "total_tokens": 25,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": null
+        },
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 22
+      }
+    },
+    {
+      "requested_model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+      "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+      "http_status": 200,
+      "seconds": 0.84,
+      "content": "READY",
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 3,
+        "prompt_tokens": 22,
+        "total_tokens": 25,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ]
+}

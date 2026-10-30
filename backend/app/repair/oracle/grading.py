@@ -119,7 +119,8 @@ class Grader:
         binding=c.canonical_digest({"contract":ecc.contract_digest,"sealed_ref":ref.sealed_ref,
                                     "sealed":self._sealed_digest(sealed_dir)})
         if isinstance(self.ledger,DatabaseLedger):
-            if self.runner.isolated and not ecc.environment.get("image","").startswith("sha256:"):
+            from app.repair.sandbox.pinned import immutable_image
+            if self.runner.isolated and not immutable_image(ecc.environment.get("image")):
                 raise GradingError("admission lacks the prepared dependency image digest")
             try:
                 (self.ledger.admit if register else self.ledger.check)(ecc.task_id,binding)

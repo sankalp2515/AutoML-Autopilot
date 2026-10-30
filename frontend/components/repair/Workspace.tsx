@@ -533,7 +533,7 @@ export default function Workspace({
             <small>
               Step {cursor + 1} / {allFrames.length}
             </small>
-            <label className="r-checkbox-row">
+            <label className="r-replay-speed">
               Speed
               <select
                 aria-label="Playback speed"

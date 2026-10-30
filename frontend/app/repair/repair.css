@@ -2004,3 +2004,7 @@ html.dark .r-glass {
   html.dark .r-glass { --r-glass-panel: #18352f; }
   .r-glass :is(.r-public-header,.r-sidebar,.r-topbar,.r-panel,.lp-instrument,.lp-case,.lp-access-grid article,.lp-final) { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* Playback speed is a compact control, not a multiline checkbox label. */
+.r-replay-speed { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; white-space: nowrap; font-size: 13px; }
+.r-replay-speed select { margin: 0; flex: 0 0 auto; }

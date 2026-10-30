@@ -1,30 +1,28 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import './repair/repair.css';
 import AppShell from '@/components/AppShell';
 
 // "Paper-lab" engineering instrument type system: Space Grotesk for display/brand,
 // IBM Plex Sans for body, IBM Plex Mono for code/labels.
-const display = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-display',
-  display: 'swap',
+// Licensed, bundled versions of the existing fonts make builds independent of
+// Google Fonts response formats and network availability.
+const display = localFont({
+  src: [{ path: '../public/fonts/space-grotesk-latin.woff2', weight: '500 700', style: 'normal' }],
+  variable: '--font-display', display: 'swap',
 });
-
-const body = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-body',
-  display: 'swap',
+const body = localFont({
+  src: [{ path: '../public/fonts/ibm-plex-sans-latin.woff2', weight: '400 700', style: 'normal' }],
+  variable: '--font-body', display: 'swap',
 });
-
-const mono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-mono',
-  display: 'swap',
+const mono = localFont({
+  src: [
+    { path: '../public/fonts/ibm-plex-mono-400-latin.woff2', weight: '400', style: 'normal' },
+    { path: '../public/fonts/ibm-plex-mono-500-latin.woff2', weight: '500', style: 'normal' },
+    { path: '../public/fonts/ibm-plex-mono-600-latin.woff2', weight: '600', style: 'normal' },
+  ],
+  variable: '--font-mono', display: 'swap',
 });
 
 export const metadata: Metadata = {

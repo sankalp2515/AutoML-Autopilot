@@ -1,0 +1,30 @@
+{
+  "id": "0cce5a6b-d222-40b0-a970-2e60d0c1782c",
+  "status": "REVIEW_READY",
+  "version": 58,
+  "fencing_token": 1,
+  "contract_digest": "sha256:a0cf87c41236f06ce8e10adf0e173f5c9bcceba5f6b7fd2fa435347eda821495",
+  "target": "A recent change broke this repository. Make the failing tests pass without breaking the model.",
+  "event_seq": 32,
+  "cancel_requested": false,
+  "created_at": 1793375136.58585,
+  "engine": "v5",
+  "mode": "full",
+  "sample": "churn-service",
+  "source": "sample",
+  "repo_name": "churn-service",
+  "fail_to_pass": [
+    "tests/test_serve.py::test_score_request_returns_probability"
+  ],
+  "ml_invariants": [
+    "train_serve_parity",
+    "holdout_non_inferior"
+  ],
+  "has_labels": true,
+  "decision": "VERIFIED",
+  "reasons": [],
+  "finalist": "0cce5a6b-c1",
+  "cost_usd": 0.009751,
+  "seconds": 189.1,
+  "error": null
+}
