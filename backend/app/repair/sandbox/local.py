@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import os
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -307,6 +308,29 @@ class LocalContainerRunner:
                             pass        # already writable or owned by the candidate user
                     target.write_bytes(content)
                     target.chmod(0o666)
+
+    def inventory(self, env_id: str) -> list[str]:
+        """Optional bounded file RPC; avoids starting a container merely to list files.
+
+        No host path leaves the runner. Consumers revalidate and read through the
+        existing jailed read_file API. The frozen SandboxRunner protocol is unchanged.
+        """
+        environment=self._environment(env_id)
+        with environment.lock:
+            root=environment.root/"work"
+            files=[]
+            for directory, dirs, names in os.walk(root,followlinks=False):
+                dirs[:]=[d for d in dirs if d not in {".git", "_ap", "sealed", "__pycache__", ".pytest_cache"} and not d.startswith(".env") and not (Path(directory)/d).is_symlink()]
+                for name in names:
+                    path=Path(directory)/name
+                    if name.startswith(".env") or path.is_symlink():continue
+                    info=path.stat(follow_symlinks=False)
+                    if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1:continue
+                    relative=path.relative_to(root).as_posix()
+                    _path(root,relative)
+                    files.append(relative)
+                    if len(files)>10000:raise SandboxError("source file inventory limit exceeded")
+            return sorted(files)
 
     def read_file(self, env_id: str, path: str, max_bytes: int = 200_000) -> bytes:
         if max_bytes < 0:

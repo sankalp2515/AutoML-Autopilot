@@ -136,6 +136,12 @@ def test_agent_picks_the_correct_candidate_and_rejects_the_tempting_one(tmp_path
     assert c2.screen_receipt.decision is c.Decision.REJECTED                     # ...but online != batch
     assert not c2.eligible and c1.eligible
     assert rep.finalist == c1.candidate.candidate_id and rep.decision is c.Decision.VERIFIED, rep.reasons
+    progress=[e for e in rep.events if e["type"]=="candidate.progress"]
+    assert progress and all(e["step"]["n"]>=1 and len(e["diff"])<=64000 for e in progress)
+    assert any("churn/serve.py" in e["diff"] for e in progress)
+    assert any(e["type"]=="usage.updated" and e["usage"]["super"]["prompt_tokens"]>0 for e in rep.events)
+    assert sum(1 for e in progress if e["candidate_id"]==c1.candidate.candidate_id)==len(c1.steps)
+
     assert rep.final_ml_receipt.holdout_opened and not c2.screen_receipt.holdout_opened
     assert rep.usage["ultra"]["calls"] == 1 and rep.usage["super"]["calls"] >= 8
     assert any(e["type"] == "tool.denied" for e in rep.events)

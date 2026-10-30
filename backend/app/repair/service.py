@@ -67,12 +67,12 @@ class RepairService:
         return task
 
     async def create(self, tenant, *, contract: c.RepoContract, base_commit_sha,
-                     repo_snapshot_digest, target, spec: dict | None = None):
+                     repo_snapshot_digest, target, spec: dict | None = None, limits: c.Limits | None = None):
         if not 1 <= len(tenant) <= 128:
             raise ValueError("invalid tenant identity")
         task_id = str(uuid.uuid4())
         ecc = c.ECC.build(task_id=task_id, base_commit_sha=base_commit_sha,
-                          repo_snapshot_digest=repo_snapshot_digest, contract=contract, target=target)
+                          repo_snapshot_digest=repo_snapshot_digest, contract=contract, target=target, limits=limits)
         async with self.sessions() as db, db.begin():
             task = m.Task(id=task_id, tenant_id=tenant, status=c.TaskStatus.CREATED.value,
                           version=0, fencing_token=0, ecc=ecc.model_dump(mode="json"),

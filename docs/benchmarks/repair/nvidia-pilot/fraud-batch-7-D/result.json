@@ -1,0 +1,36 @@
+{
+  "fixture": "fraud-batch",
+  "seed": 7,
+  "arm": "D",
+  "accepted": false,
+  "external_decision": "INCONCLUSIVE",
+  "cost_usd": 0,
+  "agent_decision": "INCONCLUSIVE",
+  "seconds": 232.5,
+  "task_id": "a39e158b-0010-475f-ba50-d855f94f089b",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "prompt_hash": "a969412e08af2457",
+  "runner": "local-container",
+  "limits": {
+    "wall_seconds": 1800,
+    "sandbox_seconds": 900,
+    "max_candidates": 2,
+    "max_iterations": 8,
+    "max_tool_calls": 60,
+    "max_diff_lines": 200,
+    "model_tokens": {
+      "ultra": 12000,
+      "super": 160000,
+      "nano": 20000
+    },
+    "tavily_calls": 3
+  },
+  "snapshot_digest": "sha256:f6b9504a8f90198e532ed23c7cd449199e2ccc50f52bc8d2f7d3b1fe5ca22c5b",
+  "plan_sha256": "86b1ebc61708e56981fe3de50ce7676ffefad705438f0fc1ecbba08cec9850b3",
+  "report_sha256": "01aebcd81ce2ad2ae3f4b50565cf85fad157b9f9192bea0cdcc1a60e2aaa59e0"
+}

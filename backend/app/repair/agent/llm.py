@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import time
+import threading
+from email.utils import parsedate_to_datetime
 import uuid
 from typing import Any, Literal
 
@@ -43,17 +45,39 @@ class CallRecord(BaseModel):
     error: str | None = None
 
 
+class _Credentials:
+    """Shared candidate credential cursor. Never serialized into call/report records."""
+    def __init__(self, keys):
+        self.keys=list(dict.fromkeys(k for k in keys if k))
+        self.index=0
+        self.lock=threading.Lock()
+        self.cooldown={}
+    def current(self):
+        with self.lock:
+            for offset in range(len(self.keys)):
+                index=(self.index+offset)%len(self.keys)
+                if self.cooldown.get(index,0)<=time.monotonic():
+                    self.index=index
+                    return self.keys[index],index
+        raise RuntimeError("All configured NVIDIA credentials are cooling down; retry later")
+    def defer(self, index, seconds):
+        with self.lock:
+            self.cooldown[index]=time.monotonic()+max(1,seconds)
+            self.index=(index+1)%len(self.keys)
+
+
 class ChatClient:
     TRANSIENT = (429, 500, 502, 503, 504)
 
     def __init__(self, *, provider: str, base_url: str, api_key: str, models: dict[str, str],
                  budget: TierTokens, timeout_s: float = 90.0, extra_body: dict[str, Any] | None = None,
-                 transport: httpx.BaseTransport | None = None, retry_pause_s: float = 2.0):
+                 transport: httpx.BaseTransport | None = None, retry_pause_s: float = 2.0, api_keys: list[str] | None = None):
         self.provider, self.base_url, self._key = provider, base_url.rstrip("/"), api_key
         self.models, self.budget, self.timeout_s = models, budget, timeout_s
         self.extra_body = extra_body or {}
         self._transport = transport
         self.retry_pause_s = retry_pause_s
+        self._credentials = _Credentials([api_key, *(api_keys or [])])
         self.calls: list[CallRecord] = []
         self._purpose_scope: str | None = None
 
@@ -68,6 +92,7 @@ class ChatClient:
                            timeout_s=self.timeout_s, extra_body=dict(self.extra_body),
                            transport=self._transport, retry_pause_s=self.retry_pause_s)
         child.calls, child._purpose_scope = self.calls, purpose
+        child._credentials = self._credentials
         return child
 
     # ── ledger ────────────────────────────────────────────────────────────────
@@ -100,7 +125,8 @@ class ChatClient:
         if self.remaining(tier) <= 0:
             raise BudgetExceeded(f"{tier} token budget exhausted ({getattr(self.budget, tier)})")
         max_tokens = max(64, min(max_tokens, self.remaining(tier)))
-        for attempt in (1, 2):
+        max_attempts=max(2,len(self._credentials.keys)+1)
+        for attempt in range(1,max_attempts+1):
             text, rec = self._post(tier, messages, max_tokens, purpose, json_mode)
             self.calls.append(rec)
             if rec.ok and rec.finish_reason == "length" and attempt == 1 and self.remaining(tier) > 256:
@@ -110,6 +136,9 @@ class ChatClient:
                 continue
             if rec.ok:
                 return text or ""
+            if self.provider == "nvidia_api" and rec.status_code in (402,429) and attempt < max_attempts and len(self._credentials.keys)>1:
+                time.sleep(self.retry_pause_s)
+                continue
             if attempt == 1 and (rec.status_code in self.TRANSIENT or (rec.error or "").endswith("Timeout")):
                 time.sleep(self.retry_pause_s)
                 continue
@@ -125,11 +154,18 @@ class ChatClient:
             body["response_format"] = {"type": "json_object"}
         t0 = time.perf_counter()
         try:
+            key, credential_index = self._credentials.current()
             with httpx.Client(timeout=self.timeout_s, transport=self._transport) as c:
-                r = c.post(f"{self.base_url}/chat/completions", headers={"Authorization": f"Bearer {self._key}"},
+                r = c.post(f"{self.base_url}/chat/completions", headers={"Authorization": f"Bearer {key}"},
                            json=body)
             ms = int((time.perf_counter() - t0) * 1000)
             if r.status_code != 200:
+                if self.provider == "nvidia_api" and r.status_code in (402,429) and len(self._credentials.keys)>1:
+                    try: delay=max(1,float(r.headers.get("Retry-After","60")))
+                    except ValueError:
+                        try: delay=max(1,parsedate_to_datetime(r.headers["Retry-After"]).timestamp()-time.time())
+                        except (ValueError,TypeError,KeyError): delay=60
+                    self._credentials.defer(credential_index,delay)
                 return None, CallRecord(**rec, ok=False, status_code=r.status_code, latency_ms=ms,
                                         error=f"HTTP {r.status_code}")
             data = r.json()
@@ -164,6 +200,7 @@ def client_from_settings(budget: TierTokens, transport: httpx.BaseTransport | No
         extra = {"chat_template_kwargs": {"enable_thinking": bool(settings.NVIDIA_ENABLE_THINKING)}}
         return ChatClient(provider="nvidia_api", base_url=settings.NVIDIA_BASE_URL, api_key=settings.NVIDIA_API_KEY,
                           budget=budget, timeout_s=settings.NVIDIA_TIMEOUT_S, extra_body=extra,
+                          api_keys=[settings.NVIDIA_API_KEY_2,settings.NVIDIA_API_KEY_3,settings.NVIDIA_API_KEY_4],
                           models={"ultra": settings.NVIDIA_PLANNER_MODEL, "super": settings.NVIDIA_CODER_MODEL,
                                   "nano": settings.NVIDIA_FAST_MODEL}, transport=transport)
     return None

@@ -117,6 +117,11 @@ async function mock(page: Page, options: Mock = {}) {
         verifier: "ok",
         sandbox: "ok",
       };
+    else if (p === "/budget/estimate")
+      body = {
+        estimated_inference_usd: 0.18,
+        limitations: "Nominal ceiling; prompt overshoot and compute excluded.",
+      };
     else if (p === "/samples")
       body = {
         samples: [
@@ -275,6 +280,7 @@ test("source, contract, discovery, evaluation pack and task submission use the r
     pack_id: "pack-browser",
     mode: "full",
     invite_code: "browser-invite",
+    budget:{max_candidates:2,coder_tokens:160000},
   });
 });
 
@@ -364,6 +370,20 @@ test("verified receipt preserves true metric and runner, supports split diff and
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download recorded patch" }).click();
   expect((await downloaded).suggestedFilename()).toBe("autopilot-repair.patch");
+});
+
+test("new genuine recordings retain isolated runner and real receipt evidence", async ({page}) => {
+  await mock(page);
+  for (const id of ["nvidia_churn_verified", "nvidia_loan_verified"]) {
+    await page.goto(`/repair/replay/${id}`);
+    await page.getByRole("tab", {name:"Verdict & receipt"}).click();
+    await expect(page.getByRole("heading", {name:"A repair with evidence behind it."})).toBeVisible();
+    await expect(page.getByText("local-container", {exact:true})).toBeVisible();
+    await expect(page.getByText("nvidia_api", {exact:true})).toBeVisible();
+    const downloaded=page.waitForEvent("download");
+    await page.getByRole("button", {name:"Download receipt JSON"}).click();
+    expect((await downloaded).suggestedFilename()).toBe("autopilot-receipt.json");
+  }
 });
 
 test("live workspace keeps evidence on connection failure and cancel requires explicit confirmation", async ({
@@ -594,7 +614,14 @@ test("handoff report renders probe evidence, drift, image and relative error imp
     flagged: [{ column: "tenure", psi: 0.4, missing_shift: 0.1 }],
   };
   report.image = "sha256:" + "a".repeat(64);
-  report.final_ml_receipt.metrics.segments={column:"region",metric:"mae",by_group:{north:{candidate:10.5,baseline:10,delta:-.05,rows:120}},too_small:["small"]};
+  report.final_ml_receipt.metrics.segments = {
+    column: "region",
+    metric: "mae",
+    by_group: {
+      north: { candidate: 10.5, baseline: 10, delta: -0.05, rows: 120 },
+    },
+    too_small: ["small"],
+  };
   report.maintainability_notes = ["Review the shared feature-building path."];
   report.final_ml_receipt.metrics.holdout = {
     metric: "rmse",
@@ -629,13 +656,27 @@ test("handoff report renders probe evidence, drift, image and relative error imp
   await expect(
     page.getByRole("heading", { name: "Maintainability review notes" }),
   ).toBeVisible();
-  await expect(page.getByRole("heading",{name:"Group quality guardrails"})).toBeVisible();
-  await expect(page.getByText("-5.00%",{exact:true})).toBeVisible();
-  await expect(page.getByText("Some groups could not be judged",{exact:true})).toBeVisible();
-  await page.setViewportSize({width:375,height:900});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  expect((await new AxeBuilder({page}).include(".repair").withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);
-
+  await expect(
+    page.getByRole("heading", { name: "Group quality guardrails" }),
+  ).toBeVisible();
+  await expect(page.getByText("-5.00%", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Some groups could not be judged", { exact: true }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 900 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include(".repair")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
 });
 
 test("no-label verification prominently states its unmeasured quality limit", async ({
@@ -688,4 +729,120 @@ test("guided contract keeps problem and metric compatible and sends a custom loa
   expect(body.yaml).toContain("problem: regression");
   expect(body.yaml).toContain("metric: rmse");
   expect(body.yaml).toContain('load_model: "churn.io:load"');
+});
+
+test("budget controls bind the request and show server estimate", async ({
+  page,
+}) => {
+  const calls: { path: string; method: string; body: unknown }[] = [];
+  await mock(page, { calls });
+  await page.goto("/repair/new");
+  await page.getByRole("button", { name: "Continue to contract" }).click();
+  await page.getByRole("button", { name: "Validate and continue" }).click();
+  await page
+    .getByText("Advanced: execution and spend", { exact: true })
+    .click();
+  await page.getByLabel("Maximum candidates", { exact: true }).fill("1");
+  await page.getByLabel("Coding token ceiling", { exact: true }).fill("4096");
+  await expect(
+    page.getByText("Estimated inference at nominal token ceilings", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Start repair", exact: true }).click();
+  const body = calls.find((c) => c.method === "POST" && c.path === "/tasks")
+    ?.body as { budget: unknown };
+  expect(body.budget).toEqual({ max_candidates: 1, coder_tokens: 4096 });
+});
+
+test("live progress shows source edits, steps and usage before final report", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.route("**/tasks/task-browser/events?after=*", (r) =>
+    r.fulfill({
+      json: [
+        {
+          seq: 1,
+          type: "candidate.created",
+          actor: "platform",
+          data: { candidate_id: "stream-c1" },
+        },
+        {
+          seq: 2,
+          type: "diagnostic.executed",
+          actor: "agent",
+          data: {
+            kind: "telemetry", telemetry_type:"candidate.progress", telemetry_version:1,
+            candidate_id: "stream-c1",
+            step: {
+              n: 1,
+              thought: "Use the shared feature list.",
+              action: "apply_edit",
+              target: "churn/serve.py",
+              ok: true,
+              excerpt: "Applied edit",
+            },
+            diff: "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -1 +1 @@\n-old\n+shared_features\n",
+          },
+        },
+        {
+          seq: 3,
+          type: "diagnostic.executed",
+          actor: "platform",
+          data: {
+            kind: "telemetry", telemetry_type:"usage.updated", telemetry_version:1,
+            usage: {
+              super: {
+                calls: 1,
+                prompt_tokens: 900,
+                completion_tokens: 100,
+                budget: 4096,
+                est_cost_usd: 0.001,
+              },
+              total_est_cost_usd: 0.001,
+            },
+            tool_calls: 1,
+          },
+        },
+      ],
+    }),
+  );
+  await page.goto("/repair/tasks/task-browser");
+  await expect(
+    page.locator(".r-diff").getByText("shared_features", { exact: false }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("1,000 / 4,096 tokens", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".r-terminal").filter({hasText:"Applied edit"}).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "A repair with evidence behind it." }),
+  ).toHaveCount(0);
+});
+
+test("benchmark exposes checker and public-subset evidence without agent claims", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.goto("/repair/benchmark");
+  await expect(
+    page.getByRole("heading", { name: "Five independent checker proofs" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Published MLOps repository patterns" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("great-expectations-serving", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("mlflow-features", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Subset feasibility, not a leaderboard result", {
+      exact: true,
+    }),
+  ).toBeVisible();
 });

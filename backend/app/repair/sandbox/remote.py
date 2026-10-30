@@ -41,11 +41,17 @@ class RemoteRunner:
                 r = c.post(f"{self.base_url}{endpoint}", json=body, headers={"Authorization": f"Bearer {self.token}"})
         except httpx.HTTPError as e:
             raise SandboxError(f"sandbox service unreachable: {type(e).__name__}") from e
+        if r.status_code == 404 and endpoint == "/inventory":
+            return None  # capability absent on older sandbox services
         if r.status_code == 404 and endpoint == "/read":
             raise FileNotFoundError(body.get("path"))
         if r.status_code != 200:
             raise SandboxError(f"sandbox service {endpoint}: HTTP {r.status_code} {r.text[:200]}")
         return r.json()
+
+    def inventory(self, env_id: str) -> list[str] | None:
+        response=self._post("/inventory",env_id=env_id)
+        return response["paths"] if response is not None else None
 
     def prepare(self, repo_dir: str, *, python: str, install: str, timeout_s: int) -> str:
         res = self._post("/prepare", archive=base64.b64encode(tar_dir(repo_dir)).decode(), python=python,

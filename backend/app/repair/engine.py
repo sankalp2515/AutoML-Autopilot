@@ -91,6 +91,10 @@ async def run_task(svc, task_id: str, tenant: str, *, owner: str) -> None:
 
     async def _append(typ: str, ev: dict) -> None:
         data = {k: v for k, v in ev.items() if k not in ("seq", "type", "actor", "at", "provenance")}
+        if typ in {"candidate.progress", "usage.updated"}:
+            # Keep the frozen Event enum: telemetry is a versioned diagnostic payload.
+            data.update(kind="telemetry", telemetry_type=typ, telemetry_version=1)
+            typ = "diagnostic.executed"
         await h.write(lambda le: svc.append_event(le, typ, actor=ev.get("actor", "platform"), data=data,
                                                   provenance=ev.get("provenance", "OBSERVED")))
 

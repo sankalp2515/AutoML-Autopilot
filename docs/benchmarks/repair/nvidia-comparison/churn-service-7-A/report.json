@@ -1,0 +1,554 @@
+{
+  "task_id": "97ef0f75-e92d-4be9-bdef-0fd56399ddcd",
+  "mode": "generic",
+  "contract_digest": "sha256:51136ec08da6a6ac7e22d187f4922d129a3ddabfc9047706b1158ad78a7d0741",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:c5273ef79844ff0778caafae559beabd9e3b3330d5d0186a8d9fcb630eb38aeb",
+  "failure_excerpt": ">       score = score_request(accounts().iloc[0].to_dict(), model())\ntests/test_serve.py:6:\nchurn/serve.py:16: in score_request\n/usr/local/lib/python3.12/site-packages/sklearn/pipeline.py:858: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/utils/_set_output.py:316: in wrapped\n/usr/local/lib/python3.12/site-packages/sklearn/preprocessing/_data.py:1094: in transform\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2923: in validate_data\n        except TypeError as e:\n                raise ValueError(\n>           raise ValueError(\nE           ValueError: X has 8 features, but StandardScaler is expecting 9 features as input.\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2787: ValueError\nFAILED tests/test_serve.py::test_score_request_returns_probability - ValueErr...",
+  "research": {},
+  "hypotheses": [],
+  "data_profile": {},
+  "maintainability_notes": [
+    "Review the added regression test and confirm the fix shares the production feature-building path."
+  ],
+  "planner_error": null,
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "97ef0f75-c1",
+        "task_id": "97ef0f75-e92d-4be9-bdef-0fd56399ddcd",
+        "parent": null,
+        "hypothesis_id": null,
+        "diff": "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -5,8 +5,8 @@\n from .features import build_features\n \n SERVING_ORDER = [\n-    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n-    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n+    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n+    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n ]\n \n \n",
+        "diff_digest": "sha256:7cd67d741811b3ce12be6d9bc689dba48d943e56ee279863a8e97feb867dc428",
+        "files_changed": [
+          "churn/serve.py"
+        ],
+        "iterations": 5,
+        "status": "VERIFIED",
+        "summary": "Root cause: SERVING_ORDER in churn/serve.py had 8 features while FEATURE_ORDER in churn/features.py had 9 features (including 'usage_gb'). The model was trained on 9 features but serving only passed 8, causing StandardScaler to fail with feature count mismatch. Fix: Updated SERVING_ORDER to match FEATURE_ORDER exactly with all 9 features in the same order.",
+        "created_at": "2026-10-29T23:58:05.802+00:00"
+      },
+      "steps": [
+        {
+          "n": 1,
+          "thought": "The error shows a feature mismatch: StandardScaler expects 9 features but receives 8. SERVING_ORDER in serve.py has 8 features while FEATURE_ORDER in features.py likely has 9. Need to examine features.py to see the correct feature list and align SERVING_ORDER accordingly.",
+          "action": "read_file",
+          "target": "churn/features.py",
+          "ok": true,
+          "denied": null,
+          "exit_code": null,
+          "excerpt": "1: \"\"\"Shared numeric representation of customer accounts.\"\"\"\n2: \n3: import pandas as pd\n4: \n5: FEATURE_ORDER = [\n6:     \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n7:     \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n8: ]\n9: \n10: \n11: def build_features(df: pd.DataFrame) -> pd.DataFrame:\n12:     values = pd.DataFrame(index=df.index)\n13:     for name in (\"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n14:                  \"auto_pay\", \"paperless\", \"usage_gb\"):\n15:         values[name] = pd.to_numeric(df[name], errors=\"rai",
+          "at": 1793318288.8846476
+        },
+        {
+          "n": 2,
+          "thought": "Found the root cause: FEATURE_ORDER in features.py has 9 features including 'usage_gb', but SERVING_ORDER in serve.py only has 8 features and is missing 'usage_gb'. The model was trained on 9 features but serving only passes 8. Need to add 'usage_gb' to SERVING_ORDER in the correct position to match",
+          "action": "apply_edit",
+          "target": "churn/serve.py",
+          "ok": true,
+          "denied": null,
+          "exit_code": null,
+          "excerpt": "Edited churn/serve.py",
+          "at": 1793318296.6967707
+        },
+        {
+          "n": 3,
+          "thought": "Applied the fix to align SERVING_ORDER with FEATURE_ORDER. Now need to run the failing test to verify the fix works.",
+          "action": "run",
+          "target": "tests/test_serve.py::test_score_request_returns_probability",
+          "ok": true,
+          "denied": null,
+          "exit_code": 0,
+          "excerpt": "exit_code=0\n.                                                                        [100%]\n1 passed in 19.31s\n",
+          "at": 1793318329.8612766
+        },
+        {
+          "n": 4,
+          "thought": "The failing test now passes. Need to run the full test suite to ensure no regressions were introduced by the change.",
+          "action": "run",
+          "target": "test",
+          "ok": true,
+          "denied": null,
+          "exit_code": 0,
+          "excerpt": "exit_code=0\n..........                                                               [100%]\n10 passed in 40.92s\n",
+          "at": 1793318388.2310448
+        },
+        {
+          "n": 5,
+          "thought": "All 10 tests pass. The fix successfully resolved the feature mismatch between training (9 features) and serving (8 features) by adding the missing 'usage_gb' feature to SERVING_ORDER in the correct order matching FEATURE_ORDER.",
+          "action": "finish",
+          "target": "",
+          "ok": true,
+          "denied": null,
+          "exit_code": null,
+          "excerpt": "Finish recorded; independent verification is still required.",
+          "at": 1793318392.4868164
+        }
+      ],
+      "stop_reason": "finished",
+      "diff_lines": 4,
+      "skipped_files": [],
+      "tokens": 9590,
+      "code_receipt": {
+        "task_id": "97ef0f75-e92d-4be9-bdef-0fd56399ddcd",
+        "candidate_id": "97ef0f75-c1",
+        "contract_digest": "sha256:51136ec08da6a6ac7e22d187f4922d129a3ddabfc9047706b1158ad78a7d0741",
+        "diff_digest": "sha256:7cd67d741811b3ce12be6d9bc689dba48d943e56ee279863a8e97feb867dc428",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:51136ec08da6a6ac7e22d187f4922d129a3ddabfc9047706b1158ad78a7d0741"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (1 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 10,
+              "collected_candidate": 10,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "local-container",
+        "created_at": "2026-10-30T00:00:53.657+00:00",
+        "receipt_digest": "sha256:b51397af34329767fd0817076116f05d620a7a253abb26b4d3b724f2b3933c26",
+        "kind": "code"
+      },
+      "screen_receipt": null,
+      "eligible": true,
+      "infra_failed": false
+    }
+  ],
+  "finalist": "97ef0f75-c1",
+  "final_ml_receipt": null,
+  "verdict": {
+    "task_id": "97ef0f75-e92d-4be9-bdef-0fd56399ddcd",
+    "candidate_id": "97ef0f75-c1",
+    "contract_digest": "sha256:51136ec08da6a6ac7e22d187f4922d129a3ddabfc9047706b1158ad78a7d0741",
+    "diff_digest": "sha256:7cd67d741811b3ce12be6d9bc689dba48d943e56ee279863a8e97feb867dc428",
+    "code_receipt_digest": "sha256:b51397af34329767fd0817076116f05d620a7a253abb26b4d3b724f2b3933c26",
+    "ml_receipt_digest": null,
+    "decision": "VERIFIED",
+    "reasons": [],
+    "created_at": "2026-10-30T00:00:53.876+00:00"
+  },
+  "decision": "VERIFIED",
+  "reasons": [],
+  "usage": {
+    "super": {
+      "calls": 5,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 8941,
+      "completion_tokens": 649,
+      "est_cost_usd": 0.010888,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0.010888
+  },
+  "calls": [
+    {
+      "correlation_id": "local-85ff6bf85245",
+      "tier": "super",
+      "purpose": "code:97ef0f75-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 2419,
+      "prompt_tokens": 1262,
+      "completion_tokens": 91,
+      "est_cost_usd": 0.001535,
+      "request_id": "chatcmpl-b05fb5a3-7b75-4718-bf36-b6f185201df2",
+      "error": null
+    },
+    {
+      "correlation_id": "local-3ccc1a069a54",
+      "tier": "super",
+      "purpose": "code:97ef0f75-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 7417,
+      "prompt_tokens": 1631,
+      "completion_tokens": 270,
+      "est_cost_usd": 0.002441,
+      "request_id": "chatcmpl-48ce5b23-e7c0-4cbf-9df0-3f654faf5cf9",
+      "error": null
+    },
+    {
+      "correlation_id": "local-b448c590acef",
+      "tier": "super",
+      "purpose": "code:97ef0f75-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 1938,
+      "prompt_tokens": 1922,
+      "completion_tokens": 59,
+      "est_cost_usd": 0.002099,
+      "request_id": "chatcmpl-6d242360-bad1-479c-8a0c-68302fa01f76",
+      "error": null
+    },
+    {
+      "correlation_id": "local-751f94b86424",
+      "tier": "super",
+      "purpose": "code:97ef0f75-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 7153,
+      "prompt_tokens": 2020,
+      "completion_tokens": 39,
+      "est_cost_usd": 0.002137,
+      "request_id": "chatcmpl-8b7fb36b-c78a-4435-a83b-88a5d323b9ae",
+      "error": null
+    },
+    {
+      "correlation_id": "local-e40a833e0280",
+      "tier": "super",
+      "purpose": "code:97ef0f75-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 3836,
+      "prompt_tokens": 2106,
+      "completion_tokens": 190,
+      "est_cost_usd": 0.002676,
+      "request_id": "chatcmpl-86368dcc-7d09-4a35-8a45-5dee17c380e4",
+      "error": null
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793318103.4519541,
+      "contract_digest": "sha256:51136ec08da6a6ac7e22d187f4922d129a3ddabfc9047706b1158ad78a7d0741",
+      "mode": "generic",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793318285.7991095,
+      "failing": [
+        "tests/test_serve.py::test_score_request_returns_probability"
+      ],
+      "collected": 10
+    },
+    {
+      "seq": 3,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793318285.8027537,
+      "candidate_id": "97ef0f75-c1",
+      "hypothesis_id": null
+    },
+    {
+      "seq": 4,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793318288.9048157,
+      "candidate_id": "97ef0f75-c1",
+      "step": {
+        "n": 1,
+        "thought": "The error shows a feature mismatch: StandardScaler expects 9 features but receives 8. SERVING_ORDER in serve.py has 8 features while FEATURE_ORDER in features.py likely has 9. Need to examine features.py to see the correct feature list and align SERVING_ORDER accordingly.",
+        "action": "read_file",
+        "target": "churn/features.py",
+        "ok": true,
+        "denied": null,
+        "exit_code": null,
+        "excerpt": "1: \"\"\"Shared numeric representation of customer accounts.\"\"\"\n2: \n3: import pandas as pd\n4: \n5: FEATURE_ORDER = [\n6:     \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n7:     \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n8: ]\n9: \n10: \n11: def build_features(df: pd.DataFrame) -> pd.DataFrame:\n12:     values = pd.DataFrame(index=df.index)\n13:     for name in (\"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n14:                  \"auto_pay\", \"paperless\", \"usage_gb\"):\n15:         values[name] = pd.to_numeric(df[name], errors=\"rai",
+        "at": 1793318288.8846476
+      },
+      "diff": "",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 1353
+    },
+    {
+      "seq": 5,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793318288.9048157,
+      "usage": {
+        "super": {
+          "calls": 1,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 1262,
+          "completion_tokens": 91,
+          "est_cost_usd": 0.001535,
+          "budget": 160000
+        },
+        "total_est_cost_usd": 0.001535
+      },
+      "tool_calls": 1
+    },
+    {
+      "seq": 6,
+      "type": "patch.applied",
+      "actor": "agent",
+      "at": 1793318296.6967707,
+      "candidate_id": "97ef0f75-c1",
+      "path": "churn/serve.py"
+    },
+    {
+      "seq": 7,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793318296.722233,
+      "candidate_id": "97ef0f75-c1",
+      "step": {
+        "n": 2,
+        "thought": "Found the root cause: FEATURE_ORDER in features.py has 9 features including 'usage_gb', but SERVING_ORDER in serve.py only has 8 features and is missing 'usage_gb'. The model was trained on 9 features but serving only passes 8. Need to add 'usage_gb' to SERVING_ORDER in the correct position to match",
+        "action": "apply_edit",
+        "target": "churn/serve.py",
+        "ok": true,
+        "denied": null,
+        "exit_code": null,
+        "excerpt": "Edited churn/serve.py",
+        "at": 1793318296.6967707
+      },
+      "diff": "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -5,8 +5,8 @@\n from .features import build_features\n \n SERVING_ORDER = [\n-    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n-    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n+    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n+    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n ]\n \n \n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 3254
+    },
+    {
+      "seq": 8,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793318296.722233,
+      "usage": {
+        "super": {
+          "calls": 2,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 2893,
+          "completion_tokens": 361,
+          "est_cost_usd": 0.003976,
+          "budget": 160000
+        },
+        "total_est_cost_usd": 0.003976
+      },
+      "tool_calls": 2
+    },
+    {
+      "seq": 9,
+      "type": "tests.passed",
+      "actor": "sandbox",
+      "at": 1793318329.8612766,
+      "candidate_id": "97ef0f75-c1",
+      "exit_code": 0
+    },
+    {
+      "seq": 10,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793318329.8818507,
+      "candidate_id": "97ef0f75-c1",
+      "step": {
+        "n": 3,
+        "thought": "Applied the fix to align SERVING_ORDER with FEATURE_ORDER. Now need to run the failing test to verify the fix works.",
+        "action": "run",
+        "target": "tests/test_serve.py::test_score_request_returns_probability",
+        "ok": true,
+        "denied": null,
+        "exit_code": 0,
+        "excerpt": "exit_code=0\n.                                                                        [100%]\n1 passed in 19.31s\n",
+        "at": 1793318329.8612766
+      },
+      "diff": "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -5,8 +5,8 @@\n from .features import build_features\n \n SERVING_ORDER = [\n-    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n-    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n+    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n+    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n ]\n \n \n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 5235
+    },
+    {
+      "seq": 11,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793318329.8818507,
+      "usage": {
+        "super": {
+          "calls": 3,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 4815,
+          "completion_tokens": 420,
+          "est_cost_usd": 0.006075,
+          "budget": 160000
+        },
+        "total_est_cost_usd": 0.006075
+      },
+      "tool_calls": 3
+    },
+    {
+      "seq": 12,
+      "type": "tests.passed",
+      "actor": "sandbox",
+      "at": 1793318388.2310448,
+      "candidate_id": "97ef0f75-c1",
+      "exit_code": 0
+    },
+    {
+      "seq": 13,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793318388.2556717,
+      "candidate_id": "97ef0f75-c1",
+      "step": {
+        "n": 4,
+        "thought": "The failing test now passes. Need to run the full test suite to ensure no regressions were introduced by the change.",
+        "action": "run",
+        "target": "test",
+        "ok": true,
+        "denied": null,
+        "exit_code": 0,
+        "excerpt": "exit_code=0\n..........                                                               [100%]\n10 passed in 40.92s\n",
+        "at": 1793318388.2310448
+      },
+      "diff": "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -5,8 +5,8 @@\n from .features import build_features\n \n SERVING_ORDER = [\n-    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n-    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n+    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n+    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n ]\n \n \n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 7294
+    },
+    {
+      "seq": 14,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793318388.2556717,
+      "usage": {
+        "super": {
+          "calls": 4,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 6835,
+          "completion_tokens": 459,
+          "est_cost_usd": 0.008212,
+          "budget": 160000
+        },
+        "total_est_cost_usd": 0.008212
+      },
+      "tool_calls": 4
+    },
+    {
+      "seq": 15,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793318392.5203097,
+      "candidate_id": "97ef0f75-c1",
+      "step": {
+        "n": 5,
+        "thought": "All 10 tests pass. The fix successfully resolved the feature mismatch between training (9 features) and serving (8 features) by adding the missing 'usage_gb' feature to SERVING_ORDER in the correct order matching FEATURE_ORDER.",
+        "action": "finish",
+        "target": "",
+        "ok": true,
+        "denied": null,
+        "exit_code": null,
+        "excerpt": "Finish recorded; independent verification is still required.",
+        "at": 1793318392.4868164
+      },
+      "diff": "--- a/churn/serve.py\n+++ b/churn/serve.py\n@@ -5,8 +5,8 @@\n from .features import build_features\n \n SERVING_ORDER = [\n-    \"tenure_months\", \"monthly_charge\", \"support_calls\", \"late_payments\",\n-    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\",\n+    \"monthly_charge\", \"tenure_months\", \"support_calls\", \"late_payments\",\n+    \"contract_monthly\", \"auto_pay\", \"internet_fiber\", \"paperless\", \"usage_gb\",\n ]\n \n \n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 9590
+    },
+    {
+      "seq": 16,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793318392.5203097,
+      "usage": {
+        "super": {
+          "calls": 5,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 8941,
+          "completion_tokens": 649,
+          "est_cost_usd": 0.010888,
+          "budget": 160000
+        },
+        "total_est_cost_usd": 0.010888
+      },
+      "tool_calls": 5
+    },
+    {
+      "seq": 17,
+      "type": "code_oracle.passed",
+      "actor": "code_oracle",
+      "at": 1793318453.6599863,
+      "candidate_id": "97ef0f75-c1",
+      "reasons": []
+    },
+    {
+      "seq": 18,
+      "type": "candidate.frozen",
+      "actor": "platform",
+      "at": 1793318453.876181,
+      "candidate_id": "97ef0f75-c1",
+      "diff_digest": "sha256:7cd67d741811b3ce12be6d9bc689dba48d943e56ee279863a8e97feb867dc428"
+    },
+    {
+      "seq": 19,
+      "type": "candidate.verified",
+      "actor": "ml_oracle",
+      "at": 1793318453.876181,
+      "candidate_id": "97ef0f75-c1",
+      "decision": "VERIFIED"
+    }
+  ],
+  "seconds": 350.4
+}

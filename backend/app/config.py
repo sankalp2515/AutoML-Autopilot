@@ -138,6 +138,9 @@ class Settings(BaseSettings):
     # OpenAI-compatible endpoint. Used when NEBIUS_API_KEY is empty. Nebius wins
     # when both are set, so the hackathon path stays Token Factory once it works.
     NVIDIA_API_KEY: str = ""
+    NVIDIA_API_KEY_2: str = ""
+    NVIDIA_API_KEY_3: str = ""
+    NVIDIA_API_KEY_4: str = ""
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_PLANNER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
     NVIDIA_FAST_MODEL: str = "nvidia/nemotron-3.5-lightning-30b-a3b"

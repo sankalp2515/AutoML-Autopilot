@@ -3,6 +3,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { money, REPLAYS, totalCost } from "@/lib/repair";
 import { Action, Badge, Notice, PageHead, Panel } from "@/components/repair/ui";
+import BenchmarkEvidence, {
+  study,
+} from "@/components/repair/BenchmarkEvidence";
 export default function Benchmark() {
   const [tab, setTab] = useState("repair");
   const recordings = Object.values(REPLAYS),
@@ -99,13 +102,15 @@ export default function Benchmark() {
               </Action>
             </div>
           </Panel>
-          <Notice
-            title="The matched-budget comparison is not published yet"
-            tone="warning"
-          >
-            We have genuine full-system recordings, but no completed A / D /
-            no-ML / no-Tavily study. Unmeasured results stay unmeasured.
-          </Notice>
+          {!study && (
+            <Notice
+              title="The matched-budget comparison is not published yet"
+              tone="warning"
+            >
+              We have genuine full-system recordings, but no completed A / D /
+              no-ML / no-Tavily study. Unmeasured results stay unmeasured.
+            </Notice>
+          )}
           <Panel
             title="Evaluation arms"
             subtitle="Each arm must be scored by the same independent checkers."
@@ -130,22 +135,35 @@ export default function Benchmark() {
                     ],
                     ["D minus ML checks", "Internal ML acceptance disabled"],
                     ["D minus Tavily", "External research disabled"],
-                  ].map(([arm, scope]) => (
+                  ].map(([arm, scope], i) => (
                     <tr key={arm}>
                       <td>{arm}</td>
                       <td>{scope}</td>
-                      <td>Not measured</td>
-                      <td>Not measured</td>
-                      <td>Not measured</td>
+                      <td>
+                        {study
+                          ? `${study.arms[i].verified} / ${study.arms[i].attempted}`
+                          : "Not measured"}
+                      </td>
+                      <td>
+                        {study
+                          ? study.arms[i].accepted ? `${study.arms[i].false_accepts} / ${study.arms[i].accepted} accepted; ${study.arms[i].unresolved_accepts} unresolved` : "No accepted patches"
+                          : "Not measured"}
+                      </td>
+                      <td>
+                        {study
+                          ? money(study.arms[i].cost_per_verified)
+                          : "Not measured"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </Panel>
+          <BenchmarkEvidence />
           <Panel
             title="Available recorded evidence"
-            subtitle="Different prompt versions on one seeded fault, not independent benchmark families."
+            subtitle="Genuine executions with original model/runner provenance; recordings are not matched benchmark trials."
           >
             <div className="r-table-wrap" tabIndex={0}>
               <table className="r-table">
@@ -162,7 +180,7 @@ export default function Benchmark() {
                   {recordings.map((r) => (
                     <tr key={r.task_id}>
                       <td>{r.replay_id}</td>
-                      <td>churn-service / train–serve mismatch</td>
+                      <td>{r.sample || "churn-service"} / repository repair</td>
                       <td>
                         <Badge value={r.decision} />
                       </td>

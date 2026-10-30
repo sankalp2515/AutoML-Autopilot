@@ -157,3 +157,20 @@ UI hints:
 - `installed: false` means no webhook has arrived from the App installation yet. Show "Install the GitHub App on this repository".
 - `recent[].outcome` is one of: `queued`, `task created` (link `task_id`), `skipped: the repository has no valid autopilot.yaml`, `not admitted: …`, `failed: …`.
 - GitHub-triggered tasks have the target `CI failed: <workflow> on <branch>`.
+
+## Budget and live progress additions
+
+`POST /budget/estimate` accepts `{max_candidates:1..2,coder_tokens:1024..160000}`
+(member role). Returns admitted limits, an estimated nominal token-ceiling inference
+cost, pricing provenance and limitations. These are reductions from server policy;
+they cannot increase global limits. Optional `budget` on `POST /tasks` has the same
+shape and is sealed into the ECC. Other tier and runtime limits stay server policy.
+
+Agent reports use `candidate.progress` carrying `{candidate_id,step,diff,diff_truncated,skipped_files,tokens}`.
+The diff preview is capped at 64 KB and is not a frozen final candidate. `usage.updated`
+contains the measured `usage` ledger and `tool_calls`. Poll/resume these events by seq
+like existing events. The persisted API keeps the frozen Event enum: both messages
+use `type: diagnostic.executed` with `data.kind: telemetry`, `data.telemetry_version: 1`
+and `data.telemetry_type: candidate.progress | usage.updated`. The other payload fields
+are in `data`. The frontend normalizes that envelope. Direct event types in recorded
+agent reports remain supported. Final candidates/receipts stay immutable and separate.

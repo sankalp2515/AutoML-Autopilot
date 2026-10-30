@@ -215,14 +215,15 @@ class RepairAgent:
     def __init__(self, runner: SandboxRunner, llm: ChatClient, oracles, *, base_dir: str,
                  contract: c.RepoContract, ecc: c.ECC, mode: str = "full",
                  on_event: Callable[[dict], None] | None = None,
-                 should_stop: Callable[[], bool] | None = None, tavily=None):
+                 should_stop: Callable[[], bool] | None = None, tavily=None, internal_ml: bool = True, research_enabled: bool = True):
         self.runner, self.llm, self.oracles = runner, llm, oracles
         self.base_dir, self.contract, self.ecc = base_dir, contract, ecc
         self.mode = mode
         self.on_event, self.should_stop = on_event, should_stop or (lambda: False)
         self.tavily = tavily
+        self.research_enabled = research_enabled
         self.roots = list(ecc.allowed_edit_roots)
-        self.ml_required = bool(ecc.success.ml_invariants)
+        self.ml_required = internal_ml and bool(ecc.success.ml_invariants)
         self._lock = threading.Lock()
         self.report = RepairReport(task_id=ecc.task_id, mode=mode, contract_digest=ecc.contract_digest,
                                    provider=llm.provider, models=dict(llm.models), runner=runner.name,
@@ -350,7 +351,7 @@ class RepairAgent:
 
     # 2 research
     def _research(self, excerpt: str) -> None:
-        if self.mode != "full" or self.ecc.limits.tavily_calls <= 0:
+        if not getattr(self, "research_enabled", True) or self.mode != "full" or self.ecc.limits.tavily_calls <= 0:
             return
         res = agent_research.research(excerpt, client=self.tavily)
         self.report.research = res
@@ -390,6 +391,17 @@ class RepairAgent:
         if last_green_suite <= last_edit:
             return "the full test suite has not passed since your last edit."
         return None
+
+    def _progress(self, run, mirror):
+        """Bounded preview, distinct from immutable frozen candidate artifacts."""
+        diff, skipped = workdir_diff(self.base_dir, str(mirror.dir), self.roots)
+        cid=run.candidate.candidate_id
+        self._event("candidate.progress", "agent", candidate_id=cid,
+                    step=run.steps[-1].model_dump(mode="json"),
+                    diff=redact(diff[:64000]), diff_truncated=len(diff)>64000,
+                    skipped_files=skipped, tokens=sum(x.prompt_tokens+x.completion_tokens for x in self.llm.calls if x.purpose==f"code:{cid}"))
+        self._event("usage.updated", "platform", usage=self.llm.usage(),
+                    tool_calls=sum(1 for ev in self.report.events if ev["type"]=="candidate.progress"))
 
     # 4 engineer one candidate
     def _engineer(self, base_env: str, cid: str, brief: str, hyp: Hypothesis | None,
@@ -447,6 +459,7 @@ class RepairAgent:
                     invalid += 1
                     turns.append((text[:1500], f"INVALID REPLY: {str(e)[:300]}. Reply with one valid JSON action."))
                     run.steps.append(Step(n=n, action="invalid", ok=False, denied=str(e)[:200]))
+                    self._progress(run, mirror)
                     if invalid >= 3:
                         run.stop_reason = "three invalid replies"
                         break
@@ -463,6 +476,7 @@ class RepairAgent:
                         run.steps.append(Step(n=n, thought=redact(step.thought[:300]), action="finish", ok=False,
                                               denied=msg[:200]))
                         turns.append((step.model_dump_json(), msg))
+                        self._progress(run, mirror)
                         continue
                 if act.action == "apply_edit" and act.path in locked and lock_refused < 6:
                     # Full mode: once the agent's own new test has failed, weakening it is the
@@ -473,6 +487,7 @@ class RepairAgent:
                                           target=act.path, ok=False, denied=msg[:200]))
                     self._event("tool.denied", "platform", candidate_id=cid, action="apply_edit", rule=msg[:160])
                     turns.append((step.model_dump_json(), "DENIED: " + msg))
+                    self._progress(run, mirror)
                     continue
                 res = tools.execute(step)
                 if self.mode == "full" and act.action == "apply_edit" and res.ok and act.old == "" \
@@ -503,6 +518,7 @@ class RepairAgent:
                 elif act.action == "run" and act.kind == "test":
                     self._event("tests.passed" if res.ok else "tests.failed", "sandbox", candidate_id=cid,
                                 exit_code=res.exit_code)
+                self._progress(run, mirror)
                 turns.append((step.model_dump_json(), f"RESULT {act.action}: {excerpt}"))
                 if act.action == "finish":
                     run.candidate.summary = redact(act.summary)
@@ -581,7 +597,7 @@ class RepairAgent:
                 plan = [(h, [o for o in hyps if o.id != h.id]) for h in hyps[:n]]
             else:
                 plan = [(None, [])]
-            per_calls = min(30, self.ecc.limits.max_tool_calls // len(plan))
+            per_calls = self.ecc.limits.max_tool_calls // len(plan)
             per_tokens = self.ecc.limits.model_tokens.super // len(plan)
             self._check_stop()
             with ThreadPoolExecutor(max_workers=len(plan)) as pool:

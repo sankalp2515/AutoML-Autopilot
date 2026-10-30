@@ -1,0 +1,105 @@
+{
+  "kind": "dummy-alignment-proof",
+  "autonomous_agent": false,
+  "runner": "process-unisolated",
+  "wrong_code": {
+    "task_id": "b01-dummies",
+    "candidate_id": "dummies",
+    "contract_digest": "sha256:85cea1df9e898771cbbda0c90efea2e3a51f29cbedf2ca2d919399af38f24af0",
+    "diff_digest": "sha256:23656852ddac5eff70ddfe7bbd8b455c6915b47c15ed18c77a0383776c5a5688",
+    "checks": [
+      {
+        "name": "contract_integrity",
+        "status": "PASS",
+        "detail": "contract digest verified",
+        "evidence": {
+          "digest": "sha256:85cea1df9e898771cbbda0c90efea2e3a51f29cbedf2ca2d919399af38f24af0"
+        }
+      },
+      {
+        "name": "diff_policy",
+        "status": "PASS",
+        "detail": "edits stay inside allowed paths; no test gaming",
+        "evidence": {}
+      },
+      {
+        "name": "diff_applies",
+        "status": "PASS",
+        "detail": "applied to the pristine base (1 files)",
+        "evidence": {}
+      },
+      {
+        "name": "baseline",
+        "status": "PASS",
+        "detail": "1 declared failing test(s) reproduced on the base",
+        "evidence": {}
+      },
+      {
+        "name": "fail_to_pass",
+        "status": "PASS",
+        "detail": "1/1 declared failing tests now pass",
+        "evidence": {
+          "not_passing": []
+        }
+      },
+      {
+        "name": "pass_to_pass",
+        "status": "PASS",
+        "detail": "all previously passing tests still pass",
+        "evidence": {
+          "broken": [],
+          "newly_skipped": [],
+          "collected_base": 2,
+          "collected_candidate": 2,
+          "added_tests": []
+        }
+      }
+    ],
+    "decision": "VERIFIED",
+    "reasons": [],
+    "runner": "process-unisolated",
+    "created_at": "2026-10-30T00:26:37.702+00:00",
+    "receipt_digest": "sha256:14681a5189c87805d79ffed7a1d0ea8a7390332d1e915c947c2bbe0399a37a23",
+    "kind": "code"
+  },
+  "wrong_ml": {
+    "task_id": "b01-dummies",
+    "candidate_id": "dummies",
+    "contract_digest": "sha256:85cea1df9e898771cbbda0c90efea2e3a51f29cbedf2ca2d919399af38f24af0",
+    "diff_digest": "sha256:23656852ddac5eff70ddfe7bbd8b455c6915b47c15ed18c77a0383776c5a5688",
+    "checks": [
+      {
+        "name": "pipeline_runs",
+        "status": "PASS",
+        "detail": "train and predict ran; 600 holdout rows scored",
+        "evidence": {}
+      },
+      {
+        "name": "train_serve_parity",
+        "status": "FAIL",
+        "detail": "online scoring disagrees with batch scoring on 199/200 rows",
+        "evidence": {
+          "entrypoint": "scorer.serve:score_request",
+          "tolerance": 1e-06,
+          "max_abs_diff": 0.002190835513207756,
+          "mismatched_rows": 199,
+          "median_abs_diff": 0.00011750298120215795,
+          "errors": [],
+          "comparison_authority": "verifier",
+          "fresh_execution_branch": true
+        }
+      }
+    ],
+    "decision": "REJECTED",
+    "reasons": [
+      "E_TRAIN_SERVE_PARITY"
+    ],
+    "runner": "process-unisolated",
+    "created_at": "2026-10-30T00:27:00.884+00:00",
+    "receipt_digest": "sha256:db4865f42559ee5468b0a0fa8f7bb0b395f295ff4d87444e6fc4874c18d4bf62",
+    "kind": "ml",
+    "metrics": {},
+    "holdout_opened": false
+  },
+  "reference_unseen_category_passed": true
+}

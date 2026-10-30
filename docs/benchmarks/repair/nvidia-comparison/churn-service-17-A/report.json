@@ -1,0 +1,137 @@
+{
+  "task_id": "a116ebaa-580b-4cf3-8441-6316ea6c7816",
+  "mode": "generic",
+  "contract_digest": "sha256:95f98bfa37eb3005d978bd1418a86b182d894e646cb749c57b49c2b8d1a8d8e3",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:c5273ef79844ff0778caafae559beabd9e3b3330d5d0186a8d9fcb630eb38aeb",
+  "failure_excerpt": ">       score = score_request(accounts().iloc[0].to_dict(), model())\ntests/test_serve.py:6:\nchurn/serve.py:16: in score_request\n/usr/local/lib/python3.12/site-packages/sklearn/pipeline.py:858: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/utils/_set_output.py:316: in wrapped\n/usr/local/lib/python3.12/site-packages/sklearn/preprocessing/_data.py:1094: in transform\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2923: in validate_data\n        except TypeError as e:\n                raise ValueError(\n>           raise ValueError(\nE           ValueError: X has 8 features, but StandardScaler is expecting 9 features as input.\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2787: ValueError\nFAILED tests/test_serve.py::test_score_request_returns_probability - ValueErr...",
+  "research": {},
+  "hypotheses": [],
+  "data_profile": {},
+  "maintainability_notes": [],
+  "planner_error": null,
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "a116ebaa-c1",
+        "task_id": "a116ebaa-580b-4cf3-8441-6316ea6c7816",
+        "parent": null,
+        "hypothesis_id": null,
+        "diff": "",
+        "diff_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "files_changed": [],
+        "iterations": 0,
+        "status": "ABANDONED",
+        "summary": "",
+        "created_at": "2026-10-30T00:22:19.233+00:00"
+      },
+      "steps": [],
+      "stop_reason": "provider: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+      "diff_lines": 0,
+      "skipped_files": [],
+      "tokens": 0,
+      "code_receipt": null,
+      "screen_receipt": null,
+      "eligible": false,
+      "infra_failed": false
+    }
+  ],
+  "finalist": null,
+  "final_ml_receipt": null,
+  "verdict": null,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "usage": {
+    "super": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0
+  },
+  "calls": [
+    {
+      "correlation_id": "local-57b88bfd120e",
+      "tier": "super",
+      "purpose": "code:a116ebaa-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1065,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-7da892170b46",
+      "tier": "super",
+      "purpose": "code:a116ebaa-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 862,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793319707.5545259,
+      "contract_digest": "sha256:95f98bfa37eb3005d978bd1418a86b182d894e646cb749c57b49c2b8d1a8d8e3",
+      "mode": "generic",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793319739.2333708,
+      "failing": [
+        "tests/test_serve.py::test_score_request_returns_probability"
+      ],
+      "collected": 10
+    },
+    {
+      "seq": 3,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793319739.2333708,
+      "candidate_id": "a116ebaa-c1",
+      "hypothesis_id": null
+    }
+  ],
+  "seconds": 36.2,
+  "evaluation": {
+    "arm": "A",
+    "arm_accepted": false,
+    "external_decision": "INCONCLUSIVE",
+    "external_ml_receipt": null
+  }
+}

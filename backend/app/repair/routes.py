@@ -25,6 +25,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTT
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.repair import budgets
 from app.repair import accounts, delivery, github_app, ops, service, snapshots
 from app.autopilot.routes import autopilot_tenant  # noqa: F401 - re-exported for dependency overrides
 from app.repair.accounts import Actor, get_service
@@ -73,6 +74,7 @@ class CreateTask(BaseModel):
     pack_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{12}$")
     mode: str = Field(default="full", pattern=r"^(full|generic)$")
     invite_code: str | None = Field(default=None, max_length=100)
+    budget: budgets.TaskBudget | None = None
 
 
 class CancelTask(BaseModel):
@@ -178,9 +180,15 @@ async def delete_pack(pack_id: str, tenant=Depends(accounts.writer)):
     await blocking(snapshots.delete_pack, pack_id, tenant)
 
 
+@router.post("/budget/estimate")
+async def budget_estimate(body: budgets.TaskBudget, tenant=Depends(accounts.writer), db=Depends(get_service)):
+    status=await ops.status(db)
+    return budgets.estimate(body,models=status.get("models"))
+
+
 # ── tasks ─────────────────────────────────────────────────────────────────────
 async def _create_task(db, tenant: str, repo_id: str, target: str, *, budget: dict, mode: str = "full",
-                       fail_to_pass: list[str] | None = None, pack_id: str | None = None, extra: dict | None = None):
+                       fail_to_pass: list[str] | None = None, pack_id: str | None = None, extra: dict | None = None, requested_budget: budgets.TaskBudget | None = None):
     info = await blocking(snapshots.describe, repo_id, tenant)
     if fail_to_pass:
         await blocking(snapshots.save_contract, repo_id, tenant, info["contract_yaml"], fail_to_pass)
@@ -196,7 +204,7 @@ async def _create_task(db, tenant: str, repo_id: str, target: str, *, budget: di
             "repo_name": src.get("url") or src.get("sample") or src.get("name"),
             "upstream_sha": frozen["upstream_sha"], "budget": budget, **(extra or {})}
     return await call(db.create(tenant, contract=frozen["contract"], base_commit_sha=frozen["sha"],
-                                repo_snapshot_digest=frozen["digest"], target=target, spec=spec))
+                                repo_snapshot_digest=frozen["digest"], target=target, spec=spec, limits=budgets.limits_for(requested_budget)))
 
 
 @router.post("/tasks", status_code=201)
@@ -207,7 +215,7 @@ async def create(body: CreateTask, actor: Actor = Depends(accounts.actor), db=De
     except ops.Denied as e:
         raise HTTPException(403, str(e)) from e
     return await _create_task(db, actor.tenant, body.repo_id, body.target, budget=budget, mode=body.mode,
-                              fail_to_pass=body.fail_to_pass, pack_id=body.pack_id)
+                              fail_to_pass=body.fail_to_pass, pack_id=body.pack_id, requested_budget=body.budget)
 
 
 @router.get("/tasks")

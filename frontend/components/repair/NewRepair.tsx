@@ -134,6 +134,49 @@ export default function NewRepair() {
     )
       setSelected(samples.data.samples[0].name);
   }, [samples.data, selected]);
+  const [maxCandidates, setMaxCandidates] = useState(2),
+    [coderTokens, setCoderTokens] = useState(160000);
+  const [estimate, setEstimate] = useState<{
+      estimated_inference_usd: number;
+      limitations: string;
+    } | null>(null),
+    [estimateError, setEstimateError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setEstimate(null);
+    setEstimateError("");
+    if (step !== 2 || !identity.canWrite) return;
+    if (
+      !Number.isInteger(coderTokens) ||
+      coderTokens < 1024 ||
+      coderTokens > 160000
+    ) {
+      setEstimateError("Choose 1,024–160,000 coding tokens.");
+      return;
+    }
+    const timer = setTimeout(() => {
+      api<{ estimated_inference_usd: number; limitations: string }>(
+        "/budget/estimate",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            max_candidates: maxCandidates,
+            coder_tokens: coderTokens,
+          }),
+        },
+      )
+        .then((r) => {
+          if (active) setEstimate(r);
+        })
+        .catch((e) => {
+          if (active) setEstimateError(e.message);
+        });
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [step, maxCandidates, coderTokens, identity.canWrite]);
   const contract = guided ? yaml(builder) : raw;
   const sample = samples.data?.samples.find((s) => s.name === selected);
   const errors: string[] = [];
@@ -303,6 +346,7 @@ export default function NewRepair() {
           pack_id: pack,
           mode,
           invite_code: invite || undefined,
+          budget: { max_candidates: maxCandidates, coder_tokens: coderTokens },
         }),
       });
       router.push(`/repair/tasks/${task.id}`);
@@ -321,6 +365,7 @@ export default function NewRepair() {
       />
     </Field>
   );
+  if (!identity.ready) return <Loading text="Checking workspace access…" />;
   if (!identity.canWrite)
     return (
       <Notice title="Read-only workspace">
@@ -774,13 +819,43 @@ export default function NewRepair() {
                   <div className="r-stack" style={{ marginTop: 16 }}>
                     <Field
                       label="Maximum candidates"
-                      hint="Managed by this server; per-task budget editing is not currently exposed."
+                      hint="May reduce the server maximum of two candidates."
                     >
-                      <input value="Server policy" readOnly />
+                      <input
+                        type="number"
+                        min={1}
+                        max={2}
+                        value={maxCandidates}
+                        onChange={(e) =>
+                          setMaxCandidates(Number(e.target.value))
+                        }
+                      />
                     </Field>
-                    <Field label="Token ceiling">
-                      <input value="Server policy" readOnly />
+                    <Field
+                      label="Coding token ceiling"
+                      hint="Shared across candidate allocations; planner/fast-tier limits remain server policy."
+                    >
+                      <input
+                        type="number"
+                        min={1024}
+                        max={160000}
+                        value={coderTokens}
+                        onChange={(e) => setCoderTokens(Number(e.target.value))}
+                      />
                     </Field>
+                    {estimate && (
+                      <Notice title="Estimated inference at nominal token ceilings">
+                        <strong>
+                          ${estimate.estimated_inference_usd.toFixed(4)}
+                        </strong>
+                        <p>{estimate.limitations}</p>
+                      </Notice>
+                    )}
+                    {estimateError && (
+                      <Notice title="Estimate unavailable" tone="warning">
+                        {estimateError}
+                      </Notice>
+                    )}
                     <p className="r-muted">
                       {status.data?.daily_cap_usd != null
                         ? `Server-wide daily spend cap: $${status.data.daily_cap_usd}.`
@@ -899,7 +974,16 @@ export default function NewRepair() {
             <Button
               kind="primary"
               icon="play"
-              disabled={busy || !status.data?.live_runs}
+              disabled={
+                busy ||
+                !status.data?.live_runs ||
+                !Number.isInteger(maxCandidates) ||
+                maxCandidates < 1 ||
+                maxCandidates > 2 ||
+                !Number.isInteger(coderTokens) ||
+                coderTokens < 1024 ||
+                coderTokens > 160000
+              }
               onClick={start}
             >
               {busy ? "Queuing repair…" : "Start repair"}

@@ -1,0 +1,31 @@
+{
+  "kind": "artifact-identity-proof",
+  "autonomous_agent": false,
+  "runner": "process-unisolated",
+  "results": {
+    "wrong_fix": {
+      "predict_without_training_rows": "FAILED"
+    },
+    "reference_fix": {
+      "predict_without_training_rows": "PASSED",
+      "artifact_sha256": "bf1b87317c6bedad7df37e997c0a799a6afb1a9f2540a8773b9f0761d27e72fb",
+      "identical_repeated_predictions": true,
+      "fresh_online_rows": 50,
+      "parity": {
+        "name": "train_serve_parity",
+        "status": "PASS",
+        "detail": "online scores match batch scores on 50 rows (max |\u0394| 1.11e-16)",
+        "evidence": {
+          "entrypoint": "fraud.serve:score_request",
+          "tolerance": 1e-09,
+          "max_abs_diff": 1.1102230246251565e-16,
+          "mismatched_rows": 0,
+          "median_abs_diff": 0.0,
+          "errors": [],
+          "comparison_authority": "verifier",
+          "fresh_execution_branch": true
+        }
+      }
+    }
+  }
+}

@@ -71,12 +71,18 @@ for directory, dirs, names in os.walk(".", followlinks=False):
         if len(files) > 10000: raise ValueError("file limit")
 with open("_ap/file-map.json", "w", encoding="utf-8") as f: json.dump(sorted(files), f)
 '''
-        result = self.runner.run(self.env_id, ["python", "-I", "-S", f"{SCRATCH}/file-map.py"],
-                                 timeout_s=30, uploads=[Upload(f"{SCRATCH}/file-map.py", adapter)], collect=[out])
-        if result.exit_code or result.timed_out:
-            raise SandboxError("sandbox file inventory failed")
+        inventory=getattr(self.runner,"inventory",None)
+        paths=None
+        if callable(inventory):
+            paths=inventory(self.env_id)
+        if paths is None:
+            result = self.runner.run(self.env_id, ["python", "-I", "-S", f"{SCRATCH}/file-map.py"],
+                                     timeout_s=30, uploads=[Upload(f"{SCRATCH}/file-map.py", adapter)], collect=[out])
+            if result.exit_code or result.timed_out:
+                raise SandboxError("sandbox file inventory failed")
         try:
-            paths = json.loads(self.runner.read_file(self.env_id, out))
+            if paths is None:
+                paths = json.loads(self.runner.read_file(self.env_id, out))
             if not isinstance(paths, list) or len(paths) > 10000:
                 raise ValueError()
             now = set()

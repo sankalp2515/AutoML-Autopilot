@@ -1,0 +1,21 @@
+{
+  "kind": "evaluation-execution-status",
+  "provider": "nvidia_api",
+  "submitted_provider_execution": false,
+  "status": "provider-blocked",
+  "pilots_completed": 6,
+  "comparison_completed_slots": 15,
+  "comparison_planned_slots": 72,
+  "reason": "Repeated ReadTimeout followed by HTTP 503; short completion probes returned HTTP 503 for all four independently supplied credential slots. Cause not established.",
+  "interrupted_slots_without_result": [
+    "loan-scorer-17-D-TAV"
+  ],
+  "notes": [
+    "Early verifier/preparation interruptions were restarted; no completed result was overwritten.",
+    "Initial churn-service-7-A and loan-scorer-7-A results record genuine external verdicts, but the first harness version omitted the full external ML receipt from those reports. They must not be represented as receipt-complete runs.",
+    "Refund-risk pilot verified a repair; it did not produce a genuine leakage rejection.",
+    "Comparison is incomplete and is excluded from public comparative headline.",
+    "Timeout/error-call costs are unknown; summary cost fields are null rather than an NVIDIA invoice estimate.",
+    "Resume preserves completed failed slots. Retrying failed slots requires a separately named study and disclosed retry policy."
+  ]
+}

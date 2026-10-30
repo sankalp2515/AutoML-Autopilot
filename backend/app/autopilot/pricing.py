@@ -3,7 +3,8 @@
 Source: nebius.com/services/token-factory/models/nvidia-nemotron-models-inference
 (read 2026-10-28). USD per 1M tokens (input, output). Estimates only: the provider's
 bill is authoritative. Calls through the NVIDIA API catalog are priced at the same
-Nebius rates so runs are comparable.
+Nebius rates as a comparative equivalent so runs are comparable. That figure is
+not an NVIDIA invoice; developer API access may be free and subject to quotas.
 """
 from __future__ import annotations
 

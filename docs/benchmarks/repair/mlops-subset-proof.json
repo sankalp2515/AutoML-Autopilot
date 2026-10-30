@@ -1,0 +1,90 @@
+{
+  "kind": "public-subset-feasibility",
+  "autonomous_agent": false,
+  "leaderboard_comparable": false,
+  "source_commit": "8f48b685df0491af048bde4b56c7917d0e42d336",
+  "tasks": [
+    {
+      "task": "great-expectations-serving",
+      "upstream_path": "dataset/mlops-bench/25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS/04_model_serving/MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING",
+      "baseline": {
+        "f2p": {
+          "passed": 0,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 1,
+          "parsed": true
+        },
+        "p2p": {
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        }
+      },
+      "reference": {
+        "f2p": {
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        },
+        "p2p": {
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        }
+      },
+      "feasibility_passed": true
+    },
+    {
+      "task": "mlflow-features",
+      "upstream_path": "dataset/mlops-bench/22_MLFLOW__MLFLOW/02_feature_engineering/MLO-22_MLFLOW__MLFLOW-02_FEATURE_ENGINEERING",
+      "baseline": {
+        "f2p": {
+          "passed": 0,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 1,
+          "parsed": true
+        },
+        "p2p": {
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        }
+      },
+      "reference": {
+        "f2p": {
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        },
+        "p2p": {
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "parsed": true
+        }
+      },
+      "feasibility_passed": true
+    }
+  ]
+}

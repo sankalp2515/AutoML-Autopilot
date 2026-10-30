@@ -199,7 +199,13 @@ async def test_durable_run_end_to_end(svc, tmp_path, monkeypatch):
     assert await svc.work_once(owner="w1")
     t = await svc.get(task["id"], "t1")
     assert t["status"] == "REVIEW_READY" and t["decision"] == "VERIFIED", t
-    types = [e["type"] for e in await svc.events(task["id"], "t1", limit=500)]
+    events = await svc.events(task["id"], "t1", limit=500)
+    types = [e["type"] for e in events]
+    telemetry=[e["data"] for e in events if e["type"]=="diagnostic.executed" and e["data"].get("kind")=="telemetry"]
+    progress=[e for e in telemetry if e["telemetry_type"]=="candidate.progress"]
+    assert progress and any("churn/serve.py" in e["diff"] for e in progress)
+    assert all(e["telemetry_version"]==1 and e["step"]["n"]>=1 for e in progress)
+    assert any(e["telemetry_type"]=="usage.updated" and e["usage"] for e in telemetry)
     for needed in ("repo.snapshotted", "hypothesis.proposed", "patch.applied", "tool.denied", "ml_oracle.rejected",
                    "candidate.frozen", "candidate.verified"):
         assert needed in types, needed

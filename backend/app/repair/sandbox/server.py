@@ -111,6 +111,13 @@ def write(body: Write) -> dict:
     return {"ok": True}
 
 
+@app.post("/inventory", dependencies=[Depends(auth)])
+def inventory(body: EnvRef) -> dict:
+    method=getattr(runner(),"inventory",None)
+    if not callable(method):raise HTTPException(404,"inventory capability unavailable")
+    return {"paths":_err(lambda:method(body.env_id))}
+
+
 @app.post("/read", dependencies=[Depends(auth)])
 def read(body: Read) -> dict:
     data = _err(lambda: runner().read_file(body.env_id, body.path, body.max_bytes))

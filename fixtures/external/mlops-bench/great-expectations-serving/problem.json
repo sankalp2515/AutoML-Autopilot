@@ -1,0 +1,191 @@
+{
+  "instance_id": "MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING",
+  "metadata": {
+    "contract_suite": true,
+    "instance_id": "MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING",
+    "repo_key": "25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS",
+    "source_kind": "hard_stage_contract",
+    "stage": "MODEL_SERVING",
+    "target_function": "evaluate_serving_window",
+    "target_module": "mlops_bench_contracts.serving_gate"
+  },
+  "problem": {
+    "data_context": {
+      "datasets": [
+        {
+          "name": "model_serving_records",
+          "quality_issues": [
+            "schema or nullability defects",
+            "freshness and identity issues",
+            "stage-specific quality regression",
+            "baseline mismatch or operational drift"
+          ],
+          "schema": {
+            "latency_ms": "required field",
+            "model_version": "required field",
+            "prediction": "required field",
+            "request_id": "required field",
+            "status_code": "required field",
+            "timestamp": "required field"
+          },
+          "velocity": "evaluated during CI, promotion, or monitoring review",
+          "volume": "pytest fixtures of a few records; production analogue is a compact release or monitoring window"
+        }
+      ]
+    },
+    "evaluation_criteria": {
+      "data_quality_requirements": [
+        "request_id",
+        "timestamp",
+        "latency_ms",
+        "prediction",
+        "model_version",
+        "status_code"
+      ],
+      "functional_requirements": [
+        "Importable public API.",
+        "Valid/invalid/drift/freshness paths covered by behavior.",
+        "JSON artifact and returned report agree.",
+        "P2P metadata and summary surfaces remain stable."
+      ],
+      "performance_requirements": [
+        "No external services.",
+        "Fast CPU-only pytest execution."
+      ]
+    },
+    "metadata": {
+      "difficulty": "hard",
+      "estimated_time": "6-8 hours",
+      "contract_suite": true,
+      "instance_id": "MLO-25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS-04_MODEL_SERVING",
+      "requires_data_understanding": true,
+      "requires_system_design": true,
+      "stage": "MODEL_SERVING"
+    },
+    "problem_context": {
+      "business_impact": "A weak gate can allow stale data, bad model promotions, unsafe serving changes, or missed monitoring regressions into production. Assume the operational risk is material enough that false confidence is worse than a conservative block.",
+      "business_scenario": "25_GREAT_EXPECTATIONS__GREAT_EXPECTATIONS needs a repo-native release gate for the model_serving stage. The gate is used by CI and review tooling to decide whether a small evidence window is safe enough to promote, hold, investigate, or roll back.",
+      "current_state": "The benchmark workspace intentionally starts from an incomplete surface. The missing behavior is not a single schema check; it is the judgment a production MLOps gate would apply to a compact record window.",
+      "gaps": [
+        "No stable stage-gate API for CI review.",
+        "No deterministic release evidence artifact.",
+        "No compact way to compare a current evidence window with a recent baseline.",
+        "No machine-readable decision that downstream automation can inspect."
+      ]
+    },
+    "public_api_contract": {
+      "artifacts": [
+        "artifacts/model_serving/release_decision.json",
+        "contract_report.json",
+        "release_decision.json"
+      ],
+      "behavioral_notes": [
+        "The surface is a CI-facing release gate, not a static report generator; derive the decision from the supplied records and optional baseline.",
+        "Reports should be deterministic, machine-readable, and useful for locating bad fields, records, or release evidence.",
+        "Use only the stable action labels `none`, `investigate_data_quality`, `retrain`, `rollback_review`, and `block_release`.",
+        "Persisted JSON evidence should be replayable by downstream tooling.",
+        "Threshold overrides are part of the API and should not alter reusable defaults.",
+        "Compatibility helpers should summarize any iterable input without consuming it twice; `entity_count` is based on unique record identities.",
+        "For serving windows, SLO breaches, error responses, stale telemetry, unhealthy model versions, and collapsed prediction behavior should influence the release decision."
+      ],
+      "cli_entrypoints": [],
+      "keyword_arguments": {
+        "mlops_bench_contracts.serving_gate.evaluate_serving_window": [
+          "baseline",
+          "output_path",
+          "thresholds"
+        ]
+      },
+      "public_surfaces": [
+        "mlops_bench_contracts.serving_gate.DEFAULT_THRESHOLDS",
+        "mlops_bench_contracts.serving_gate.REQUIRED_FIELDS",
+        "mlops_bench_contracts.serving_gate.describe_contract",
+        "mlops_bench_contracts.serving_gate.evaluate_serving_window",
+        "mlops_bench_contracts.serving_gate.summarize_records"
+      ],
+      "schema_fields": [
+        "artifact_path",
+        "decision_id",
+        "drift_ratio",
+        "freshness_breach_rate",
+        "latency_ms",
+        "lineage",
+        "metrics",
+        "model_version",
+        "passed",
+        "prediction",
+        "quality_pass_rate",
+        "recommended_action",
+        "request_id",
+        "status_code",
+        "timestamp",
+        "violations",
+        "missing_required_count",
+        "null_required_count",
+        "invalid_numeric_count",
+        "invalid_timestamp_count",
+        "duplicate_rate",
+        "record_id",
+        "severity"
+      ],
+      "sources": [
+        "benchmark_contract_builder"
+      ],
+      "target_files": [
+        "mlops_bench_contracts/serving_gate.py"
+      ]
+    },
+    "system_constraints": {
+      "constraints": [
+        "The implementation must be deterministic and local-only.",
+        "Reports must be machine-readable enough for CI automation.",
+        "Small fixtures stand in for production release windows, so edge behavior matters more than throughput tuning."
+      ]
+    },
+    "system_context": {
+      "current_architecture": "Standalone Python module added to the repository snapshot for CI validation.",
+      "integration_points": [
+        "mlops_bench_contracts/serving_gate.py",
+        "artifacts/model_serving/release_decision.json"
+      ],
+      "scale_requirements": {
+        "cost_budget": "no external services",
+        "latency": "p95 under 250ms for 100 in-memory records",
+        "throughput": "50K events/hour production analogue"
+      },
+      "tech_stack": [
+        "python",
+        "pytest",
+        "json"
+      ]
+    },
+    "task_title": "Build a repo-native serving health and routing gate for 25 GREAT EXPECTATIONS/GREAT EXPECTATIONS",
+    "your_task": {
+      "objective": "Complete `mlops_bench_contracts.serving_gate.evaluate_serving_window(records, output_path=None, *, baseline=None, thresholds=None)` as the public stage gate.",
+      "requirements": [
+        "Create or update `mlops_bench_contracts/serving_gate.py` and expose `evaluate_serving_window(records, output_path=None, *, baseline=None, thresholds=None)`.",
+        "Return a release report with `passed`, `metrics`, `violations`, `recommended_action`, `artifact_path`, `decision_id`, and `lineage`.",
+        "Use the release-action vocabulary consistently: `none` for clean windows, `investigate_data_quality` for data/schema/freshness defects, `retrain` for model-quality regression, `rollback_review` for risky promoted behavior, and `block_release` for governance or release blocks. Do not invent synonyms.",
+        "Required fields are request_id, timestamp, latency_ms, prediction, model_version, status_code. Treat timestamp as event time, request_id as the record identity, and latency_ms, prediction, status_code as numeric quality evidence.",
+        "Evaluate the evidence window like a production release reviewer: combine schema health, freshness, identity uniqueness, numeric quality, baseline regression, and the stage-specific risk signals implied by the records.",
+        "If `output_path` is provided, write a JSON evidence artifact that downstream tooling can compare with the returned report.",
+        "Support threshold overrides using the repo-standard policy keys and keep default policy reusable across calls.",
+        "Preserve helper surfaces `describe_contract()`, `summarize_records(records)`, `DEFAULT_THRESHOLDS`, and `REQUIRED_FIELDS` for compatibility checks; `summarize_records` should materialize iterables once, return total records, count unique record identities as `entity_count`, and report required fields.",
+        "Use only the Python standard library and keep the implementation deterministic on CPU-only pytest fixtures."
+      ],
+      "success_criteria": [
+        "Clean release-like windows pass with `recommended_action` set to `none`.",
+        "Risky windows fail with enough machine-readable detail for release automation and human review, using the release-action vocabulary rather than free-form labels.",
+        "When several independent concerns exist in the same window, the report should not hide the extra evidence behind the first issue found.",
+        "Baseline windows, threshold overrides, generated record streams, and persisted artifacts should behave consistently enough for CI replay.",
+        "Stage-specific release risks should be reflected in the decision, even when the basic schema looks valid."
+      ],
+      "technical_constraints": [
+        "Pytest must run in seconds on small in-memory fixtures.",
+        "Do not change unrelated repository files or require package installation, cloud services, Docker, DVC remotes, MLflow servers, GPUs, or network access.",
+        "Threshold override names used by downstream jobs may include: max_age_minutes, max_duplicate_rate, max_missing_rate, max_drift_ratio, max_feature_skew, min_accuracy, min_roc_auc, max_loss_regression, max_p95_latency_ms, max_error_rate, max_alert_rate, min_quality_score.",
+        "Prefer conservative release decisions when evidence is malformed, stale, inconsistent, or materially worse than baseline."
+      ]
+    }
+  }
+}

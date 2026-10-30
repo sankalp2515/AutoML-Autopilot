@@ -228,7 +228,9 @@ export function Budget({ report }: { report?: Report | null }) {
             </strong>
           </div>
         </div>
+        {report?.calls?.some(c=>!c.ok) && <Notice title="Usage may be incomplete" tone="warning">Some provider requests failed. Token and cost figures cover reported usage; failed requests may have unreported usage.</Notice>}
         <p>Estimates exclude local compute, storage and unreported charges.</p>
+        {report?.provider === "nvidia_api" && <p>NVIDIA developer requests are shown at equivalent Nebius token rates for comparison. This is not an NVIDIA bill; free developer access is subject to account limits.</p>}
       </div>
     </Panel>
   );

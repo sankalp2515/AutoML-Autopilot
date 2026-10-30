@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    "churn-service",
+    "loan-scorer",
+    "refund-risk",
+    "credit-approval",
+    "fraud-batch",
+    "pricing-model"
+  ],
+  "seeds": [
+    7
+  ],
+  "arms": {
+    "D": {
+      "mode": "full",
+      "internal_ml": true,
+      "research_enabled": true
+    }
+  },
+  "slots": 6,
+  "dataset_seed": 7,
+  "model_seed_note": "Same requested sampling seed in each arm; provider determinism is not guaranteed.",
+  "artifact_kind": "plan-not-results"
+}

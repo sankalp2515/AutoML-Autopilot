@@ -1,0 +1,198 @@
+{
+  "task_id": "ce1b3c13-7b36-4a64-8cec-69f9d6c7eea8",
+  "mode": "full",
+  "contract_digest": "sha256:9cdca3d0658935b562ab18d234b4001e5be6668eee272489851818cffe99d085",
+  "prompt_version": "repair-v4",
+  "prompt_hash": "a969412e08af2457",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3-ultra-550b-a55b"
+  },
+  "runner": "local-container",
+  "isolated": true,
+  "image": "sha256:c5273ef79844ff0778caafae559beabd9e3b3330d5d0186a8d9fcb630eb38aeb",
+  "failure_excerpt": ">       score = score_request(accounts().iloc[0].to_dict(), model())\ntests/test_serve.py:6:\nchurn/serve.py:16: in score_request\n/usr/local/lib/python3.12/site-packages/sklearn/pipeline.py:858: in predict_proba\n/usr/local/lib/python3.12/site-packages/sklearn/utils/_set_output.py:316: in wrapped\n/usr/local/lib/python3.12/site-packages/sklearn/preprocessing/_data.py:1094: in transform\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2923: in validate_data\n        except TypeError as e:\n                raise ValueError(\n>           raise ValueError(\nE           ValueError: X has 8 features, but StandardScaler is expecting 9 features as input.\n/usr/local/lib/python3.12/site-packages/sklearn/utils/validation.py:2787: ValueError\nFAILED tests/test_serve.py::test_score_request_returns_probability - ValueErr...",
+  "research": {},
+  "hypotheses": [
+    {
+      "id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "evidence": "fallback: hypothesis planner unavailable",
+      "files": [],
+      "check": "",
+      "probe": null,
+      "status": "untested",
+      "proposed_by": "platform"
+    }
+  ],
+  "data_profile": {},
+  "maintainability_notes": [],
+  "planner_error": "RuntimeError: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "ce1b3c13-c1",
+        "task_id": "ce1b3c13-7b36-4a64-8cec-69f9d6c7eea8",
+        "parent": null,
+        "hypothesis_id": "H1",
+        "diff": "",
+        "diff_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "files_changed": [],
+        "iterations": 0,
+        "status": "ABANDONED",
+        "summary": "",
+        "created_at": "2026-10-30T00:25:41.516+00:00"
+      },
+      "steps": [],
+      "stop_reason": "provider: nvidia_api nvidia/nemotron-3-ultra-550b-a55b: HTTP 503",
+      "diff_lines": 0,
+      "skipped_files": [],
+      "tokens": 0,
+      "code_receipt": null,
+      "screen_receipt": null,
+      "eligible": false,
+      "infra_failed": false
+    }
+  ],
+  "finalist": null,
+  "final_ml_receipt": null,
+  "verdict": null,
+  "decision": "INCONCLUSIVE",
+  "reasons": [
+    "E_NO_PATCH"
+  ],
+  "usage": {
+    "ultra": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 12000
+    },
+    "super": {
+      "calls": 2,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": 0,
+      "budget": 160000
+    },
+    "total_est_cost_usd": 0
+  },
+  "calls": [
+    {
+      "correlation_id": "local-49e81f383c04",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1098,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-d28e9f474cbb",
+      "tier": "ultra",
+      "purpose": "hypotheses",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 999,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-6abab940de6b",
+      "tier": "super",
+      "purpose": "code:ce1b3c13-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 1295,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    },
+    {
+      "correlation_id": "local-d3eb2d4b105e",
+      "tier": "super",
+      "purpose": "code:ce1b3c13-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 503,
+      "finish_reason": null,
+      "latency_ms": 930,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 503"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793319890.8521388,
+      "contract_digest": "sha256:9cdca3d0658935b562ab18d234b4001e5be6668eee272489851818cffe99d085",
+      "mode": "full",
+      "runner": "local-container",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793319937.4123344,
+      "failing": [
+        "tests/test_serve.py::test_score_request_returns_probability"
+      ],
+      "collected": 10
+    },
+    {
+      "seq": 3,
+      "type": "hypothesis.proposed",
+      "actor": "agent",
+      "at": 1793319941.5114276,
+      "provenance": "INFERRED",
+      "hypothesis_id": "H1",
+      "cause": "The declared failing test exposes a defect in the code it calls.",
+      "check": ""
+    },
+    {
+      "seq": 4,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793319941.5167592,
+      "candidate_id": "ce1b3c13-c1",
+      "hypothesis_id": "H1"
+    }
+  ],
+  "seconds": 55.7,
+  "evaluation": {
+    "arm": "D-TAV",
+    "arm_accepted": false,
+    "external_decision": "INCONCLUSIVE",
+    "external_ml_receipt": null
+  }
+}

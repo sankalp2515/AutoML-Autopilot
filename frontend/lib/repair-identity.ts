@@ -36,6 +36,7 @@ export function useIdentity() {
     ...resource,
     error: authError || resource.error,
     signedIn,
+    ready: !initializing && (!signedIn || !resource.loading),
     role,
     canWrite:
       !initializing && (!signedIn || (!!resource.data && role !== "viewer")),

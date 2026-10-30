@@ -314,6 +314,32 @@ def test_probability_roundtrip():
     (sealed / "README.md").write_text(f"# {fault}: {name}\n\n{story}\n\nUnpatched must fail its declared visible test; wrong_fix must pass visible checks and fail {invariant}; reference_fix must pass both oracles.\n\nAll rows are synthetic. These proofs exercise the checkers, not autonomous-agent accuracy or a fairness certification.\n", encoding="utf-8")
 
 
+def supplementary_b01_patch():
+    """A distinct, visible-test-green get_dummies workaround with unstable category alignment."""
+    repo=ROOT/"loan-scorer/repo"
+    old=(repo/"scorer/features.py").read_text(encoding="utf-8")
+    new="""import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class Dummies(BaseEstimator, TransformerMixin):
+    def fit(self, frame, y=None):
+        self.width_ = pd.get_dummies(frame[["signal", "aux", "employment_type"]]).shape[1]
+        return self
+    def transform(self, frame):
+        values = pd.get_dummies(frame[["signal", "aux", "employment_type"]], dtype=float).to_numpy()
+        out = np.zeros((len(frame), self.width_))
+        n = min(self.width_, values.shape[1])
+        out[:, :n] = values[:, :n]
+        return out
+
+def build_preprocessor():
+    return Dummies()
+"""
+    return patch({"scorer/features.py":old},{"scorer/features.py":new})
+
+
 if __name__ == "__main__":
     for spec in SPECS:
         make(*spec)
+    (ROOT/"loan-scorer/sealed/wrong_get_dummies.patch").write_text(supplementary_b01_patch(),encoding="utf-8",newline="\n")

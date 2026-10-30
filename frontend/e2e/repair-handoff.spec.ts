@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
@@ -11,7 +11,7 @@ test.describe("real API handoff integration with seeded local identities and scr
   function credentials() {
     return JSON.parse(readFileSync(process.env.E2E_REPAIR_IDENTITY!, "utf8"));
   }
-  async function login(page: any, who = "owner", workspace?: string) {
+  async function login(page: Page, who = "owner", workspace?: string) {
     const d = credentials();
     await page.addInitScript(
       ({ token, workspace }) => {
@@ -153,6 +153,10 @@ test.describe("real API handoff integration with seeded local identities and scr
     await page.goto("/repair/new");
     await page.getByRole("button", { name: "Continue to contract" }).click();
     await page.getByRole("button", { name: "Validate and continue" }).click();
+    await page.getByText("Advanced: execution and spend",{exact:true}).click();
+    await page.getByLabel("Maximum candidates",{exact:true}).fill("2");
+    await page.getByLabel("Coding token ceiling",{exact:true}).fill("24000");
+    await expect(page.getByText("Estimated inference at nominal token ceilings",{exact:true})).toBeVisible();
     await page.getByRole("button", { name: /Start repair/ }).click();
     await expect(page).toHaveURL(/repair\/tasks\//);
     await expect(

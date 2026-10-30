@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import evidence from "@/data/repair/evidence.json";
+import {study} from "@/components/repair/BenchmarkEvidence";
 import { REPLAYS, VERIFIED_REPLAY, REJECTED_REPLAY } from "@/lib/repair";
 import { Action, Badge, Icon } from "@/components/repair/ui";
 const wrong = REPLAYS.churn_live_prompt_v1.candidates[0];
@@ -81,6 +83,27 @@ export default function RepairHome() {
           </div>
         </div>
       </section>
+      {study && <div className="r-section"><p><strong>{study.arms[0].false_accepts} / {study.arms[0].accepted} accepted generic-agent patches</strong> were rejected by independent verification in the measured comparison. {study.arms[0].unresolved_accepts} accepted outcomes remain unresolved. <Link className="r-text-link" href="/repair/benchmark">Inspect the study, denominators and uncertainty</Link></p></div>}
+      <div className="r-section">
+        <p>
+          <strong>
+            {
+              evidence.checker_proofs.filter(
+                (p) => p.wrong_code === "VERIFIED" && p.wrong_ml === "REJECTED",
+              ).length
+            }{" "}
+            / {evidence.checker_proofs.length} authored wrong patches
+          </strong>{" "}
+          passed software checks and were rejected by ML checks across the added
+          fixtures.{" "}
+          <Link className="r-text-link" href="/repair/benchmark">
+            Inspect checker proofs and public-task evidence
+          </Link>
+        </p>
+        <p className="r-muted">
+          Checker validation, not a generic-agent false-accept rate.
+        </p>
+      </div>
       <section className="r-entry-grid" aria-label="Choose how to start">
         <div className="r-entry">
           <Icon name="play" size={24} />

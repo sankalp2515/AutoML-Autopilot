@@ -77,3 +77,62 @@ def test_unpatched_wrong_and_reference(name, tmp_path, monkeypatch):
     if out := os.environ.get("REPAIR_PROOF_OUTPUT"):
         p = Path(out); p.mkdir(parents=True, exist_ok=True)
         (p / f"{name}.json").write_text(json.dumps({"fixture": name, "kind": "checker-proof", "runner": runner.name, "autonomous_agent": False, "base_commit_sha": admitted["sha"], "snapshot_digest": admitted["digest"], "receipts": receipts}, indent=2), encoding="utf-8")
+
+
+@pytest.mark.slow
+def test_fraud_artifact_identity_without_training_rows(tmp_path, monkeypatch):
+    """B09's explicit deployment protocol: load the saved artifact, no refitting."""
+    from app.repair.oracle import common as cm
+    from app.repair.sandbox.base import Upload
+    import hashlib
+    monkeypatch.setenv("REPAIR_TEST_TRAIN_CACHE","0")
+    fix=ROOT/"fraud-batch";repo=fix/"repo"
+    rc=c.RepoContract.from_yaml((repo/"autopilot.yaml").read_text())
+    runner=ProcessRunner(str(tmp_path/"envs"),allow_unisolated=True)
+    results={}
+    for kind in ["wrong_fix","reference_fix"]:
+        files=cm.apply_diff(str(repo),(fix/f"sealed/{kind}.patch").read_text())
+        with cm.environment(runner,str(repo),rc,files) as env:
+            assert cm.train(runner,env,rc).exit_code==0
+            artifact_before=hashlib.sha256(runner.read_file(env,cm.model_path(rc))).hexdigest()
+            runner.write_files(env,{rc.data.train:None})
+            ph=cm.placeholders(rc)
+            first=runner.run(env,cm.expand(rc.commands.predict,ph),timeout_s=120,collect=[cm.PREDICTIONS])
+            if kind=="wrong_fix":
+                assert first.exit_code!=0;results[kind]={"predict_without_training_rows":"FAILED"};continue
+            assert first.exit_code==0
+            values=runner.read_file(env,cm.PREDICTIONS)
+            second=runner.run(env,cm.expand(rc.commands.predict,ph),timeout_s=120,collect=[cm.PREDICTIONS])
+            assert second.exit_code==0 and values==runner.read_file(env,cm.PREDICTIONS)
+            assert hashlib.sha256(runner.read_file(env,cm.model_path(rc))).hexdigest()==artifact_before
+            parity=ml._parity(runner,env,rc,50,1e-9)
+            assert parity.status==c.CheckStatus.PASS
+            results[kind]={"predict_without_training_rows":"PASSED","artifact_sha256":artifact_before,"identical_repeated_predictions":True,"fresh_online_rows":50,"parity":parity.model_dump(mode="json")}
+    import os
+    if out:=os.environ.get("REPAIR_PROOF_OUTPUT"):
+        (Path(out)/"fraud-artifact-identity.json").write_text(json.dumps({"kind":"artifact-identity-proof","autonomous_agent":False,"runner":runner.name,"results":results},indent=2),encoding="utf-8")
+
+
+@pytest.mark.slow
+def test_library_dummy_alignment_and_unseen_category(tmp_path, monkeypatch):
+    from app.repair.oracle import common as cm
+    from app.repair.sandbox.base import Upload
+    import os
+    fix=ROOT/"loan-scorer";repo=fix/"repo"
+    rc=c.RepoContract.from_yaml((repo/"autopilot.yaml").read_text())
+    ecc=c.ECC.build(task_id="b01-dummies",base_commit_sha="1"*40,repo_snapshot_digest="sha256:fixture",contract=rc,target="Restore pinned-library compatibility")
+    runner=ProcessRunner(str(tmp_path/"envs"),allow_unisolated=True)
+    baseline=code.measure_baseline(runner,str(repo),rc)
+    diff=(fix/"sealed/wrong_get_dummies.patch").read_text()
+    cr=code.verify(runner,base_dir=str(repo),contract=rc,ecc=ecc,task_id=ecc.task_id,candidate_id="dummies",diff=diff,baseline=baseline)
+    assert cr.decision==c.Decision.VERIFIED
+    mr=ml.verify(runner,base_dir=str(repo),contract=rc,ecc=ecc,task_id=ecc.task_id,candidate_id="dummies",diff=diff,sealed_dir=None,manifest=None,ledger=None,baseline=None,open_holdout=False)
+    assert mr.decision==c.Decision.REJECTED
+    assert next(c for c in mr.checks if c.name=="train_serve_parity").status==c.CheckStatus.FAIL
+    files=cm.apply_diff(str(repo),(fix/"sealed/reference_fix.patch").read_text())
+    script=b"import pandas as pd\nfrom scorer.model import fit\nfrom scorer.serve import score_request\nf=pd.read_csv('data/train.csv')\nm=fit(f)\nr=dict(f.iloc[0],employment_type='unseen-contractor')\nassert 0 <= score_request(r,m) <= 1\n"
+    with cm.environment(runner,str(repo),rc,files) as env:
+        result=runner.run(env,["python","_ap/unseen.py"],timeout_s=120,uploads=[Upload("_ap/unseen.py",script)],env={"PYTHONPATH":"."})
+        assert result.exit_code==0,result.stderr
+    if out:=os.environ.get("REPAIR_PROOF_OUTPUT"):
+        (Path(out)/"loan-dummies-unseen.json").write_text(json.dumps({"kind":"dummy-alignment-proof","autonomous_agent":False,"runner":runner.name,"wrong_code":cr.model_dump(mode="json"),"wrong_ml":mr.model_dump(mode="json"),"reference_unseen_category_passed":True},indent=2),encoding="utf-8")

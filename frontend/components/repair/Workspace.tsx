@@ -46,8 +46,22 @@ function frames(report: Report): Frame[] {
       )
     )
       continue;
-    result.push({ id: `event-${event.seq}`, event, cid });
-    if (event.type === "candidate.created")
+    result.push({
+      id: `event-${event.seq}`,
+      event,
+      cid,
+      step:
+        event.type === "candidate.progress" && d.step
+          ? (d.step as Step)
+          : undefined,
+    });
+    if (
+      event.type === "candidate.created" &&
+      !report.events.some(
+        (e) =>
+          e.type === "candidate.progress" && details(e).candidate_id === cid,
+      )
+    )
       for (const step of report.candidates.find(
         (c) => c.candidate.candidate_id === cid,
       )?.steps || [])
@@ -148,7 +162,12 @@ export default function Workspace({
           last = fresh.at(-1)!.seq;
           setEvents((previous) => {
             const ids = new Set(previous.map((e) => e.seq));
-            return [...previous, ...fresh.filter((e) => !ids.has(e.seq))];
+            return [...previous, ...fresh.filter((e) => !ids.has(e.seq)).map((e) => {
+              const d=details(e);
+              return e.type === "diagnostic.executed" && d.telemetry_version === 1 &&
+                ["candidate.progress", "usage.updated"].includes(String(d.telemetry_type))
+                ? {...e,type:String(d.telemetry_type)} : e;
+            })];
           });
         }
         setLiveCandidates(candidates.map(normalize));
@@ -202,6 +221,7 @@ export default function Workspace({
           ({
             id: `event-${e.seq}`,
             event: e,
+            step: e.type === "candidate.progress" && details(e).step ? details(e).step as Step : undefined,
             cid:
               typeof details(e).candidate_id === "string"
                 ? String(details(e).candidate_id)
@@ -290,7 +310,68 @@ export default function Workspace({
             eligible: screen && c.eligible,
           };
         })
-    : report?.candidates || liveCandidates;
+    : report?.candidates ||
+      liveCandidates.map((c) => ({
+        ...c,
+        candidate: { ...c.candidate },
+        steps: [...c.steps],
+      }));
+  if (!recorded && !report) {
+    for (const event of events) {
+      const d = details(event),
+        id = String(d.candidate_id || "");
+      if (
+        event.type !== "candidate.created" &&
+        event.type !== "candidate.progress"
+      )
+        continue;
+      let run = candidates.find((c) => c.candidate.candidate_id === id);
+      if (!run) {
+        run = {
+          candidate: {
+            candidate_id: id,
+            hypothesis_id:
+              typeof d.hypothesis_id === "string" ? d.hypothesis_id : undefined,
+            diff: "",
+            diff_digest: "",
+            files_changed: [],
+            status: "EXPLORING",
+            summary: "",
+            iterations: 0,
+          },
+          steps: [],
+          stop_reason: "",
+          diff_lines: 0,
+          eligible: false,
+        };
+        candidates.push(run);
+      }
+      if (event.type === "candidate.progress") {
+        if (d.step && typeof d.step === "object") {
+          const step = d.step as Step;
+          run.steps = [...run.steps.filter((s) => s.n !== step.n), step].sort(
+            (a, b) => a.n - b.n,
+          );
+        }
+        if (typeof d.diff === "string") run.candidate.diff = d.diff;
+        if (d.diff_truncated)
+          run.stop_reason =
+            "Live diff preview is truncated; the frozen diff is available after completion.";
+      }
+    }
+  }
+  const usageEvent = [...seenEvents]
+    .reverse()
+    .find((e) => e.type === "usage.updated");
+  const liveBudget =
+    report ||
+    (usageEvent
+      ? ({
+          usage: details(usageEvent).usage,
+          candidates,
+          seconds: task ? Math.max(0, Date.now() / 1000 - task.created_at) : 0,
+        } as Report)
+      : null);
   const activeCandidate =
     candidates.find((c) => c.candidate.candidate_id === selected) ||
     candidates[0];
@@ -723,12 +804,18 @@ export default function Workspace({
                   )}
                 </Panel>
               )}
-              <Budget report={atEnd ? report : null} />
+              <Budget
+                report={recorded ? (atEnd ? report : null) : liveBudget}
+              />
             </div>
           </div>
           <Panel
             title="Candidate source & terminal"
-            subtitle="Final source diffs appear only after that candidate’s recorded engineering steps."
+            subtitle={
+              recorded
+                ? "Source diffs follow recorded engineering steps."
+                : "Bounded source previews and tool results update as the worker persists them."
+            }
           >
             <div
               className="r-tabs"

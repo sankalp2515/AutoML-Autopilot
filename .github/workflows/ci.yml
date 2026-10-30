@@ -55,6 +55,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r backend/requirements-runtime.txt pytest==8.3.4 pytest-asyncio==0.24.0
+      - name: Validate pinned public MLOps task subset
+        run: python scripts/evaluate_mlops_subset.py prove --out docs/benchmarks/repair/mlops-subset-proof.json
       - name: Prove wrong-green rejection and reference acceptance on six repositories
         working-directory: backend
         env:

@@ -1,0 +1,32 @@
+source_directory	source_url	commit	license_text	upstream_notice
+01_GoogleCloudPlatform__mlops-with-vertex-ai	https://github.com/GoogleCloudPlatform/mlops-with-vertex-ai	11a2f341626a036a5ebbc030eadc10dfd2dfa5e0	third_party_licenses/01_GoogleCloudPlatform__mlops-with-vertex-ai.txt	
+02_GoogleCloudPlatform__vertex-pipelines-end-to-end-samples	https://github.com/GoogleCloudPlatform/vertex-pipelines-end-to-end-samples	a78d2f648bbbd303517d371cee0bc9b9985a5fa2	third_party_licenses/02_GoogleCloudPlatform__vertex-pipelines-end-to-end-samples.txt	
+03_prsdm__mlops-project	https://github.com/prsdm/mlops-project	5936c9d3942544c844676d53816b0d715e7295c4	third_party_licenses/03_prsdm__mlops-project.txt	
+04_NVIDIA-Merlin__gcp-ml-ops	https://github.com/NVIDIA-Merlin/gcp-ml-ops	5fed2a218b605854fe7147576891e91871698359	third_party_licenses/04_NVIDIA-Merlin__gcp-ml-ops.txt	
+05_Snowflake-Labs__sfguide-getting-started-with-model-serving-in-spcs	https://github.com/Snowflake-Labs/sfguide-getting-started-with-model-serving-in-spcs	d87bb255f91dd4669b7323271893b14d2d661d0d	third_party_licenses/05_Snowflake-Labs__sfguide-getting-started-with-model-serving-in-spcs.txt	
+06_feast-dev__feast-aws-credit-scoring-tutorial	https://github.com/feast-dev/feast-aws-credit-scoring-tutorial	449494ed4b263756caf3dabfa1f5b98c85c0cbac	third_party_licenses/06_feast-dev__feast-aws-credit-scoring-tutorial.txt	
+07_datadrivers__effective-guide-mlops	https://github.com/datadrivers/effective-guide-mlops	60118a63a7710137a565af39c2b380a4f48520d6	third_party_licenses/07_datadrivers__effective-guide-mlops.txt	
+08_zenml-io__template-e2e-batch	https://github.com/zenml-io/template-e2e-batch	b6d727e6f0fedff6f37f5ac43c1f4949480d1160	third_party_licenses/08_zenml-io__template-e2e-batch.txt	
+09_zenml-io__zenml-projects	https://github.com/zenml-io/zenml-projects	544862bd165982fb40d23d44bae7b4108aed6975	third_party_licenses/09_zenml-io__zenml-projects.txt	
+10_mlrun__demos	https://github.com/mlrun/demos	123e89ed73272b03ee67fb8086cb6037a5d3adc8	third_party_licenses/10_mlrun__demos.txt	
+11_google__product_return_predictor	https://github.com/google/product_return_predictor	01ec11b0df93e0d5eb113bdf9e40c95cbfbf500d	third_party_licenses/11_google__product_return_predictor.txt	
+12_aws-solutions__maintaining-personalized-experiences-with-machine-learning	https://github.com/aws-solutions/maintaining-personalized-experiences-with-machine-learning	fa32471a05b01610f86b044cd4b15a7d5660ead9	third_party_licenses/12_aws-solutions__maintaining-personalized-experiences-with-machine-learning.txt	upstream_notices/12_aws-solutions__maintaining-personalized-experiences-with-machine-learning.txt
+13_mlops-ai__mlops	https://github.com/mlops-ai/mlops	d1bbc22b6bab5d74947096231d817ff6885ce309	third_party_licenses/13_mlops-ai__mlops.txt	
+14_jerife__MLOps-on-kubernetes	https://github.com/jerife/MLOps-on-kubernetes	39dc42bfcee50001a38bfbb43c113276bee46865	third_party_licenses/14_jerife__MLOps-on-kubernetes.txt	
+15_awslabs__aiops-modules	https://github.com/awslabs/aiops-modules	dfd7f154479654cf2b600b0f76a2f294cada32fa	third_party_licenses/15_awslabs__aiops-modules.txt	upstream_notices/15_awslabs__aiops-modules.txt
+16_GoogleCloudPlatform__vertex-ai-samples	https://github.com/GoogleCloudPlatform/vertex-ai-samples	9ea1cf3b86d8dfff75efc975d66b757556d2fa7a	third_party_licenses/16_GoogleCloudPlatform__vertex-ai-samples.txt	
+17_tensorflow__tfx	https://github.com/tensorflow/tfx	58435d68d561e9ba6c657a0ec111adba5176ee98	third_party_licenses/17_tensorflow__tfx.txt	
+18_kubeflow__pipelines	https://github.com/kubeflow/pipelines	2a961c9ce9d80dda4224d37163a24ae332c19cad	third_party_licenses/18_kubeflow__pipelines.txt	
+19_flyteorg__flytesnacks	https://github.com/flyteorg/flytesnacks	c9b2c44dc5d0ce42e482be1ffb16c8b19e72c23c	third_party_licenses/19_flyteorg__flytesnacks.txt	upstream_notices/19_flyteorg__flytesnacks.txt
+20_flyteorg__flyte	https://github.com/flyteorg/flyte	9690c8e9661b7c4099ac6600f4dbc835981c74d3	third_party_licenses/20_flyteorg__flyte.txt	
+21_zenml-io__zenml	https://github.com/zenml-io/zenml	e441dda7f208e93ed54781ce5c03dac3ee3a56e3	third_party_licenses/21_zenml-io__zenml.txt	
+22_mlflow__mlflow	https://github.com/mlflow/mlflow	3f5172a9b8b595034ab6acf3962482974602919b	third_party_licenses/22_mlflow__mlflow.txt	
+23_iterative__dvc	https://github.com/iterative/dvc	f74c1c0e709de61f571905802bc0c75035dc6ef2	third_party_licenses/23_iterative__dvc.txt	
+24_feast-dev__feast	https://github.com/feast-dev/feast	104ad10403e4e7dcb27145a86b2523c1c4639612	third_party_licenses/24_feast-dev__feast.txt	
+25_great-expectations__great_expectations	https://github.com/great-expectations/great_expectations	33614cd70a407f8b9589fa2cf5f1cb1d7d0723aa	third_party_licenses/25_great-expectations__great_expectations.txt	
+26_evidentlyai__evidently	https://github.com/evidentlyai/evidently	a4aa4c2b37fe7a4344cc5031f566deccf3d69e4f	third_party_licenses/26_evidentlyai__evidently.txt	
+27_bentoml__BentoML	https://github.com/bentoml/BentoML	73c4dbead99be6515fa25fcd91e348ac30f5c22e	third_party_licenses/27_bentoml__BentoML.txt	
+28_kserve__kserve	https://github.com/kserve/kserve	f8a0ac1c85c3d06e7f4a9b6872f2778a556c7886	third_party_licenses/28_kserve__kserve.txt	
+29_datahub-project__datahub	https://github.com/datahub-project/datahub	5bb84fb1372a06ade38fc7182f25d3d741698d0a	third_party_licenses/29_datahub-project__datahub.txt	upstream_notices/29_datahub-project__datahub.txt
+30_open-metadata__OpenMetadata	https://github.com/open-metadata/OpenMetadata	d864c5b211f26dc7e29bcdf39b31a5d7134ffaa7	third_party_licenses/30_open-metadata__OpenMetadata.txt	upstream_notices/30_open-metadata__OpenMetadata.txt
+31_alibaba__feathub	https://github.com/alibaba/feathub	15d63821262fe1cd1e2e665144e39af1bc8e4130	third_party_licenses/31_alibaba__feathub.txt	

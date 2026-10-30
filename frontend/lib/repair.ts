@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE } from "./api";
 import { getAccessToken } from "./supabase";
+import generatedReplays from "@/data/repair/generated-replays.json";
 import rejected from "@/data/repair/v1.json";
 import verified from "@/data/repair/v2.json";
 
@@ -201,6 +202,7 @@ export interface Discovery {
   failing: string[];
 }
 export const REPLAYS: Record<string, Report> = {
+  ...(generatedReplays as unknown as Record<string, Report>),
   churn_live_prompt_v1: rejected as unknown as Report,
   churn_live_prompt_v2: verified as unknown as Report,
 };
