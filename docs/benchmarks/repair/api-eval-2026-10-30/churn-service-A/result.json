@@ -1,0 +1,6 @@
+{
+  "fixture": "churn-service",
+  "arm": "A",
+  "status": "NOT_ADMITTED",
+  "detail": "{\"detail\":\"Today's live-run token allowance is used up.\"}"
+}

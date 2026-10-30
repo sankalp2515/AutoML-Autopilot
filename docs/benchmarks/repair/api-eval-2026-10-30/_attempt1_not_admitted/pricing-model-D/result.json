@@ -1,0 +1,6 @@
+{
+  "fixture": "pricing-model",
+  "arm": "D",
+  "status": "NOT_ADMITTED",
+  "detail": "{\"detail\":\"Today's live-run budget is used up. Watch a recorded run instead.\"}"
+}

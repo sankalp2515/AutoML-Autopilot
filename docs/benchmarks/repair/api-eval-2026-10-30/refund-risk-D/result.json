@@ -1,0 +1,18 @@
+{
+  "fixture": "refund-risk",
+  "arm": "D",
+  "mode": "full",
+  "task_id": "21b2b3da-466f-4cbd-864c-b86460448cdb",
+  "status": "REJECTED",
+  "decision": "REJECTED",
+  "reasons": [
+    "E_NO_ELIGIBLE_CANDIDATE"
+  ],
+  "finalist": null,
+  "cost_usd": null,
+  "seconds": 160.4,
+  "wall_seconds": 185.9,
+  "holdout": null,
+  "ml_checks_failed": [],
+  "timed_out_waiting": false
+}

@@ -1,0 +1,21 @@
+{
+  "fixture": "pricing-model",
+  "arm": "A",
+  "mode": "generic",
+  "task_id": "ebf34a96-df10-471e-affc-d1531c59c2e9",
+  "status": "REVIEW_READY",
+  "decision": "VERIFIED",
+  "reasons": [],
+  "finalist": "ebf34a96-c1",
+  "cost_usd": null,
+  "seconds": 255.4,
+  "wall_seconds": 275.1,
+  "holdout": {
+    "metric": "roc_auc",
+    "candidate": 0.9485,
+    "rows": 600,
+    "baseline": 0.9485
+  },
+  "ml_checks_failed": [],
+  "timed_out_waiting": false
+}

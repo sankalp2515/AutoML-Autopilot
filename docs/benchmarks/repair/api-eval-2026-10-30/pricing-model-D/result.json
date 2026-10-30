@@ -1,0 +1,6 @@
+{
+  "fixture": "pricing-model",
+  "arm": "D",
+  "status": "NOT_ADMITTED",
+  "detail": "{\"detail\":\"Today's live-run token allowance is used up.\"}"
+}
