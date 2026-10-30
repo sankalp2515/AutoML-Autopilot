@@ -1,0 +1,20 @@
+{
+  "fixture": "loan-scorer",
+  "arm": "D",
+  "mode": "full",
+  "task_id": "cfc6aecc-5751-43fd-8035-d1f5da780eba",
+  "status": "REVIEW_READY",
+  "decision": "VERIFIED",
+  "reasons": [],
+  "finalist": "cfc6aecc-c2",
+  "cost_usd": null,
+  "seconds": 643.5,
+  "wall_seconds": 669.5,
+  "holdout": {
+    "metric": "roc_auc",
+    "candidate": 0.9997,
+    "rows": 600
+  },
+  "ml_checks_failed": [],
+  "timed_out_waiting": false
+}

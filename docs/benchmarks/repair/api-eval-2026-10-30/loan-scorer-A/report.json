@@ -1,0 +1,627 @@
+{
+  "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+  "mode": "generic",
+  "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+  "prompt_version": "repair-v5",
+  "prompt_hash": "9ed8fcf4c4e9f218",
+  "provider": "nvidia_api",
+  "models": {
+    "ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "super": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nano": "nvidia/nemotron-3.5-lightning-30b-a3b"
+  },
+  "runner": "sandbox-service",
+  "isolated": true,
+  "image": "sha256:d8d7da4b0aa0cad133fd08925fa24dacdb4238cd535741b8c5c2486c899d2ee4",
+  "failure_excerpt": ">       model = fit(frame)\ntests/test_service.py:19:\nscorer/model.py:6: in fit\n>           (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\nE       TypeError: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'\nscorer/features.py:6: TypeError\nFAILED tests/test_service.py::test_service - TypeError: OneHotEncoder.__init_...",
+  "research": {},
+  "hypotheses": [],
+  "data_profile": {},
+  "maintainability_notes": [
+    "Review the added regression test and confirm the fix shares the production feature-building path."
+  ],
+  "planner_error": null,
+  "candidates": [
+    {
+      "candidate": {
+        "candidate_id": "b746ecfe-c1",
+        "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+        "parent": null,
+        "hypothesis_id": null,
+        "diff": "--- a/scorer/features.py\n+++ b/scorer/features.py\n@@ -3,4 +3,4 @@\n \n def build_preprocessor():\n     return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n-        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n+        (\"category\", OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n",
+        "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5",
+        "files_changed": [
+          "scorer/features.py"
+        ],
+        "iterations": 4,
+        "status": "VERIFIED",
+        "summary": "Root cause: scikit-learn 1.8.0 deprecated the 'sparse' parameter in OneHotEncoder in favor of 'sparse_output'. The fix was a single parameter rename in scorer/features.py from sparse=False to sparse_output=False.",
+        "created_at": "2026-10-30T14:07:56.137+00:00"
+      },
+      "steps": [
+        {
+          "n": 1,
+          "thought": "The error occurs because scikit-learn 1.8.0 deprecated the 'sparse' parameter in OneHotEncoder in favor of 'sparse_output'. I need to update the OneHotEncoder call in scorer/features.py to use the new parameter name.",
+          "action": "apply_edit",
+          "target": "scorer/features.py",
+          "ok": true,
+          "denied": null,
+          "exit_code": null,
+          "excerpt": "Edited scorer/features.py",
+          "at": 1793369285.0914872
+        },
+        {
+          "n": 2,
+          "thought": "The edit was applied successfully. Now I need to run the failing test to verify the fix works.",
+          "action": "run",
+          "target": "tests/test_service.py::test_service",
+          "ok": true,
+          "denied": null,
+          "exit_code": 0,
+          "excerpt": "exit_code=0\n.                                                                        [100%]\n1 passed in 6.23s\n",
+          "at": 1793369301.3018768
+        },
+        {
+          "n": 3,
+          "thought": "The test_service test passed. I should run the full test suite to ensure no other tests are broken by this change.",
+          "action": "run",
+          "target": "test",
+          "ok": true,
+          "denied": null,
+          "exit_code": 0,
+          "excerpt": "exit_code=0\n..                                                                       [100%]\n2 passed in 78.40s (0:01:18)\n",
+          "at": 1793369394.4369633
+        },
+        {
+          "n": 4,
+          "thought": "All tests pass. The fix was successful - replacing the deprecated 'sparse' parameter with 'sparse_output' in OneHotEncoder resolved the compatibility issue with scikit-learn 1.8.0.",
+          "action": "finish",
+          "target": "",
+          "ok": true,
+          "denied": null,
+          "exit_code": null,
+          "excerpt": "Finish recorded; independent verification is still required.",
+          "at": 1793369402.777572
+        }
+      ],
+      "stop_reason": "finished",
+      "diff_lines": 2,
+      "skipped_files": [],
+      "tokens": 6892,
+      "code_receipt": {
+        "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+        "candidate_id": "b746ecfe-c1",
+        "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+        "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5",
+        "checks": [
+          {
+            "name": "contract_integrity",
+            "status": "PASS",
+            "detail": "contract digest verified",
+            "evidence": {
+              "digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123"
+            }
+          },
+          {
+            "name": "diff_policy",
+            "status": "PASS",
+            "detail": "edits stay inside allowed paths; no test gaming",
+            "evidence": {}
+          },
+          {
+            "name": "diff_applies",
+            "status": "PASS",
+            "detail": "applied to the pristine base (1 files)",
+            "evidence": {}
+          },
+          {
+            "name": "baseline",
+            "status": "PASS",
+            "detail": "1 declared failing test(s) reproduced on the base",
+            "evidence": {}
+          },
+          {
+            "name": "fail_to_pass",
+            "status": "PASS",
+            "detail": "1/1 declared failing tests now pass",
+            "evidence": {
+              "not_passing": []
+            }
+          },
+          {
+            "name": "pass_to_pass",
+            "status": "PASS",
+            "detail": "all previously passing tests still pass",
+            "evidence": {
+              "broken": [],
+              "newly_skipped": [],
+              "collected_base": 2,
+              "collected_candidate": 2,
+              "added_tests": []
+            }
+          }
+        ],
+        "decision": "VERIFIED",
+        "reasons": [],
+        "runner": "sandbox-service",
+        "created_at": "2026-10-30T14:10:25.345+00:00",
+        "receipt_digest": "sha256:4087029da5d67f9476567ac76e592e7090979e9f1795371867eba0ba750e7458",
+        "kind": "code"
+      },
+      "screen_receipt": {
+        "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+        "candidate_id": "b746ecfe-c1",
+        "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+        "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5",
+        "checks": [
+          {
+            "name": "pipeline_runs",
+            "status": "PASS",
+            "detail": "train and predict ran; 600 holdout rows scored",
+            "evidence": {}
+          },
+          {
+            "name": "train_serve_parity",
+            "status": "PASS",
+            "detail": "online scores match batch scores on 200 rows (max |\u0394| 1.11e-16)",
+            "evidence": {
+              "entrypoint": "scorer.serve:score_request",
+              "tolerance": 1e-06,
+              "max_abs_diff": 1.1102230246251565e-16,
+              "mismatched_rows": 0,
+              "median_abs_diff": 1.1194387430912833e-17,
+              "errors": [],
+              "comparison_authority": "verifier",
+              "fresh_execution_branch": true
+            }
+          }
+        ],
+        "decision": "INCONCLUSIVE",
+        "reasons": [
+          "SCREEN_ONLY"
+        ],
+        "runner": "sandbox-service",
+        "created_at": "2026-10-30T14:11:20.007+00:00",
+        "receipt_digest": "sha256:a208ffefab2a4386f7bd101e43e6014f6f3c210c937fcf3022c2e57f3431aee2",
+        "kind": "ml",
+        "metrics": {},
+        "holdout_opened": false
+      },
+      "eligible": true,
+      "infra_failed": false
+    }
+  ],
+  "finalist": "b746ecfe-c1",
+  "final_ml_receipt": {
+    "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+    "candidate_id": "b746ecfe-c1",
+    "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+    "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5",
+    "checks": [
+      {
+        "name": "pipeline_runs",
+        "status": "PASS",
+        "detail": "train and predict ran; 600 holdout rows scored",
+        "evidence": {}
+      },
+      {
+        "name": "train_serve_parity",
+        "status": "PASS",
+        "detail": "online scores match batch scores on 200 rows (max |\u0394| 1.11e-16)",
+        "evidence": {
+          "entrypoint": "scorer.serve:score_request",
+          "tolerance": 1e-06,
+          "max_abs_diff": 1.1102230246251565e-16,
+          "mismatched_rows": 0,
+          "median_abs_diff": 1.1194387430912833e-17,
+          "errors": [],
+          "comparison_authority": "verifier",
+          "fresh_execution_branch": true
+        }
+      },
+      {
+        "name": "holdout_integrity",
+        "status": "PASS",
+        "detail": "holdout labels opened once, for the frozen finalist",
+        "evidence": {
+          "rows": 600,
+          "positives": 300
+        }
+      },
+      {
+        "name": "holdout_non_inferior",
+        "status": "PASS",
+        "detail": "roc_auc 0.9997 vs last known good 1.0 (margin 0.02); the base commit cannot produce predictions",
+        "evidence": {
+          "candidate": 0.9997,
+          "recorded_baseline": 1.0
+        }
+      }
+    ],
+    "decision": "VERIFIED",
+    "reasons": [],
+    "runner": "sandbox-service",
+    "created_at": "2026-10-30T14:12:37.963+00:00",
+    "receipt_digest": "sha256:b5b35eaa675d880a8aaa0e0d382aa220a11ec6ca648c033f01de6adf6a233481",
+    "kind": "ml",
+    "metrics": {
+      "holdout": {
+        "metric": "roc_auc",
+        "candidate": 0.9997,
+        "rows": 600
+      }
+    },
+    "holdout_opened": true
+  },
+  "verdict": {
+    "task_id": "b746ecfe-a32d-496a-aae7-467dbf6ab4e4",
+    "candidate_id": "b746ecfe-c1",
+    "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+    "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5",
+    "code_receipt_digest": "sha256:4087029da5d67f9476567ac76e592e7090979e9f1795371867eba0ba750e7458",
+    "ml_receipt_digest": "sha256:b5b35eaa675d880a8aaa0e0d382aa220a11ec6ca648c033f01de6adf6a233481",
+    "decision": "VERIFIED",
+    "reasons": [],
+    "created_at": "2026-10-30T14:12:37.977+00:00"
+  },
+  "decision": "VERIFIED",
+  "reasons": [],
+  "usage": {
+    "super": {
+      "calls": 5,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "prompt_tokens": 6373,
+      "completion_tokens": 519,
+      "est_cost_usd": null,
+      "budget": 160000
+    },
+    "accounting_complete": false,
+    "total_est_cost_usd": null
+  },
+  "calls": [
+    {
+      "correlation_id": "local-b0f4a76e62c5",
+      "tier": "super",
+      "purpose": "code:b746ecfe-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 7749,
+      "prompt_tokens": 1307,
+      "completion_tokens": 275,
+      "est_cost_usd": 0.002132,
+      "request_id": "chatcmpl-8faa0bff-54f0-4fc3-92af-ebc32ff1e631",
+      "error": null,
+      "at": "2026-10-30T14:08:04.140465+00:00",
+      "usage_reported": true
+    },
+    {
+      "correlation_id": "local-141ac8daa6b3",
+      "tier": "super",
+      "purpose": "code:b746ecfe-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": false,
+      "status_code": 429,
+      "finish_reason": null,
+      "latency_ms": 124,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "est_cost_usd": null,
+      "request_id": null,
+      "error": "HTTP 429",
+      "at": "2026-10-30T14:08:05.340654+00:00",
+      "usage_reported": false
+    },
+    {
+      "correlation_id": "local-74c599d1e4f3",
+      "tier": "super",
+      "purpose": "code:b746ecfe-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 2719,
+      "prompt_tokens": 1602,
+      "completion_tokens": 45,
+      "est_cost_usd": 0.001737,
+      "request_id": "chatcmpl-65779f33-2720-485f-bc63-fdf6d44b0765",
+      "error": null,
+      "at": "2026-10-30T14:08:10.065581+00:00",
+      "usage_reported": true
+    },
+    {
+      "correlation_id": "local-67cc1e847ce4",
+      "tier": "super",
+      "purpose": "code:b746ecfe-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 1429,
+      "prompt_tokens": 1686,
+      "completion_tokens": 40,
+      "est_cost_usd": 0.001806,
+      "request_id": "chatcmpl-9bb6f044-6648-4c30-a415-bb1ed0d976a6",
+      "error": null,
+      "at": "2026-10-30T14:08:22.844410+00:00",
+      "usage_reported": true
+    },
+    {
+      "correlation_id": "local-1d8dc0d97c93",
+      "tier": "super",
+      "purpose": "code:b746ecfe-c1",
+      "provider": "nvidia_api",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": true,
+      "status_code": 200,
+      "finish_reason": "stop",
+      "latency_ms": 7140,
+      "prompt_tokens": 1778,
+      "completion_tokens": 159,
+      "est_cost_usd": 0.002255,
+      "request_id": "chatcmpl-ebf7ebc1-b4ac-4003-87c0-cad8cb61d7d8",
+      "error": null,
+      "at": "2026-10-30T14:10:01.752252+00:00",
+      "usage_reported": true
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "task.created",
+      "actor": "platform",
+      "at": 1793369230.8736935,
+      "contract_digest": "sha256:a71d0d317f23dd9a932b3b3c973dcf38fd480a769378334672a9f81f76760123",
+      "mode": "generic",
+      "runner": "sandbox-service",
+      "isolated": true
+    },
+    {
+      "seq": 2,
+      "type": "baseline.reproduced",
+      "actor": "platform",
+      "at": 1793369276.1180565,
+      "failing": [
+        "tests/test_service.py::test_service"
+      ],
+      "collected": 2
+    },
+    {
+      "seq": 3,
+      "type": "candidate.created",
+      "actor": "platform",
+      "at": 1793369276.1380532,
+      "candidate_id": "b746ecfe-c1",
+      "hypothesis_id": null
+    },
+    {
+      "seq": 4,
+      "type": "patch.applied",
+      "actor": "agent",
+      "at": 1793369285.0915487,
+      "candidate_id": "b746ecfe-c1",
+      "path": "scorer/features.py"
+    },
+    {
+      "seq": 5,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793369285.1482558,
+      "candidate_id": "b746ecfe-c1",
+      "step": {
+        "n": 1,
+        "thought": "The error occurs because scikit-learn 1.8.0 deprecated the 'sparse' parameter in OneHotEncoder in favor of 'sparse_output'. I need to update the OneHotEncoder call in scorer/features.py to use the new parameter name.",
+        "action": "apply_edit",
+        "target": "scorer/features.py",
+        "ok": true,
+        "denied": null,
+        "exit_code": null,
+        "excerpt": "Edited scorer/features.py",
+        "at": 1793369285.0914872
+      },
+      "diff": "--- a/scorer/features.py\n+++ b/scorer/features.py\n@@ -3,4 +3,4 @@\n \n def build_preprocessor():\n     return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n-        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n+        (\"category\", OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 1582
+    },
+    {
+      "seq": 6,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793369285.1824768,
+      "usage": {
+        "super": {
+          "calls": 1,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 1307,
+          "completion_tokens": 275,
+          "est_cost_usd": 0.002132,
+          "budget": 160000
+        },
+        "accounting_complete": true,
+        "total_est_cost_usd": 0.002132
+      },
+      "tool_calls": 1
+    },
+    {
+      "seq": 7,
+      "type": "tests.passed",
+      "actor": "sandbox",
+      "at": 1793369301.3018868,
+      "candidate_id": "b746ecfe-c1",
+      "exit_code": 0
+    },
+    {
+      "seq": 8,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793369301.341439,
+      "candidate_id": "b746ecfe-c1",
+      "step": {
+        "n": 2,
+        "thought": "The edit was applied successfully. Now I need to run the failing test to verify the fix works.",
+        "action": "run",
+        "target": "tests/test_service.py::test_service",
+        "ok": true,
+        "denied": null,
+        "exit_code": 0,
+        "excerpt": "exit_code=0\n.                                                                        [100%]\n1 passed in 6.23s\n",
+        "at": 1793369301.3018768
+      },
+      "diff": "--- a/scorer/features.py\n+++ b/scorer/features.py\n@@ -3,4 +3,4 @@\n \n def build_preprocessor():\n     return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n-        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n+        (\"category\", OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 3229
+    },
+    {
+      "seq": 9,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793369301.3880997,
+      "usage": {
+        "super": {
+          "calls": 3,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 2909,
+          "completion_tokens": 320,
+          "est_cost_usd": null,
+          "budget": 160000
+        },
+        "accounting_complete": false,
+        "total_est_cost_usd": null
+      },
+      "tool_calls": 2
+    },
+    {
+      "seq": 10,
+      "type": "tests.passed",
+      "actor": "sandbox",
+      "at": 1793369394.436975,
+      "candidate_id": "b746ecfe-c1",
+      "exit_code": 0
+    },
+    {
+      "seq": 11,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793369394.537591,
+      "candidate_id": "b746ecfe-c1",
+      "step": {
+        "n": 3,
+        "thought": "The test_service test passed. I should run the full test suite to ensure no other tests are broken by this change.",
+        "action": "run",
+        "target": "test",
+        "ok": true,
+        "denied": null,
+        "exit_code": 0,
+        "excerpt": "exit_code=0\n..                                                                       [100%]\n2 passed in 78.40s (0:01:18)\n",
+        "at": 1793369394.4369633
+      },
+      "diff": "--- a/scorer/features.py\n+++ b/scorer/features.py\n@@ -3,4 +3,4 @@\n \n def build_preprocessor():\n     return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n-        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n+        (\"category\", OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 4955
+    },
+    {
+      "seq": 12,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793369394.5696516,
+      "usage": {
+        "super": {
+          "calls": 4,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 4595,
+          "completion_tokens": 360,
+          "est_cost_usd": null,
+          "budget": 160000
+        },
+        "accounting_complete": false,
+        "total_est_cost_usd": null
+      },
+      "tool_calls": 3
+    },
+    {
+      "seq": 13,
+      "type": "candidate.progress",
+      "actor": "agent",
+      "at": 1793369402.783068,
+      "candidate_id": "b746ecfe-c1",
+      "step": {
+        "n": 4,
+        "thought": "All tests pass. The fix was successful - replacing the deprecated 'sparse' parameter with 'sparse_output' in OneHotEncoder resolved the compatibility issue with scikit-learn 1.8.0.",
+        "action": "finish",
+        "target": "",
+        "ok": true,
+        "denied": null,
+        "exit_code": null,
+        "excerpt": "Finish recorded; independent verification is still required.",
+        "at": 1793369402.777572
+      },
+      "diff": "--- a/scorer/features.py\n+++ b/scorer/features.py\n@@ -3,4 +3,4 @@\n \n def build_preprocessor():\n     return ColumnTransformer([(\"numeric\", StandardScaler(), [\"signal\", \"aux\"]),\n-        (\"category\", OneHotEncoder(sparse=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n+        (\"category\", OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\"), [\"employment_type\"])])\n",
+      "diff_truncated": false,
+      "skipped_files": [],
+      "tokens": 6892
+    },
+    {
+      "seq": 14,
+      "type": "usage.updated",
+      "actor": "platform",
+      "at": 1793369402.7974348,
+      "usage": {
+        "super": {
+          "calls": 5,
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "prompt_tokens": 6373,
+          "completion_tokens": 519,
+          "est_cost_usd": null,
+          "budget": 160000
+        },
+        "accounting_complete": false,
+        "total_est_cost_usd": null
+      },
+      "tool_calls": 4
+    },
+    {
+      "seq": 15,
+      "type": "code_oracle.passed",
+      "actor": "code_oracle",
+      "at": 1793369425.4043179,
+      "candidate_id": "b746ecfe-c1",
+      "reasons": []
+    },
+    {
+      "seq": 16,
+      "type": "ml_oracle.passed",
+      "actor": "ml_oracle",
+      "at": 1793369480.0421686,
+      "candidate_id": "b746ecfe-c1",
+      "stage": "screen",
+      "reasons": [
+        "SCREEN_ONLY"
+      ]
+    },
+    {
+      "seq": 17,
+      "type": "candidate.frozen",
+      "actor": "platform",
+      "at": 1793369480.0950217,
+      "candidate_id": "b746ecfe-c1",
+      "diff_digest": "sha256:c39bd21da156373c7414cdc969edbf86b3676ba75bbc34a3d6b8e874e4dfcba5"
+    },
+    {
+      "seq": 18,
+      "type": "candidate.verified",
+      "actor": "ml_oracle",
+      "at": 1793369558.1177065,
+      "candidate_id": "b746ecfe-c1",
+      "decision": "VERIFIED"
+    }
+  ],
+  "seconds": 327.3
+}
